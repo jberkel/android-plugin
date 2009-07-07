@@ -1,0 +1,10 @@
+What I did was break out AndroidProject into a plugin.  This just meant copying it to src/main/scala in its own project and having its project definition extend PluginProject.  Use publish-local to make it available for use by projects on your machine.  It is really easy to publish the plulgin to scala-tools if you are interested.
+
+I changed the tasks that forked the android binaries to use the new execTask in the 0.5.2-p1 snapshot I just posted.  Also, I made the androidSdkPath abstract so that it is defined in the project that extends AndroidProject (in this case, SaisiyatProject).
+
+To use the plugin, you just need to add:
+
+import sbt._
+class Plugins(info: ProjectInfo) extends PluginDefinition(info) {
+  val android = "android-plugin" % "android-plugin" % "0.1"
+}
