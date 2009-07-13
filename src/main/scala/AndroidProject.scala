@@ -22,6 +22,9 @@ object AndroidProject {
 
 abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
+  def proguardOption = ""
+  def proguardInJars = runClasspath --- proguardExclude
+  def proguardExclude = (androidJarPath +++ mainCompilePath +++ mainResourcesPath)
   override def unmanagedClasspath = super.unmanagedClasspath +++ androidJarPath
 
   import AndroidProject._
@@ -84,14 +87,14 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   }
   
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
-
+  
   lazy val proguard = proguardAction
   def proguardAction = proguardTask dependsOn(compile) describedAs("Optimize class files.")
   def proguardTask = task {
     taskdef('resource -> "proguard/ant/task.properties")
     anttask("proguard")('<> ->
       <a>
-      -injars {mainCompilePath.absolutePath}:{FileUtilities.scalaLibraryJar.getAbsolutePath}(!META-INF/MANIFEST.MF,!library.properties)
+      -injars {mainCompilePath.absolutePath}:{FileUtilities.scalaLibraryJar.getAbsolutePath}(!META-INF/MANIFEST.MF,!library.properties){proguardInJars.get.map(File.separator + _.absolutePath + "(!META-INF/MANIFEST.MF)")}
       -outjars {classesMinJarPath.absolutePath}
       -libraryjars {androidJarPath.absolutePath}
       -dontwarn
@@ -99,10 +102,11 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
       -dontobfuscate
       -keep public class * extends android.app.Activity
       -keep public class * extends android.appwidget.AppWidgetProvider
-      </a>.text)          
+      {proguardOption}
+      </a>.text)
     None
   }
-
+  
   lazy val dx = dxAction
   def dxAction = dxTask dependsOn(proguard) describedAs("Convert class files to dex files")
   def dxTask = execTask {<x> {dxPath.absolutePath} --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}</x> }
