@@ -94,7 +94,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     taskdef('resource -> "proguard/ant/task.properties")
     anttask("proguard")('<> ->
       <a>
-      -injars {mainCompilePath.absolutePath}:{FileUtilities.scalaLibraryJar.getAbsolutePath}(!META-INF/MANIFEST.MF,!library.properties){proguardInJars.get.map(File.separator + _.absolutePath + "(!META-INF/MANIFEST.MF)")}
+      -injars {mainCompilePath.absolutePath + File.pathSeparator + FileUtilities.scalaLibraryJar.getAbsolutePath}(!META-INF/MANIFEST.MF,!library.properties){proguardInJars.get.map(File.pathSeparator + _.absolutePath + "(!META-INF/MANIFEST.MF)")}
       -outjars {classesMinJarPath.absolutePath}
       -libraryjars {androidJarPath.absolutePath}
       -dontwarn
