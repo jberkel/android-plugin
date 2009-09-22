@@ -101,6 +101,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
       -dontoptimize
       -dontobfuscate
       -keep public class * extends android.app.Activity
+      -keep public class * extends android.app.Service
       -keep public class * extends android.appwidget.AppWidgetProvider
       {proguardOption}
       </a>.text)
