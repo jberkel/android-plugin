@@ -181,10 +181,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   lazy val minSdkVersion = usesSdk("minSdkVersion")
   lazy val maxSdkVersion = usesSdk("maxSdkVersion")
-  
+  lazy val manifestPackage = manifest.attribute("package").getOrElse(error("package not defined")).text
+    
   def usesSdk(s: String):Option[Int] = (manifest \ "uses-sdk").first.attribute("http://schemas.android.com/apk/res/android", s).map(_.text.toInt)
-  
-  
+
   def addonsJarPath = Path.lazyPathFinder {
     for {
       lib <- manifest \ "application" \ "uses-library"
