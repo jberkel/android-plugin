@@ -13,6 +13,7 @@ object AndroidProject {
   val DefaultAndroidPlatformName = "android-1.5"
   val DefaultAndroidManifestName = "AndroidManifest.xml"
   val DefaultAndroidJarName = "android.jar"
+  val DefaultMapsJarName = "maps.jar"  
   val DefaultAssetsDirectoryName = "assets"
   val DefaultResDirectoryName = "res"
   val DefaultClassesMinJarName = "classes.min.jar"
@@ -22,10 +23,13 @@ object AndroidProject {
 
 abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
+
   def proguardOption = ""
   def proguardInJars = runClasspath --- proguardExclude
-  def proguardExclude = (androidJarPath +++ mainCompilePath +++ mainResourcesPath)
-  override def unmanagedClasspath = super.unmanagedClasspath +++ androidJarPath
+  def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
+  def libraryJarPath = androidJarPath +++ addonsJarPath
+  override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
+  
 
   import AndroidProject._
 
@@ -37,6 +41,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def androidPlatformName = DefaultAndroidPlatformName
   def androidManifestName = DefaultAndroidManifestName
   def androidJarName = DefaultAndroidJarName
+  def mapsJarName = DefaultMapsJarName
   def assetsDirectoryName = DefaultAssetsDirectoryName
   def resDirectoryName = DefaultResDirectoryName
   def classesMinJarName = DefaultClassesMinJarName
@@ -46,6 +51,17 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   def scalaHomePath = Path.fromFile(new File(System.getProperty("scala.home")))
   def androidSdkPath: Path
+  def apiLevel = minSdkVersion.getOrElse(platformName2ApiLevel)
+  
+  def platformName2ApiLevel:Int = androidPlatformName match {
+    case "android-1.0" => 1
+    case "android-1.1" => 2
+    case "android-1.5" => 3
+    case "android-1.6" => 4
+    case "android-2.0" => 5
+  }
+
+  
   def androidToolsPath = androidSdkPath / "tools"
   def apkbuilderPath = androidToolsPath / DefaultApkbuilderName
   def adbPath = androidToolsPath / adbName
@@ -57,6 +73,8 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   def androidManifestPath =  mainSourcePath / androidManifestName
   def androidJarPath = androidPlatformPath / androidJarName
+  def addonsPath = androidSdkPath / "add-ons" / ("google_apis-" + apiLevel) / "libs"
+  def mapsJarPath = addonsPath / DefaultMapsJarName
   def mainAssetsPath = mainSourcePath / assetsDirectoryName
   def mainResPath = mainSourcePath / resDirectoryName
   def classesMinJarPath = outputPath / classesMinJarName
@@ -96,13 +114,14 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
       <a>
       -injars {mainCompilePath.absolutePath + File.pathSeparator + FileUtilities.scalaLibraryJar.getAbsolutePath}(!META-INF/MANIFEST.MF,!library.properties){proguardInJars.get.map(File.pathSeparator + _.absolutePath + "(!META-INF/MANIFEST.MF)")}
       -outjars {classesMinJarPath.absolutePath}
-      -libraryjars {androidJarPath.absolutePath}
+      -libraryjars {libraryJarPath.get.map(_.absolutePath).mkString(File.pathSeparator)}
       -dontwarn
       -dontoptimize
       -dontobfuscate
       -keep public class * extends android.app.Activity
       -keep public class * extends android.app.Service
       -keep public class * extends android.appwidget.AppWidgetProvider
+      -keep public class * implements junit.framework.Test 
       {proguardOption}
       </a>.text)
     None
@@ -156,4 +175,26 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def adbTask(adbPath: Path, emulator: Boolean, action: String, packageApkPath: Path) = execTask {<x>
       {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action} {packageApkPath.absolutePath}
    </x>}
+   
+  lazy val manifest:scala.xml.Elem = scala.xml.XML.loadFile(androidManifestPath.asFile)
+
+  lazy val minSdkVersion = usesSdk("minSdkVersion")
+  lazy val maxSdkVersion = usesSdk("maxSdkVersion")
+  
+  def usesSdk(s: String):Option[Int] = (manifest \ "uses-sdk").first.attribute("http://schemas.android.com/apk/res/android", s).map(_.text.toInt)
+  
+  
+  def addonsJarPath = Path.lazyPathFinder {
+    for {
+      lib <- manifest \ "application" \ "uses-library"
+      val p = lib.attribute("http://schemas.android.com/apk/res/android", "name").flatMap {
+        _.text match {
+          case "com.google.android.maps" => Some(mapsJarPath)
+          case _ => None
+        } 
+      }   
+      if p.isDefined
+    } yield p.get
+  }
+  
 }
