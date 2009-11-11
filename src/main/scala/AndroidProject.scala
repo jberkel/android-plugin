@@ -148,6 +148,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def packageTask(signPackage: Boolean) = execTask {<x>
       {apkbuilderPath.absolutePath}  {packageApkPath.absolutePath}
         {if (signPackage) "" else "-u"} -z {resourcesApkPath.absolutePath} -f {classesDexPath.absolutePath}
+        {proguardInJars.get.map(" -rj " + _.absolutePath)}
   </x>} dependsOn(cleanApk)
   
   lazy val installEmulator = installEmulatorAction
