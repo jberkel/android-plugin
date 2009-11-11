@@ -198,4 +198,19 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     } yield p.get
   }
   
+  
+  // these dependencies are already included in the  
+  // they won't get included in build
+  val http_core = "org.apache.httpcomponents" % "httpcore" % "4.0.1" % "provided"
+  val http_client = "org.apache.httpcomponents" % "httpclient" % "4.0" % "provided"
+  val logging = "commons-logging" % "commons-logging"  % "1.1.1" % "provided"
+  val codec = "commons-codec" % "commons-codec"  % "1.3" % "provided"
+
+  override def ivyXML =
+    <dependencies>
+       <exclude module="httpclient" conf="compile"/>
+       <exclude module="httpcore" conf="compile"/>              
+       <exclude module="commons-logging" conf="compile"/>              
+       <exclude module="commons-codec" conf="compile"/>      
+    </dependencies>
 }
