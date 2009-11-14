@@ -129,8 +129,8 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   
   lazy val dx = dxAction
   def dxAction = dxTask dependsOn(proguard) describedAs("Convert class files to dex files")
-  def dxTask = execTask {<x> {dxPath.absolutePath} -JXmx512M --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}</x> }
-
+  def dxTask = fileTask(classesDexPath from classesMinJarPath) { execTask {<x> {dxPath.absolutePath} -JXmx512M --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}</x> } run } 
+  
   lazy val aaptPackage = aaptPackageAction
   def aaptPackageAction = aaptPackageTask dependsOn(dx) describedAs("Package resources and assets.")
   def aaptPackageTask = execTask {<x>
