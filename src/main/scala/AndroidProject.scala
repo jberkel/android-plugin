@@ -188,7 +188,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def addonsJarPath = Path.lazyPathFinder {
     for {
       lib <- manifest \ "application" \ "uses-library"
-      val p = lib.attribute("http://schemas.android.com/apk/res/android", "name").flatMap {
+      p = lib.attribute("http://schemas.android.com/apk/res/android", "name").flatMap {
         _.text match {
           case "com.google.android.maps" => Some(mapsJarPath)
           case _ => None
