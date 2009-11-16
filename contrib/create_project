@@ -4,10 +4,10 @@ exec scala -deprecation "$0" "$@"
 
 var project:String = _
 var pkg:String = _
-var apiLevel = "4"
+var apiLevel = "4"  // TODO obtain from sdk
 var activity = "MainActivity"
 var androidSdk = System.getenv("ANDROID_SDK_HOME") 
-var scalaVersion = "2.7.6"
+var scalaVersion = "2.7.6" // TODO default to version running in current jvm
 
 def usage {
   println("create_project --project <name> --package <pkg> --sdk <path> " +
@@ -113,9 +113,9 @@ val specDef = """
 val activityDef = """
   |package #{package}
   | 
-  |import android.app.Activity
-  |import android.os.Bundle
-  |import android.widget.TextView
+  |import _root_.android.app.Activity
+  |import _root_.android.os.Bundle
+  |import _root_.android.widget.TextView
   | 
   |class #{activity} extends Activity {
   |  override def onCreate(savedInstanceState: Bundle) {
@@ -130,7 +130,7 @@ val testDef = """
   |package #{package}.tests 
   |
   |import junit.framework.Assert._
-  |import android.test.AndroidTestCase
+  |import _root_.android.test.AndroidTestCase
   |
   |class Tests extends AndroidTestCase {
   |  def testPackageIsCorrect {      
