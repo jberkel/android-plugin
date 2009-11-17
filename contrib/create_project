@@ -7,7 +7,7 @@ var pkg:String = _
 var apiLevel = "4"  // TODO obtain from sdk
 var activity = "MainActivity"
 var androidSdk = System.getenv("ANDROID_SDK_HOME") 
-var scalaVersion = "2.7.6" // TODO default to version running in current jvm
+var scalaVersion = """\d\.\d\.\d""".r.findFirstIn(scala.util.Properties.versionString).getOrElse("2.7.6")
 
 def usage {
   println("create_project --project <name> --package <pkg> --sdk <path> " +
