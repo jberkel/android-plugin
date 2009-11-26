@@ -1,5 +1,7 @@
 ##Installation
 
+Requires [sbt](http://simple-build-tool.googlecode.com/)
+
     $ git clone git://github.com/jberkel/android-plugin.git
     $ cd android-plugin
     $ sbt publish-local
