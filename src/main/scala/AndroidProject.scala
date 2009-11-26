@@ -21,7 +21,7 @@ object AndroidProject {
   val DefaultResourcesApkName = "resources.apk"
 }
 
-abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
+class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def proguardOption = ""
   def proguardInJars = runClasspath --- proguardExclude
   def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
