@@ -1,3 +1,9 @@
+##Installation
+
+    $ git clone git://github.com/jberkel/android-plugin.git
+    $ cd android-plugin
+    $ sbt publish-local
+
 ##Usage
 
 To use the plugin in a project, you just need to create project/plugins/Plugins.scala:
@@ -6,7 +12,6 @@ To use the plugin in a project, you just need to create project/plugins/Plugins.
     class Plugins(info: ProjectInfo) extends PluginDefinition(info) {
       val android = "android-plugin" % "android-plugin" % "1.3"
     }
-
 
 and make the project definition in project/build/Project (for example):
 
@@ -19,13 +24,11 @@ and make the project definition in project/build/Project (for example):
     }
 
 
-Alternatively, you can also use the script in contrib/create_android_project to set
-everything up for you:
+Alternatively, you can also use the script in contrib/ to set everything up for you:
 
-    $ contrib/create_project --project MyAndroidProject --package com.foo.project
+    $ contrib/create_android_project --project MyAndroidProject --package com.foo.project
 
-This will generate the directory / project structure as well as all needed files plus
-skeleton tests, specs and activities.
+This will generate the project structure as well as all needed files plus skeleton tests, specs and activities.
 
 To build the package:
 
@@ -36,4 +39,4 @@ To build the package:
 
 This code is based on work by Walter Chang
 ([saisiyat](http://github.com/weihsiu/saisiyat/)), turned into a plugin by
-[Mark Harrah](github.com/harrah).
+[Mark Harrah](http://github.com/harrah).
