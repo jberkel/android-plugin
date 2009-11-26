@@ -22,15 +22,12 @@ object AndroidProject {
 }
 
 abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
-
-
   def proguardOption = ""
   def proguardInJars = runClasspath --- proguardExclude
   def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
   def libraryJarPath = androidJarPath +++ addonsJarPath
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
   
-
   import AndroidProject._
 
   def aaptName = DefaultAaptName
@@ -92,16 +89,11 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val aidl = aidlAction
   def aidlAction = aidlTask describedAs("Generate Java classes from .aidl files.")
   def aidlTask = execTask {
-	val aidlPaths = descendents(mainSourceRoots, "*.aidl").getPaths
-	if(aidlPaths.isEmpty)
-		Process(true)
-	else
-  	{
-		aidlPath.absolutePath ::
-		"-o" ::
-		mainJavaSourcePath.absolutePath ::
-		aidlPaths.toList
-	}
+  	val aidlPaths = descendents(mainSourceRoots, "*.aidl").getPaths
+  	if(aidlPaths.isEmpty)
+  		Process(true)
+  	else 
+  	  aidlPath.absolutePath :: "-o" :: mainJavaSourcePath.absolutePath :: aidlPaths.toList
   }
   
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
