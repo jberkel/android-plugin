@@ -1,0 +1,12 @@
+== 0.2 TBR
+ 
+ * use ANDROID_SDK_HOME for locating SDK
+ * exclude Android provided artifacts (commons-*)
+ * added project generator script
+ * added AndroidTestProject for unit testing
+ * extract project metadata from AndroidManifest.xml (package name, api level)
+ * autodiscovery of google add-on apis (Google Maps)
+
+== 0.1 Initial release, 07/07/09
+
+ * Mark Harrah, based off http://github.com/weihsiu/saisiyat/
