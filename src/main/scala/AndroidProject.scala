@@ -169,12 +169,13 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val uninstallDevice = uninstallDeviceAction
   def uninstallDeviceAction = uninstallTask(false) dependsOn(packageDebug) describedAs("Uninstall package on the default device.")
 
-  def installTask(emulator: Boolean) = defaultAdbTask(emulator, "install")
-  def reinstallTask(emulator: Boolean) = defaultAdbTask(emulator, "install -r")
-  def uninstallTask(emulator: Boolean) = defaultAdbTask(emulator, "uninstall")
-  def defaultAdbTask(emulator: Boolean, action: String) = adbTask(adbPath, emulator, action, packageApkPath)
-  def adbTask(adbPath: Path, emulator: Boolean, action: String, packageApkPath: Path) = execTask {<x>
-      {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action} {packageApkPath.absolutePath}
+  def installTask(emulator: Boolean) = defaultAdbTask(emulator, "install "+packageApkPath.absolutePath)
+  def reinstallTask(emulator: Boolean) = defaultAdbTask(emulator, "install -r "+packageApkPath.absolutePath)
+  def uninstallTask(emulator: Boolean) = defaultAdbTask(emulator, "uninstall "+manifestPackage)
+  
+  def defaultAdbTask(emulator: Boolean, action: String) = adbTask(adbPath, emulator, action)
+  def adbTask(adbPath: Path, emulator: Boolean, action: String) = execTask {<x>
+      {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action}
    </x>}
    
   lazy val manifest:scala.xml.Elem = scala.xml.XML.loadFile(androidManifestPath.asFile)
