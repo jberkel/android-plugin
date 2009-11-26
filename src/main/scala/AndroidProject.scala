@@ -46,8 +46,12 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def packageApkName = artifactBaseName + ".apk"
   def resourcesApkName = DefaultResourcesApkName
 
-  def scalaHomePath = Path.fromFile(new File(System.getProperty("scala.home")))
-  def androidSdkPath: Path
+  def scalaHomePath  = Path.fromFile(new File(System.getProperty("scala.home")))
+  def androidSdkPath = {
+    val sdk = System.getenv("ANDROID_SDK_HOME")
+    if (sdk == null) error("You need to set ANDROID_SDK_HOME")
+    Path.fromFile(new File(sdk))
+  }
   def apiLevel = minSdkVersion.getOrElse(platformName2ApiLevel)
   
   def platformName2ApiLevel:Int = androidPlatformName match {
@@ -161,15 +165,14 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val uninstallDevice = uninstallDeviceAction
   def uninstallDeviceAction = uninstallTask(false) dependsOn(packageDebug) describedAs("Uninstall package on the default device.")
 
-  def installTask(emulator: Boolean) = defaultAdbTask(emulator, "install "+packageApkPath.absolutePath)
-  def reinstallTask(emulator: Boolean) = defaultAdbTask(emulator, "install -r "+packageApkPath.absolutePath)
-  def uninstallTask(emulator: Boolean) = defaultAdbTask(emulator, "uninstall "+manifestPackage)
+  def installTask(emulator: Boolean) = adbTask(emulator, "install "+packageApkPath.absolutePath)
+  def reinstallTask(emulator: Boolean) = adbTask(emulator, "install -r "+packageApkPath.absolutePath)
+  def uninstallTask(emulator: Boolean) = adbTask(emulator, "uninstall "+manifestPackage)
   
-  def defaultAdbTask(emulator: Boolean, action: String) = adbTask(adbPath, emulator, action)
-  def adbTask(adbPath: Path, emulator: Boolean, action: String) = execTask {<x>
+  def adbTask(emulator: Boolean, action: String) = execTask {<x>
       {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action}
    </x>}
-   
+         
   lazy val manifest:scala.xml.Elem = scala.xml.XML.loadFile(androidManifestPath.asFile)
 
   lazy val minSdkVersion = usesSdk("minSdkVersion")
@@ -190,7 +193,6 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
       if p.isDefined
     } yield p.get
   }
-  
   
   // these dependencies are already included in the Android SDK 
   // set the configuration to "provided" so they won't get included in the package

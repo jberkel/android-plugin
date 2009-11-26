@@ -10,7 +10,7 @@ var androidSdk = System.getenv("ANDROID_SDK_HOME")
 var scalaVersion = """\d\.\d\.\d""".r.findFirstIn(scala.util.Properties.versionString).getOrElse("2.7.6")
 
 def usage {
-  println("create_project --project <name> --package <pkg> --sdk <path> " +
+  println("create_project --project <name> --package <pkg> [--sdk <path>] " +
           "[--scala-version <version>] [--api-level <level>] [--activity <name>]")
   exit(1)
 }
@@ -83,19 +83,11 @@ val projectDef = """
   |  lazy val main = project(".", "main", new MainProject(_))
   |  lazy val tests = project("tests",  "tests", new TestProject(_), main)
   |
-  |  class Defaults(info: ProjectInfo) extends AndroidProject(info) {
-  |    override def androidSdkPath = Path.fromFile("#{sdkPath}")
-  |  }
-  |
-  |  class MainProject(info: ProjectInfo) extends Defaults(info) {    
+  |  class MainProject(info: ProjectInfo) extends AndroidProject(info) {    
   |    val scalatest = "org.scalatest" % "scalatest" % "1.0" % "test"
   |  }
   |
-  |  class TestProject(info: ProjectInfo) extends Defaults(info) {
-  |    override def proguardInJars = Path.emptyPathFinder
-  |    lazy val runTest = defaultAdbTask(true, "shell am instrument -w "+manifestPackage+"/android.test.InstrumentationTestRunner") describedAs("runs instrumentation tests")        
-  |  }
-  |  
+  |  class TestProject(info: ProjectInfo) extends AndroidTestProject(info)
   |}""".stripMargin.trim
 
 val specDef = """

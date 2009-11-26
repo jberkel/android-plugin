@@ -24,7 +24,7 @@ class SaisiyatProject(info: ProjectInfo) extends AndroidProject(info) {
 Alternatively, you can also use the script in contrib/create_project to set
 everything up for you:
 
-contrib/create_project --project MyAndroidProject --package com.foo.project --sdk <path to android sdk>
+contrib/create_project --project MyAndroidProject --package com.foo.project
 
 This will generate the directory / project structure as well as all needed files plus
 skeleton tests, specs and activities.
