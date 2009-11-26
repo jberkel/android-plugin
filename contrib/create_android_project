@@ -88,7 +88,7 @@ val projectDef = """
   |  }
   |
   |  class MainProject(info: ProjectInfo) extends Defaults(info) {    
-  |    val scalatest = "org.scalatest" % "scalatest" % "1.0" % "test->default"
+  |    val scalatest = "org.scalatest" % "scalatest" % "1.0" % "test"
   |  }
   |
   |  class TestProject(info: ProjectInfo) extends Defaults(info) {
@@ -121,7 +121,7 @@ val activityDef = """
   |  override def onCreate(savedInstanceState: Bundle) {
   |    super.onCreate(savedInstanceState)
   |    setContentView(new TextView(this) {
-  |      setText("Hello Android, I'm Scala!")
+  |      setText("hello, world")
   |    })
   |  }
   |}""".stripMargin.trim
@@ -132,7 +132,7 @@ val testDef = """
   |import junit.framework.Assert._
   |import _root_.android.test.AndroidTestCase
   |
-  |class Tests extends AndroidTestCase {
+  |class UnitTests extends AndroidTestCase {
   |  def testPackageIsCorrect {      
   |    assertEquals("#{package}", getContext.getPackageName)
   |  }
@@ -150,10 +150,10 @@ class Generator(val config:Config) {
   val Project = new File(config.target, "project/build/Project.scala")
   val Plugins = new File(config.target, "project/plugins/Plugins.scala")
   val BuildProperties = new File(config.target, "project/build.properties")
-  val Spec = new File(config.target, "src/test/scala/spec.scala")
-  val Test = new File(config.target, "tests/src/main/scala/test.scala")
+  val Spec = new File(config.target, "src/test/scala/Specs.scala")
+  val Test = new File(config.target, "tests/src/main/scala/UnitTests.scala")
 
-  val Activity = new File(config.target, "src/main/scala/activity.scala")
+  val Activity = new File(config.target, "src/main/scala/Activity.scala")
   val AppIcon = new File(config.target, "src/main/res/drawable/app_icon.png")
 
   val dirs2create = List(
