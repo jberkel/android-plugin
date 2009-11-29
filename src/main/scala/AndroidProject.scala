@@ -88,7 +88,7 @@ class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def aaptGenerateTask = execTask {<x>
       {aaptPath.absolutePath} package -m -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath}
          -I {androidJarPath.absolutePath} -J {mainJavaSourcePath.absolutePath}
-    </x>}
+    </x>} dependsOn directory(mainJavaSourcePath)
 
   lazy val aidl = aidlAction
   def aidlAction = aidlTask describedAs("Generate Java classes from .aidl files.")
@@ -132,7 +132,7 @@ class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def aaptPackageTask = execTask {<x>
     {aaptPath.absolutePath} package -f -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath} 
        -A {mainAssetsPath.absolutePath} -I {androidJarPath.absolutePath} -F {resourcesApkPath.absolutePath}
-  </x>}
+  </x>} dependsOn directory(mainAssetsPath)
 
   lazy val packageDebug = packageDebugAction
   def packageDebugAction = packageTask(true) dependsOn(aaptPackage) describedAs("Package and sign with a debug key.")
@@ -192,6 +192,10 @@ class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
       }   
       if p.isDefined
     } yield p.get
+  }
+  
+  def directory(dir: Path) = fileTask(dir :: Nil) {
+    FileUtilities.createDirectory(dir, log)
   }
   
   // these dependencies are already included in the Android SDK 
