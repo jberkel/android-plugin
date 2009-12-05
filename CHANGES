@@ -1,4 +1,4 @@
-== 0.2 TBR
+== 0.2 05/12/09
  
  * use ANDROID_SDK_HOME for locating SDK
  * exclude Android provided artifacts (commons-*)

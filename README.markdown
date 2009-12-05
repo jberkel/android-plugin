@@ -12,7 +12,7 @@ To use the plugin in a project, you just need to create project/plugins/Plugins.
 
     import sbt._
     class Plugins(info: ProjectInfo) extends PluginDefinition(info) {
-      val android = "android-plugin" % "android-plugin" % "0.2"
+      val android = "org.scala-tools.sbt" % "android-plugin" % "0.2"
     }
 
 and make the project definition in project/build/Project (for example):
