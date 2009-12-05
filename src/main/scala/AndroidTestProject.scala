@@ -1,6 +1,6 @@
 import sbt._
 
-class AndroidTestProject(info: ProjectInfo) extends AndroidProject(info) {
+abstract class AndroidTestProject(info: ProjectInfo) extends AndroidProject(info) {
   override def proguardInJars = Path.emptyPathFinder
   
   lazy val runTest = runTestAction

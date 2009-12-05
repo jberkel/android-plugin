@@ -10,7 +10,6 @@ object AndroidProject {
   val DefaultAidlName = "aidl"
   val DefaultApkbuilderName = "apkbuilder"
   val DefaultDxName = "dx"
-  val DefaultAndroidPlatformName = "android-1.5"
   val DefaultAndroidManifestName = "AndroidManifest.xml"
   val DefaultAndroidJarName = "android.jar"
   val DefaultMapsJarName = "maps.jar"  
@@ -21,7 +20,7 @@ object AndroidProject {
   val DefaultResourcesApkName = "resources.apk"
 }
 
-class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
+abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def proguardOption = ""
   def proguardInJars = runClasspath --- proguardExclude
   def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
@@ -29,13 +28,14 @@ class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
   
   import AndroidProject._
-
+  
+  def androidPlatformName:String
+   
   def aaptName = DefaultAaptName
   def adbName = DefaultAdbName
   def aidlName = DefaultAidlName
   def apkbuilderName = DefaultApkbuilderName
   def dxName = DefaultDxName
-  def androidPlatformName = DefaultAndroidPlatformName
   def androidManifestName = DefaultAndroidManifestName
   def androidJarName = DefaultAndroidJarName
   def mapsJarName = DefaultMapsJarName

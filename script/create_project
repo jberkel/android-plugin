@@ -2,38 +2,36 @@
 exec scala -deprecation "$0" "$@"
 !#
 
-var project:String = _
-var pkg:String = _
-var apiLevel = "4"  // TODO obtain from sdk
+var apiLevel = "4"
+var platform = "android-1.6"
 var activity = "MainActivity"
-var androidSdk = System.getenv("ANDROID_SDK_HOME") 
 var scalaVersion = """\d\.\d\.\d""".r.findFirstIn(scala.util.Properties.versionString).getOrElse("2.7.6")
 
 def usage {
-  println("create_project --project <name> --package <pkg> [--sdk <path>] " +
+  println("create_project <name> <pkg> [--platform <name>] " +
           "[--scala-version <version>] [--api-level <level>] [--activity <name>]")
   exit(1)
 }
 def take(i: Iterator[String]) = if (e.hasNext) e.next else null
 val e = args.elements
+
+val (project, pkg) = (take(e), take(e))
 while (e.hasNext) e.next match {
-  case "--project"   => project = take(e)
   case "--activity"  => activity = take(e)
   case "--api-level" => apiLevel = take(e)
-  case "--package"   => pkg = take(e)
-  case "--sdk"       => androidSdk = take(e)
+  case "--platform"  => platform = take(e)
   case "--scala-version" => scalaVersion = take(e)
   case _             => usage
 }
 
-if (pkg == null || project == null || androidSdk == null) 
+if (pkg == null || project == null)
   usage
 
 case class Config(
-  val project:String, val target: String, val sdkPath:String, 
+  val project:String, val target: String, val platform:String, 
   val sdkVersion:String, val `package`:String, val scalaVersion:String, val activity:String)
 
-val config = Config(project, project, androidSdk, apiLevel, pkg, scalaVersion, activity)
+val config = Config(project, project, platform, apiLevel, pkg, scalaVersion, activity)
 val manifestXml = <manifest xmlns:android="http://schemas.android.com/apk/res/android" package={config.`package`}
           android:versionCode="1"
           android:versionName="0.1">
@@ -77,17 +75,20 @@ val pluginDef = """
 val projectDef = """
   |import sbt._
   |
+  |trait Defaults {
+  |  def androidPlatformName = "#{platform}"
+  |}
   |class #{project}(info: ProjectInfo) extends ParentProject(info) {
   |  override def shouldCheckOutputDirectories = false
   |    
   |  lazy val main = project(".", "main", new MainProject(_))
   |  lazy val tests = project("tests",  "tests", new TestProject(_), main)
   |
-  |  class MainProject(info: ProjectInfo) extends AndroidProject(info) {    
+  |  class MainProject(info: ProjectInfo) extends AndroidProject(info) with Defaults {    
   |    val scalatest = "org.scalatest" % "scalatest" % "1.0" % "test"
   |  }
   |
-  |  class TestProject(info: ProjectInfo) extends AndroidTestProject(info)
+  |  class TestProject(info: ProjectInfo) extends AndroidTestProject(info) with Defaults
   |}""".stripMargin.trim
 
 val specDef = """
@@ -178,10 +179,10 @@ class Generator(val config:Config) {
   }
 
   def expand(template: String): String = doExpand(template, v => v match {
-    case "sdkPath" => config.sdkPath
     case "project" => config.project
     case "package" => config.`package`
     case "activity" => config.activity
+    case "platform" => config.platform
     case "scalaVersion" => config.scalaVersion
     case _ => fail("unknown substitution: " + v)
   })
