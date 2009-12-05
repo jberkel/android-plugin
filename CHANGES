@@ -1,5 +1,6 @@
 == 0.2 05/12/09
  
+ * removed dependencies to ant+antelese
  * use ANDROID_SDK_HOME for locating SDK
  * exclude Android provided artifacts (commons-*)
  * added project generator script
