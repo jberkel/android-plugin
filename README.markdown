@@ -1,12 +1,6 @@
-##Installation
+##Usage
 
 Requires [sbt](http://simple-build-tool.googlecode.com/)
-
-    $ git clone git://github.com/jberkel/android-plugin.git
-    $ cd android-plugin
-    $ sbt publish-local
-
-##Usage
 
 To use the plugin in a project, you just need to create project/plugins/Plugins.scala:
 
@@ -40,6 +34,14 @@ To build the package:
 To install the package:
 
     $ sbt install-emulator
+
+##Hacking on the plugin
+
+If you need make modifications to the plugin itself, you can compile and install it locally:
+
+    $ git clone git://github.com/jberkel/android-plugin.git
+    $ cd android-plugin
+    $ sbt publish-local    
 
 ##Credits
 
