@@ -1,4 +1,4 @@
-import com.netgents.antelese.Antelese.{task => anttask,  _}
+import proguard.{Configuration=>ProGuardConfiguration, ProGuard, ConfigurationParser}
 import io.Source
 import java.io._
 import sbt._
@@ -104,25 +104,24 @@ class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   
   lazy val proguard = proguardAction
   def proguardAction = proguardTask dependsOn(compile) describedAs("Optimize class files.")
-  def proguardTask = task {
-    taskdef('resource -> "proguard/ant/task.properties")
-    anttask("proguard")('<> ->
-      <a>
-      -injars {mainCompilePath.absolutePath + File.pathSeparator + FileUtilities.scalaLibraryJar.getAbsolutePath}(!META-INF/MANIFEST.MF,!library.properties){proguardInJars.get.map(File.pathSeparator + _.absolutePath + "(!META-INF/MANIFEST.MF)")}
-      -outjars {classesMinJarPath.absolutePath}
-      -libraryjars {libraryJarPath.get.map(_.absolutePath).mkString(File.pathSeparator)}
-      -dontwarn
-      -dontoptimize
-      -dontobfuscate
-      -keep public class * extends android.app.Activity
-      -keep public class * extends android.app.Service
-      -keep public class * extends android.appwidget.AppWidgetProvider
-      -keep public class * implements junit.framework.Test { "{ public void test*(); }" }
-      {proguardOption}
-      </a>.text)
+  def proguardTask = task { 
+    val args = "-injars" ::  mainCompilePath.absolutePath+File.pathSeparator+
+                             FileUtilities.scalaLibraryJar.getAbsolutePath+"(!META-INF/MANIFEST.MF,!library.properties)"+
+                             (if (!proguardInJars.getPaths.isEmpty) File.pathSeparator+proguardInJars.getPaths.map(_+"(!META-INF/MANIFEST.MF)").mkString(File.pathSeparator) else "") ::                             
+               "-outjars" :: classesMinJarPath.absolutePath ::
+               "-libraryjars" :: libraryJarPath.getPaths.mkString(File.pathSeparator) :: 
+               "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" :: 
+               "-keep public class * extends android.app.Activity" ::
+               "-keep public class * extends android.app.Service" ::
+               "-keep public class * extends android.appwidget.AppWidgetProvider" ::
+               "-keep public class * implements junit.framework.Test { public void test*(); }" :: proguardOption :: Nil
+    
+    val config = new ProGuardConfiguration
+    new ConfigurationParser(args.toArray[String], info.projectPath.asFile).parse(config)    
+    new ProGuard(config).execute
     None
   }
-  
+
   lazy val dx = dxAction
   def dxAction = dxTask dependsOn(proguard) describedAs("Convert class files to dex files")
   def dxTask = fileTask(classesDexPath from classesMinJarPath) { execTask {<x> {dxPath.absolutePath} -JXmx512M --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}</x> } run } 
