@@ -32,6 +32,9 @@ if (pkg == null || project == null)
 if (!pkg.matches("""[a-z]+\.([a-z]+\.?)+[a-z]$"""))
   fail("invalid package name, need 2 package components (e.g. com.bar)")
 
+if (!project.matches("""[a-zA-Z]\w+"""))
+  fail("invalid project name: " + project)
+
 case class Config(
   val project:String, val target: String, val platform:String, 
   val sdkVersion:String, val `package`:String, val scalaVersion:String, val activity:String)
@@ -83,10 +86,10 @@ val projectDef = """
   |trait Defaults {
   |  def androidPlatformName = "#{platform}"
   |}
-  |class #{project}(info: ProjectInfo) extends ParentProject(info) {
+  |class #{project_class}(info: ProjectInfo) extends ParentProject(info) {
   |  override def shouldCheckOutputDirectories = false
   |    
-  |  lazy val main = project(".", "main", new MainProject(_))
+  |  lazy val main = project(".", "#{project}", new MainProject(_))
   |  lazy val tests = project("tests",  "tests", new TestProject(_), main)
   |
   |  class MainProject(info: ProjectInfo) extends AndroidProject(info) with Defaults {    
@@ -145,7 +148,7 @@ class Generator(val config:Config) {
   val Manifest = new File(config.target, "src/main/AndroidManifest.xml")
   val TestManifest = new File(config.target, "tests/src/main/AndroidManifest.xml")
   val Strings = new File(config.target, "src/main/res/values/strings.xml")
-  val Project = new File(config.target, "project/build/Project.scala")
+  val Project = new File(config.target, "project/build/" + config.project.capitalize + ".scala")
   val Plugins = new File(config.target, "project/plugins/Plugins.scala")
   val BuildProperties = new File(config.target, "project/build.properties")
   val Spec = new File(config.target, "src/test/scala/Specs.scala")
@@ -184,7 +187,8 @@ class Generator(val config:Config) {
   }
 
   def expand(template: String): String = doExpand(template, v => v match {
-    case "project" => config.project.capitalize
+    case "project_class" => config.project.capitalize
+    case "project" => config.project
     case "package" => config.`package`
     case "activity" => config.activity.capitalize
     case "platform" => config.platform
@@ -231,7 +235,7 @@ class Generator(val config:Config) {
   }
 
   def createActivity(activityDef: String) = writeFile(Activity, expand(activityDef)) 
-  def createResources = writeFile(Strings, pretty(resources(Map("app_name"->config.project))))
+  def createResources = writeFile(Strings, pretty(resources(Map("app_name"->config.project.capitalize))))
   def createSpecs(specDef: String) = writeFile(Spec, expand(specDef))
   def createTests(testDef: String) = writeFile(Test, expand(testDef))
 }
