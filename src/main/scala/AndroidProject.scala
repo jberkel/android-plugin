@@ -159,10 +159,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def reinstallDeviceAction = reinstallTask(false) dependsOn(packageDebug) describedAs("Reinstall package on the default device.")
 
   lazy val uninstallEmulator = uninstallEmulatorAction
-  def uninstallEmulatorAction = uninstallTask(true) dependsOn(packageDebug) describedAs("Uninstall package on the default emulator.")
+  def uninstallEmulatorAction = uninstallTask(true) describedAs("Uninstall package on the default emulator.")
 
   lazy val uninstallDevice = uninstallDeviceAction
-  def uninstallDeviceAction = uninstallTask(false) dependsOn(packageDebug) describedAs("Uninstall package on the default device.")
+  def uninstallDeviceAction = uninstallTask(false) describedAs("Uninstall package on the default device.")
 
   def installTask(emulator: Boolean) = adbTask(emulator, "install "+packageApkPath.absolutePath)
   def reinstallTask(emulator: Boolean) = adbTask(emulator, "install -r "+packageApkPath.absolutePath)
