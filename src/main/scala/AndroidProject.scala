@@ -35,7 +35,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def adbName = DefaultAdbName
   def aidlName = DefaultAidlName
   def apkbuilderName = DefaultApkbuilderName
-  def dxName = DefaultDxName
+  def dxName = DefaultDxName + osBatchSuffix
   def androidManifestName = DefaultAndroidManifestName
   def androidJarName = DefaultAndroidJarName
   def mapsJarName = DefaultMapsJarName
@@ -53,7 +53,9 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     Path.fromFile(new File(sdk))
   }
   def apiLevel = minSdkVersion.getOrElse(platformName2ApiLevel)
-  
+  def isWindows = System.getProperty("os.name").startsWith("Windows")
+  def osBatchSuffix = if (isWindows) ".bat" else ""
+
   def platformName2ApiLevel:Int = androidPlatformName match {
     case "android-1.0" => 1
     case "android-1.1" => 2
@@ -70,7 +72,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def platformToolsPath = androidPlatformPath / "tools"
   def aaptPath = platformToolsPath / aaptName
   def aidlPath = platformToolsPath / aidlName
-  def dxPath = platformToolsPath / DefaultDxName
+  def dxPath = platformToolsPath / dxName
 
   def androidManifestPath =  mainSourcePath / androidManifestName
   def androidJarPath = androidPlatformPath / androidJarName
