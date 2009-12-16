@@ -31,10 +31,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   
   def androidPlatformName:String
    
-  def aaptName = DefaultAaptName
+  def aaptName = DefaultAaptName // note: this is a .exe file in windows
   def adbName = DefaultAdbName
   def aidlName = DefaultAidlName
-  def apkbuilderName = DefaultApkbuilderName
+  def apkbuilderName = DefaultApkbuilderName + osBatchSuffix
   def dxName = DefaultDxName + osBatchSuffix
   def androidManifestName = DefaultAndroidManifestName
   def androidJarName = DefaultAndroidJarName
@@ -66,7 +66,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   
   def androidToolsPath = androidSdkPath / "tools"
-  def apkbuilderPath = androidToolsPath / DefaultApkbuilderName
+  def apkbuilderPath = androidToolsPath / apkbuilderName
   def adbPath = androidToolsPath / adbName
   def androidPlatformPath = androidSdkPath / "platforms" / androidPlatformName
   def platformToolsPath = androidPlatformPath / "tools"
@@ -126,7 +126,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   lazy val dx = dxAction
   def dxAction = dxTask dependsOn(proguard) describedAs("Convert class files to dex files")
-  def dxTask = fileTask(classesDexPath from classesMinJarPath) { execTask {<x> {dxPath.absolutePath} -JXmx512M --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}</x> } run } 
+  def dxTask = fileTask(classesDexPath from classesMinJarPath) { execTask {<x> {dxPath.absolutePath} --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}</x> } run } 
   
   lazy val aaptPackage = aaptPackageAction
   def aaptPackageAction = aaptPackageTask dependsOn(dx) describedAs("Package resources and assets.")
