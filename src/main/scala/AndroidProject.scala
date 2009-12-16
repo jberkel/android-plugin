@@ -18,6 +18,7 @@ object AndroidProject {
   val DefaultClassesMinJarName = "classes.min.jar"
   val DefaultClassesDexName = "classes.dex"
   val DefaultResourcesApkName = "resources.apk"
+  val DefaultDxJavaOpts = "-JXmx512m"
 }
 
 abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
@@ -45,6 +46,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def classesDexName = DefaultClassesDexName
   def packageApkName = artifactBaseName + ".apk"
   def resourcesApkName = DefaultResourcesApkName
+  def dxJavaOpts = DefaultDxJavaOpts
 
   def scalaHomePath  = Path.fromFile(new File(System.getProperty("scala.home")))
   def androidSdkPath = {
@@ -55,7 +57,12 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def apiLevel = minSdkVersion.getOrElse(platformName2ApiLevel)
   def isWindows = System.getProperty("os.name").startsWith("Windows")
   def osBatchSuffix = if (isWindows) ".bat" else ""
-
+  
+  def dxMemoryParameter = {
+    // per http://code.google.com/p/android/issues/detail?id=4217, dx.bat
+    // doesn't currently support -JXmx arguments.  For now, omit them in windows.
+    if (isWindows) "" else dxJavaOpts
+  }
   def platformName2ApiLevel:Int = androidPlatformName match {
     case "android-1.0" => 1
     case "android-1.1" => 2
@@ -63,7 +70,6 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     case "android-1.6" => 4
     case "android-2.0" => 5
   }
-
   
   def androidToolsPath = androidSdkPath / "tools"
   def apkbuilderPath = androidToolsPath / apkbuilderName
@@ -126,7 +132,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   lazy val dx = dxAction
   def dxAction = dxTask dependsOn(proguard) describedAs("Convert class files to dex files")
-  def dxTask = fileTask(classesDexPath from classesMinJarPath) { execTask {<x> {dxPath.absolutePath} --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}</x> } run } 
+  def dxTask = fileTask(classesDexPath from classesMinJarPath) { 
+     execTask {<x> {dxPath.absolutePath} {dxMemoryParameter} 
+        --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}
+    </x> } run } 
   
   lazy val aaptPackage = aaptPackageAction
   def aaptPackageAction = aaptPackageTask dependsOn(dx) describedAs("Package resources and assets.")
