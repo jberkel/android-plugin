@@ -208,13 +208,6 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     FileUtilities.createDirectory(dir, log)
   }
   
-  // these dependencies are already included in the Android SDK 
-  // set the configuration to "provided" so they won't get included in the package
-  val http_core = "org.apache.httpcomponents" % "httpcore" % "4.0.1" % "provided"
-  val http_client = "org.apache.httpcomponents" % "httpclient" % "4.0" % "provided"
-  val logging = "commons-logging" % "commons-logging"  % "1.1.1" % "provided"
-  val codec = "commons-codec" % "commons-codec"  % "1.3" % "provided"
-
   override def ivyXML =
     <dependencies>
        <exclude module="httpclient" conf="compile"/>
