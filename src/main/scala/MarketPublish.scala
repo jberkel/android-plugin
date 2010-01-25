@@ -3,7 +3,8 @@ import Process._
 
 trait MarketPublish extends AndroidProject {
   /** Keystore alias for the private key used to sign this application */
-  def key_alias: String
+  def keyalias: String
+  def keystorePath = Path.userHome / ".keystore"
   
   lazy val prepareMarket = prepareMarketAction
   def prepareMarketAction = task { 
@@ -24,9 +25,9 @@ trait MarketPublish extends AndroidProject {
 
   lazy val signRelease = signReleaseAction
   def signReleaseAction = execTask {<x>
-      jarsigner -verbose -storepass {getPassword} {packageApkPath} {key_alias}
+      jarsigner -verbose -keystore {keystorePath} -storepass {getPassword} {packageApkPath} {keyalias}
   </x>} dependsOn(packageRelease) describedAs(
-    "Sign with key alias '%s' in ~/.keystore, using jarsigner." format key_alias)
+    "Sign with key alias '%s' in %s, using jarsigner." format (keyalias, keystorePath))
   
   def getPassword = SimpleReader.readLine("\nEnter keystore password: ").get
 }
