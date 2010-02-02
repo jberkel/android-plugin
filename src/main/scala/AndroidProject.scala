@@ -110,11 +110,13 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
   
+  /** Projects using xsbt may want to ovrride and return `buildScalaInstance.libraryJar` */
+  def scalaLibraryJar = FileUtilities.scalaLibraryJar
   lazy val proguard = proguardAction
   def proguardAction = proguardTask dependsOn(compile) describedAs("Optimize class files.")
   def proguardTask = task { 
     val args = "-injars" ::  mainCompilePath.absolutePath+File.pathSeparator+
-                             FileUtilities.scalaLibraryJar.getAbsolutePath+"(!META-INF/MANIFEST.MF,!library.properties)"+
+                             scalaLibraryJar.getAbsolutePath+"(!META-INF/MANIFEST.MF,!library.properties)"+
                              (if (!proguardInJars.getPaths.isEmpty) File.pathSeparator+proguardInJars.getPaths.map(_+"(!META-INF/MANIFEST.MF)").mkString(File.pathSeparator) else "") ::                             
                "-outjars" :: classesMinJarPath.absolutePath ::
                "-libraryjars" :: libraryJarPath.getPaths.mkString(File.pathSeparator) :: 
