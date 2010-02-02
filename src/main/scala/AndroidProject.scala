@@ -110,8 +110,13 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
   
-  /** Projects using xsbt may want to ovrride and return `buildScalaInstance.libraryJar` */
-  def scalaLibraryJar = FileUtilities.scalaLibraryJar
+  /** Forward compatibility with sbt 0.6+ Scala build versions */
+  def scalaLibraryJar = try {
+    type xsbtProject = { def buildScalaInstance: { def libraryJar: File } }
+    this.asInstanceOf[xsbtProject].buildScalaInstance.libraryJar
+  } catch {
+    case e: NoSuchMethodException => FileUtilities.scalaLibraryJar
+  }
   lazy val proguard = proguardAction
   def proguardAction = proguardTask dependsOn(compile) describedAs("Optimize class files.")
   def proguardTask = task { 
