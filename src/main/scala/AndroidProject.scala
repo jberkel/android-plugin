@@ -221,5 +221,6 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
        <exclude module="httpcore" conf="compile"/>              
        <exclude module="commons-logging" conf="compile"/>              
        <exclude module="commons-codec" conf="compile"/>      
+       <exclude module="scala-library" conf="compile"/>                    
     </dependencies>
 }
