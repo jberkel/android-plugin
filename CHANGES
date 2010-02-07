@@ -1,3 +1,9 @@
+== 0.4 06/02/10
+
+ * xsbt compatibility (n8han)
+ * jarsigning support (n8han)
+ * Windows compatibility fixes (timgilbert)
+
 == 0.3 07/12/09
 
  * removed dependencies to ant+antelese
