@@ -18,6 +18,10 @@ and make the project definition in project/build/Project (for example):
       override def androidPlatformName = "android-1.5"
       // or preferably set the ANDROID_SDK_HOME environment variable
       override def androidSdkPath = Path.fromFile(new File("/home/mark/code/java/android-sdk-linux_x86-1.5_r2"))
+      // set to the keystore alias you used when creating your keychain
+      val keyalias "my_keys"
+      // set to the location of your keystore
+      override def keystorePath = Path.userHome / ".keystore" / "mykeys.keystore"
     }
 
 
@@ -35,6 +39,10 @@ To build the package:
 To install the package:
 
     $ sbt install-emulator
+
+To build a signed package for release into the Marketplace
+
+    $ sbt sign-release
 
 ##Hacking on the plugin
 
