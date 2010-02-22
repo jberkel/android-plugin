@@ -33,7 +33,7 @@ This will generate the project structure as well as all needed files plus skelet
 
 To build the package:
 
-    $ cd MyAndroidProject
+    $ cd myAndroidProject
     $ sbt update package-debug
 
 To install the package:
