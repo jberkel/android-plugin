@@ -69,6 +69,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     case "android-1.5" => 3
     case "android-1.6" => 4
     case "android-2.0" => 5
+    case "android-2.1" => 7
   }
   
   def androidToolsPath = androidSdkPath / "tools"
