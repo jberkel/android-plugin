@@ -1,0 +1,5 @@
+* Build and install test packages before running test-emulator/device
+* Android 2.1 fix (pk11)
+* README updates (stevej)
+* Require sbt 0.7.0 / Scala 2.7.7 (to build plugin itself)
+* Posterous support :)
