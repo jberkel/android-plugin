@@ -5,7 +5,7 @@ exec scala -deprecation "$0" "$@"
 var apiLevel = "4"
 var platform = "android-1.6"
 var activity = "MainActivity"
-var scalaVersion = """\d\.\d\.\d""".r.findFirstIn(scala.util.Properties.versionString).getOrElse("2.7.6")
+var scalaVersion = """\d\.\d\.\d""".r.findFirstIn(scala.util.Properties.versionString).getOrElse("2.7.7")
 
 def usage {
   println("create_project <name> <pkg> [--platform <name>] " +
@@ -67,9 +67,10 @@ val testManifestXml = <manifest xmlns:android="http://schemas.android.com/apk/re
 
 val buildProperties = """
   |project.name=#{project}
-  |sbt.version=0.5.6
+  |sbt.version=0.7.1
   |project.version=0.1
-  |scala.version=#{scalaVersion}
+  |def.scala.version=2.7.7
+  |build.scala.versions=2.7.7
   |project.initialize=false
   |""".stripMargin.trim
 
@@ -77,7 +78,7 @@ val pluginDef = """
   |import sbt._
   |
   |class Plugins(info: ProjectInfo) extends PluginDefinition(info) {
-  |  val android = "org.scala-tools.sbt" % "android-plugin" % "0.4"
+  |  val android = "org.scala-tools.sbt" % "android-plugin" % "0.4.1"
   |}""".stripMargin.trim
 
 val projectDef = """
