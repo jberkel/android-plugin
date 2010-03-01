@@ -1,3 +1,7 @@
+== 0.4.x
+
+ * CHANGES no longer maintained, cf notes/x.y.z.markdown 
+
 == 0.4 06/02/10
 
  * xsbt compatibility (n8han)
