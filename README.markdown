@@ -46,7 +46,7 @@ To build a signed package for release into the Marketplace
 
 ##Hacking on the plugin
 
-If you need make modifications to the plugin itself, you can compile and install it locally:
+If you need make modifications to the plugin itself, you can compile and install it locally (you need at least sbt 0.7.x to build it):
 
     $ git clone git://github.com/jberkel/android-plugin.git
     $ cd android-plugin
