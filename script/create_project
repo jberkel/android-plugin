@@ -67,7 +67,7 @@ val testManifestXml = <manifest xmlns:android="http://schemas.android.com/apk/re
 
 val buildProperties = """
   |project.name=#{project}
-  |sbt.version=0.7.1
+  |sbt.version=0.7.2
   |project.version=0.1
   |def.scala.version=2.7.7
   |build.scala.versions=2.7.7
