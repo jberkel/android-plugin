@@ -106,7 +106,12 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   	if(aidlPaths.isEmpty)
   		Process(true)
   	else 
-  	  aidlPath.absolutePath :: "-o" :: mainJavaSourcePath.absolutePath :: aidlPaths.toList
+          aidlPaths.toList.map {ap =>
+            aidlPath.absolutePath :: "-o" + mainJavaSourcePath.absolutePath :: "-I" + mainJavaSourcePath.absolutePath :: ap :: Nil}.foldLeft(None.asInstanceOf[Option[ProcessBuilder]]){(f, s) => f match{
+              case None => Some(s)
+              case Some(first) => Some(first ## s)
+            }
+          }.get
   }
   
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
