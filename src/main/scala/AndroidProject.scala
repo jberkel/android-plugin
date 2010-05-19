@@ -136,6 +136,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
                "-keep public class * extends android.app.Service" ::
                "-keep public class * extends android.appwidget.AppWidgetProvider" ::
                "-keep public class * extends android.content.BroadcastReceiver" ::
+               "-keep public class * extends android.view.View" ::
                "-keep public class * implements junit.framework.Test { public void test*(); }" :: proguardOption :: Nil
     
     val config = new ProGuardConfiguration
