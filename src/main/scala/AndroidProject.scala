@@ -19,6 +19,7 @@ object AndroidProject {
   val DefaultClassesDexName = "classes.dex"
   val DefaultResourcesApkName = "resources.apk"
   val DefaultDxJavaOpts = "-JXmx512m"
+  val manifestSchema = "http://schemas.android.com/apk/res/android"
 }
 
 abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
@@ -185,6 +186,12 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   lazy val reinstallDevice = reinstallDeviceAction
   def reinstallDeviceAction = reinstallTask(false) dependsOn(packageDebug) describedAs("Reinstall package on the default device.")
+  
+  lazy val startDevice = startDeviceAction
+  def startDeviceAction = startTask(false) dependsOn(reinstallDevice) describedAs("Start package on device after installation")
+  
+  lazy val startEmulator = startEmulatorAction
+  def startEmulatorAction = startTask(true) dependsOn(reinstallEmulator) describedAs("Start package on emulator after installation")
 
   lazy val uninstallEmulator = uninstallEmulatorAction
   def uninstallEmulatorAction = uninstallTask(true) describedAs("Uninstall package on the default emulator.")
@@ -194,6 +201,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   def installTask(emulator: Boolean) = adbTask(emulator, "install "+packageApkPath.absolutePath)
   def reinstallTask(emulator: Boolean) = adbTask(emulator, "install -r "+packageApkPath.absolutePath)
+  def startTask(emulator: Boolean) = adbTask(emulator, "shell am start -a android.intent.action.MAIN -n "+manifestPackage+"/"+manifestPackage+"."+launcherActivity)
   def uninstallTask(emulator: Boolean) = adbTask(emulator, "uninstall "+manifestPackage)
   
   def adbTask(emulator: Boolean, action: String) = execTask {<x>
@@ -206,12 +214,24 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val maxSdkVersion = usesSdk("maxSdkVersion")
   lazy val manifestPackage = manifest.attribute("package").getOrElse(error("package not defined")).text
     
-  def usesSdk(s: String):Option[Int] = (manifest \ "uses-sdk").first.attribute("http://schemas.android.com/apk/res/android", s).map(_.text.toInt)
+  def usesSdk(s: String):Option[Int] = (manifest \ "uses-sdk").first.attribute(manifestSchema, s).map(_.text.toInt)
+  
+  def launcherActivity:String = {
+    for (activity <- (manifest \\ "activity")) {
+      for(action <- (activity \\ "action")) {
+        val name = action.attribute(manifestSchema, "name").getOrElse(error("action name not defined")).text
+        if (name == "android.intent.action.MAIN") {
+          return activity.attribute(manifestSchema, "name").getOrElse(error("activity name not defined")).text
+        }
+      }
+    }
+    ""
+  }
 
   def addonsJarPath = Path.lazyPathFinder {
     for {
       lib <- manifest \ "application" \ "uses-library"
-      p = lib.attribute("http://schemas.android.com/apk/res/android", "name").flatMap {
+      p = lib.attribute(manifestSchema, "name").flatMap {
         _.text match {
           case "com.google.android.maps" => Some(mapsJarPath)
           case _ => None
