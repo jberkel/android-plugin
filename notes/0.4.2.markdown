@@ -1,0 +1,1 @@
+* Plugin has been renamed to sbt-android-plugin

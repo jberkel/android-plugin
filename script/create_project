@@ -78,7 +78,7 @@ val pluginDef = """
   |import sbt._
   |
   |class Plugins(info: ProjectInfo) extends PluginDefinition(info) {
-  |  val android = "org.scala-tools.sbt" % "android-plugin" % "0.4.1"
+  |  val android = "org.scala-tools.sbt" % "sbt-android-plugin" % "0.4.2"
   |}""".stripMargin.trim
 
 val projectDef = """
