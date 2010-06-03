@@ -102,10 +102,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val aidl = aidlAction
   def aidlAction = aidlTask describedAs("Generate Java classes from .aidl files.")
   def aidlTask = execTask {
-  	val aidlPaths = descendents(mainSourceRoots, "*.aidl").getPaths
-  	if(aidlPaths.isEmpty)
-  		Process(true)
-  	else 
+    val aidlPaths = descendents(mainSourceRoots, "*.aidl").getPaths
+    if(aidlPaths.isEmpty)
+      Process(true)
+    else 
           aidlPaths.toList.map {ap =>
             aidlPath.absolutePath :: "-o" + mainJavaSourcePath.absolutePath :: "-I" + mainJavaSourcePath.absolutePath :: ap :: Nil}.foldLeft(None.asInstanceOf[Option[ProcessBuilder]]){(f, s) => f match{
               case None => Some(s)
@@ -131,14 +131,15 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
                              (if (!proguardInJars.getPaths.isEmpty) File.pathSeparator+proguardInJars.getPaths.map(_+"(!META-INF/MANIFEST.MF)").mkString(File.pathSeparator) else "") ::                             
                "-outjars" :: classesMinJarPath.absolutePath ::
                "-libraryjars" :: libraryJarPath.getPaths.mkString(File.pathSeparator) :: 
-               "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" :: 
+               "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
                "-keep public class * extends android.app.Activity" ::
                "-keep public class * extends android.app.Service" ::
                "-keep public class * extends android.appwidget.AppWidgetProvider" ::
                "-keep public class * extends android.content.BroadcastReceiver" ::
+               "-keep public class * extends android.content.ContentProvider" ::
                "-keep public class * extends android.view.View" ::
                "-keep public class * implements junit.framework.Test { public void test*(); }" :: proguardOption :: Nil
-    
+               
     val config = new ProGuardConfiguration
     new ConfigurationParser(args.toArray[String], info.projectPath.asFile).parse(config)    
     new ProGuard(config).execute
