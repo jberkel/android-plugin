@@ -3,7 +3,7 @@ exec scala -deprecation "$0" "$@"
 !#
 
 var apiLevel = "4"
-var platform = "android-1.6"
+var platform = "android-" + apiLevel
 var activity = "MainActivity"
 var scalaVersion = """\d\.\d\.\d""".r.findFirstIn(scala.util.Properties.versionString).getOrElse("2.7.7")
 
