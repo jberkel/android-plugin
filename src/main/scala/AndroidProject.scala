@@ -49,10 +49,11 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def dxJavaOpts = DefaultDxJavaOpts
 
   def scalaHomePath  = Path.fromFile(new File(System.getProperty("scala.home")))
-  def androidSdkPath = {
-    val sdk = System.getenv("ANDROID_SDK_HOME")
-    if (sdk == null) error("You need to set ANDROID_SDK_HOME")
-    Path.fromFile(new File(sdk))
+  lazy val androidSdkPath = {
+    val envs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT")
+    val paths = for { e <- envs; p = System.getenv(e); if p != null } yield p
+    if (paths.isEmpty) error("You need to set " + envs.mkString(" or "))
+    Path.fromFile(paths.first)
   }
   def apiLevel = minSdkVersion.getOrElse(platformName2ApiLevel)
   def isWindows = System.getProperty("os.name").startsWith("Windows")
