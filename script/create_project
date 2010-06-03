@@ -27,7 +27,7 @@ while (e.hasNext) e.next match {
 
 if (pkg == null || project == null)
   usage
-  
+
 // android needs at least 2 package components for some weird reason
 if (!pkg.matches("""[a-z]+\.([a-z]+\.?)+[a-z]$"""))
   fail("invalid package name, need 2 package components (e.g. com.bar)")
@@ -36,7 +36,7 @@ if (!project.matches("""[a-zA-Z]\w+"""))
   fail("invalid project name: " + project)
 
 case class Config(
-  val project:String, val target: String, val platform:String, 
+  val project:String, val target: String, val platform:String,
   val sdkVersion:String, val `package`:String, val scalaVersion:String, val activity:String)
 
 val config = Config(project, project, platform, apiLevel, pkg, scalaVersion, activity)
@@ -44,23 +44,23 @@ val manifestXml = <manifest xmlns:android="http://schemas.android.com/apk/res/an
           android:versionCode="1"
           android:versionName="0.1">
     <uses-sdk android:minSdkVersion={config.sdkVersion}/>
-    <application android:label="@string/app_name" android:icon="@drawable/app_icon">            
+    <application android:label="@string/app_name" android:icon="@drawable/app_icon">
         <activity android:name={"."+config.activity} android:label="@string/app_name">
            <intent-filter>
                <action android:name="android.intent.action.MAIN"/>
                <category android:name="android.intent.category.LAUNCHER"/>
            </intent-filter>
-        </activity> 
+        </activity>
     </application>
   </manifest>
-  
+
 val testManifestXml = <manifest xmlns:android="http://schemas.android.com/apk/res/android"
             package={config.`package` + ".tests"}>
       <uses-sdk android:minSdkVersion={config.sdkVersion}/>
       <application>
         <uses-library android:name="android.test.runner"/>
       </application>
-      <instrumentation android:name="android.test.InstrumentationTestRunner"                  
+      <instrumentation android:name="android.test.InstrumentationTestRunner"
                        android:targetPackage={config.`package`}
                        android:label="Tests"/>
   </manifest>
@@ -89,12 +89,12 @@ val projectDef = """
   |}
   |class #{project_class}(info: ProjectInfo) extends ParentProject(info) {
   |  override def shouldCheckOutputDirectories = false
-  |  override def updateAction = task { None } 
+  |  override def updateAction = task { None }
   |
   |  lazy val main  = project(".", "#{project}", new MainProject(_))
   |  lazy val tests = project("tests",  "tests", new TestProject(_), main)
   |
-  |  class MainProject(info: ProjectInfo) extends AndroidProject(info) with Defaults {    
+  |  class MainProject(info: ProjectInfo) extends AndroidProject(info) with Defaults {
   |    val scalatest = "org.scalatest" % "scalatest" % "1.0" % "test"
   |  }
   |
@@ -104,7 +104,7 @@ val projectDef = """
 val specDef = """
   |import #{package}
   |import org.scalatest.matchers.ShouldMatchers
-  |import org.scalatest.Spec  
+  |import org.scalatest.Spec
   |
   |class Specs extends Spec with ShouldMatchers {
   |  describe("a spec") {
@@ -115,11 +115,11 @@ val specDef = """
 
 val activityDef = """
   |package #{package}
-  | 
+  |
   |import _root_.android.app.Activity
   |import _root_.android.os.Bundle
   |import _root_.android.widget.TextView
-  | 
+  |
   |class #{activity} extends Activity {
   |  override def onCreate(savedInstanceState: Bundle) {
   |    super.onCreate(savedInstanceState)
@@ -130,13 +130,13 @@ val activityDef = """
   |}""".stripMargin.trim
 
 val testDef = """
-  |package #{package}.tests 
+  |package #{package}.tests
   |
   |import junit.framework.Assert._
   |import _root_.android.test.AndroidTestCase
   |
   |class UnitTests extends AndroidTestCase {
-  |  def testPackageIsCorrect {      
+  |  def testPackageIsCorrect {
   |    assertEquals("#{package}", getContext.getPackageName)
   |  }
   |}""".stripMargin.trim
@@ -145,7 +145,7 @@ val testDef = """
 class Generator(val config:Config) {
   import java.io.File
   import scala.xml.Node
-  
+
   val Resources = List("drawable", "layout", "values", "xml")
   val Manifest = new File(config.target, "src/main/AndroidManifest.xml")
   val TestManifest = new File(config.target, "tests/src/main/AndroidManifest.xml")
@@ -212,7 +212,7 @@ class Generator(val config:Config) {
 
     (dirs2create ++ testdirs2create).foreach { d=> mkdir_p(config.target :: d) }
   }
- 
+
   def createIcon:Unit = createIcon(AppIcon, 48, 48)
   def createIcon(file: File, width: Int, height:Int) {
     val bi = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_ARGB)
@@ -236,7 +236,7 @@ class Generator(val config:Config) {
     writeFile(BuildProperties, expand(buildProperties))
   }
 
-  def createActivity(activityDef: String) = writeFile(Activity, expand(activityDef)) 
+  def createActivity(activityDef: String) = writeFile(Activity, expand(activityDef))
   def createResources = writeFile(Strings, pretty(resources(Map("app_name"->config.project.capitalize))))
   def createSpecs(specDef: String) = writeFile(Spec, expand(specDef))
   def createTests(testDef: String) = writeFile(Test, expand(testDef))
