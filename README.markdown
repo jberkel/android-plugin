@@ -40,6 +40,10 @@ To install the package:
 
     $ sbt install-emulator
 
+To install and automatically start the main activity
+
+    $ sbt start-emulator
+
 To build a signed package for release into the Marketplace
 
     $ sbt sign-release
