@@ -223,10 +223,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
         if (name == "android.intent.action.MAIN") {
           val act = activity.attribute(manifestSchema, "name").getOrElse(error("activity name not defined")).text
           if (act.isEmpty) error("activity name not defined")
-          return if (act.startsWith(".") || act(0).isLowerCase)
-           act;
-          else
-           manifestPackage+"."+act;
+          return if (act.contains(".")) act else manifestPackage+"."+act
         }
       }
     }
