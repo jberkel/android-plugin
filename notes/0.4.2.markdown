@@ -1,3 +1,3 @@
 * Plugin has been renamed to sbt-android-plugin
-* sbt start-emulator command (GH-4) [steve918]
-* Various proguard config enhancements
+* sbt start-emulator command (GH-4) (steve918)
+* Various proguard config enhancements (GH-9, GH-10, GH-11)
