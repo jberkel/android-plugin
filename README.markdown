@@ -1,6 +1,6 @@
 ##Usage
 
-Requires [sbt](http://simple-build-tool.googlecode.com/)
+Requires [sbt](http://simple-build-tool.googlecode.com/) and the [Android SDK](http://developer.android.com/sdk/index.html) (`brew install android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
 
 To use the plugin in a project, you just need to create project/plugins/Plugins.scala:
 
@@ -15,11 +15,14 @@ and make the project definition in project/build/Project (for example):
     import java.io.File
 
     class Project(info: ProjectInfo) extends AndroidProject(info) {
-      override def androidPlatformName = "android-1.5"
+      override def androidPlatformName = "android-2.1"
+
       // or preferably set the ANDROID_SDK_HOME environment variable
-      override def androidSdkPath = Path.fromFile(new File("/home/mark/code/java/android-sdk-linux_x86-1.5_r2"))
+      override def androidSdkPath = Path.fromFile(new File("/usr/local/Cellar/android-sdk/r5"))
+
       // set to the keystore alias you used when creating your keychain
       val keyalias = "my_keys"
+
       // set to the location of your keystore
       override def keystorePath = Path.userHome / ".keystore" / "mykeys.keystore"
     }
@@ -27,7 +30,7 @@ and make the project definition in project/build/Project (for example):
 
 Alternatively, you can also use a provided script to set everything up for you:
 
-    $ script/create_project MyAndroidProject com.foo.project
+    $ script/create_project myAndroidProject com.foo.project
 
 This will generate the project structure as well as all needed files plus skeleton tests, specs and activities.
 
@@ -55,6 +58,8 @@ If you need make modifications to the plugin itself, you can compile and install
     $ git clone git://github.com/jberkel/android-plugin.git
     $ cd android-plugin
     $ sbt publish-local    
+
+Because the plugin gets cached in a project based on its version number you might need to use `sbt clean-plugins` to force a reload after `sbt publish-local`.
 
 ##Credits
 
