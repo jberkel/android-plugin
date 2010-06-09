@@ -1,6 +1,6 @@
 ##Usage
 
-Requires [sbt](http://simple-build-tool.googlecode.com/) and the [Android SDK](http://developer.android.com/sdk/index.html) (`brew install android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
+Requires [sbt](http://simple-build-tool.googlecode.com/) and the [Android SDK](http://developer.android.com/sdk/index.html) (`brew install sbt android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
 
 To use the plugin in a project, you just need to create project/plugins/Plugins.scala:
 
