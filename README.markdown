@@ -14,7 +14,7 @@ and make the project definition in project/build/Project (for example):
     import sbt._
     import java.io.File
 
-    class Project(info: ProjectInfo) extends AndroidProject(info) {
+    class Project(info: ProjectInfo) extends AndroidProject(info) with MarketPublish {
       override def androidPlatformName = "android-2.1"
 
       // or preferably set the ANDROID_SDK_HOME environment variable
