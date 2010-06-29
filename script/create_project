@@ -2,7 +2,7 @@
 exec scala -deprecation "$0" "$@"
 !#
 
-var apiLevel = "4"
+var apiLevel = "7"
 var platform = "android-" + apiLevel
 var activity = "MainActivity"
 var scalaVersion = """\d\.\d\.\d""".r.findFirstIn(scala.util.Properties.versionString).getOrElse("2.7.7")
@@ -19,7 +19,7 @@ val e = args.elements
 val (project, pkg) = (take(e), take(e))
 while (e.hasNext) e.next match {
   case "--activity"  => activity = take(e)
-  case "--api-level" => apiLevel = take(e)
+  case "--api-level" => apiLevel = take(e); platform = "android-" + apiLevel
   case "--platform"  => platform = take(e)
   case "--scala-version" => scalaVersion = take(e)
   case _             => usage
@@ -70,7 +70,7 @@ val buildProperties = """
   |sbt.version=0.7.4
   |project.version=0.1
   |def.scala.version=2.7.7
-  |build.scala.versions=2.7.7
+  |build.scala.versions=#{scalaVersion}
   |project.initialize=false
   |""".stripMargin.trim
 
