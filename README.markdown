@@ -51,6 +51,14 @@ To build a signed package for release into the Marketplace
 
     $ sbt sign-release
 
+##Scala Versions
+
+The version of Scala that sbt compiles your project against is configured in the `buildScalaVersion` property in the `project/build.properties` file. While this currently defaults to 2.7.7, you may set it to other versions including Scala 2.8 versions.
+
+Whenever you change build versions, you'll need to run `update` again to fetch dependencies. For more information, see the sbt documentation on [cross-building][cb].
+
+[cb]: http://code.google.com/p/simple-build-tool/wiki/CrossBuild
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile and install it locally (you need at least sbt 0.7.x to build it):
