@@ -23,7 +23,8 @@ trait TypedResources extends AndroidProject {
               // whre ids start with @+id/
               ClasspathUtilities.toLoader(androidJarPath).loadClass(
                 // where the label is a widget in the android jar
-                "android.widget." + node.label
+                if (!node.label.contains('.')) "android.widget." + node.label
+                else node.label
               ).getName)
             } catch { case _ => None }
             case _ => None
