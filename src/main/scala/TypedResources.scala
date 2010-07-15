@@ -12,21 +12,19 @@ trait TypedResources extends AndroidProject {
   
   lazy val generateTypedResources = fileTask(typedResource from xmlResources) {
     val Id = """@\+id/(.*)""".r
+    val androidJarLoader = ClasspathUtilities.toLoader(androidJarPath)
     val resources = xmlResources.get.flatMap { path =>
-      val xml = XML.loadFile(path.asFile)
-      xml.descendant flatMap { node =>
+      XML.loadFile(path.asFile).descendant_or_self flatMap { node =>
         // all nodes
         node.attribute("http://schemas.android.com/apk/res/android", "id") flatMap {
           // with android:id attribute
           _.firstOption map { _.text } flatMap {
+            // if it looks like a full classname
+            case Id(id) if node.label.contains('.') => Some(id, node.label)
+            // otherwise it may be a widget
             case Id(id) => try { Some(id,
-              // whre ids start with @+id/
-              ClasspathUtilities.toLoader(androidJarPath).loadClass(
-                // where the label is a widget in the android jar
-                if (!node.label.contains('.')) "android.widget." + node.label
-                else node.label
-              ).getName)
-            } catch { case _ => None }
+              androidJarLoader.loadClass("android.widget." + node.label).getName
+            ) } catch { case _ => None }
             case _ => None
           }
         }
