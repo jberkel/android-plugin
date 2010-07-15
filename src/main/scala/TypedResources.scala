@@ -57,7 +57,7 @@ trait TypedResources extends AndroidProject {
             |trait TypedActivity extends Activity with TypedActivityHolder { def activity = this }
             |object TypedResource {
             |  implicit def view2typed(v: View) = new TypedViewHolder { def view = v }
-            |  implicit def view2typed(act: Activity) = new TypedActivityHolder { def activity = act }
+            |  implicit def activity2typed(act: Activity) = new TypedActivityHolder { def activity = act }
             |}
             |""".stripMargin.format(
               manifestPackage, resources map { case (id, classname) =>
