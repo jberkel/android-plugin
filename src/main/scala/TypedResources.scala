@@ -29,7 +29,13 @@ trait TypedResources extends AndroidProject {
           }
         }
       }
-    }.foldLeft(Map.empty[String, String]) { case (m, (k, v)) => m + (k -> v) }
+    }.foldLeft(Map.empty[String, String]) { 
+      case (m, (k, v)) => 
+        m.get(k).foreach { v0 =>
+          if (v0 != v) log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
+        }
+        m + (k -> v)
+    }
     FileUtilities.write(typedResource.asFile,
     """     |package %s
             |import android.app.Activity
