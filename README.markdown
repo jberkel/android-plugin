@@ -59,6 +59,14 @@ Whenever you change build versions, you'll need to run `update` again to fetch d
 
 [cb]: http://code.google.com/p/simple-build-tool/wiki/CrossBuild
 
+##Typed resources references
+
+As an enhancement to the Android build process, this plugin can generate typed references to application layout elements. To enable, mix the `TypedResources` trait into your sbt project definition. During compilation a file `TR.scala` will be generated under `src_managed/main/scala`.
+
+Typed resource references are created in an object `TR` (similar to Android's standard `R`). These are handled by the method `findView` defined in the traits `TypedView` and `TypedActivity`. There are also implicit conversions defined in the object `TypedResource`; import these to add the method on demand to any views and activities in scope. The `findView` method casts the view to the known resource type before returning it, so that application code can avoid the redundancy of casting a resource to a type it has declared in the resource definition.
+
+Since Android's resource IDs are scoped to the application, a warning is issued by the plugin when the same ID is used for different types of a resources; the type of resources retrieved by that ID will be unpredictable.
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile and install it locally (you need at least sbt 0.7.x to build it):
