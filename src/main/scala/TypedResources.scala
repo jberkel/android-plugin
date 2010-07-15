@@ -5,15 +5,15 @@ trait TypedResources extends AndroidProject {
   def managedScalaPath = "src_managed" / "main" / "scala"
   def typedResource = managedScalaPath / "TR.scala"
   abstract override def mainSourceRoots = super.mainSourceRoots +++ managedScalaPath
-  def xmlResources = mainResPath ** "*.xml"
+  def layoutResources = mainResPath / "layout" ** "*.xml"
   override def compileAction = super.compileAction dependsOn generateTypedResources
   override def cleanAction = super.cleanAction dependsOn cleanTask(managedScalaPath)
-  override def watchPaths = super.watchPaths +++ xmlResources
+  override def watchPaths = super.watchPaths +++ layoutResources
   
-  lazy val generateTypedResources = fileTask(typedResource from xmlResources) {
+  lazy val generateTypedResources = fileTask(typedResource from layoutResources) {
     val Id = """@\+id/(.*)""".r
     val androidJarLoader = ClasspathUtilities.toLoader(androidJarPath)
-    val resources = xmlResources.get.flatMap { path =>
+    val resources = layoutResources.get.flatMap { path =>
       XML.loadFile(path.asFile).descendant_or_self flatMap { node =>
         // all nodes
         node.attribute("http://schemas.android.com/apk/res/android", "id") flatMap {
@@ -29,7 +29,13 @@ trait TypedResources extends AndroidProject {
           }
         }
       }
-    }.foldLeft(Map.empty[String, String]) { case (m, (k, v)) => m + (k -> v) }
+    }.foldLeft(Map.empty[String, String]) { 
+      case (m, (k, v)) => 
+        m.get(k).foreach { v0 =>
+          if (v0 != v) log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
+        }
+        m + (k -> v)
+    }
     FileUtilities.write(typedResource.asFile,
     """     |package %s
             |import android.app.Activity
@@ -51,7 +57,7 @@ trait TypedResources extends AndroidProject {
             |trait TypedActivity extends Activity with TypedActivityHolder { def activity = this }
             |object TypedResource {
             |  implicit def view2typed(v: View) = new TypedViewHolder { def view = v }
-            |  implicit def view2typed(act: Activity) = new TypedActivityHolder { def activity = act }
+            |  implicit def activity2typed(act: Activity) = new TypedActivityHolder { def activity = act }
             |}
             |""".stripMargin.format(
               manifestPackage, resources map { case (id, classname) =>
