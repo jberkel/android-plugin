@@ -1,0 +1,1 @@
+* `TypedResources` trait processes layout definitions to generate typed resource references in a Scala source file
