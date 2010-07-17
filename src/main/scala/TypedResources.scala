@@ -45,7 +45,7 @@ trait TypedResources extends AndroidProject {
             |  def view: View
             |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]  
             |}
-            |trait TypedView extends View { def view = this }
+            |trait TypedView extends View with TypedViewHolder { def view = this }
             |trait TypedActivityHolder {
             |  def activity: Activity
             |  def findView[T](tr: TypedResource[T]) = activity.findViewById(tr.id).asInstanceOf[T]
