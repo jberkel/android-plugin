@@ -3,6 +3,7 @@ import scala.xml._
 
 trait TypedResources extends AndroidProject {
   def managedScalaPath = "src_managed" / "main" / "scala"
+  /** Typed resource file to be generated, also includes interfaces to access these resources. */
   def typedResource = managedScalaPath / "TR.scala"
   abstract override def mainSourceRoots = super.mainSourceRoots +++ managedScalaPath
   def layoutResources = mainResPath / "layout" ** "*.xml"
@@ -10,6 +11,7 @@ trait TypedResources extends AndroidProject {
   override def cleanAction = super.cleanAction dependsOn cleanTask(managedScalaPath)
   override def watchPaths = super.watchPaths +++ layoutResources
   
+  /** File task that generates `typedResource` if it's older than any layout resource, or doesn't exist */
   lazy val generateTypedResources = fileTask(typedResource from layoutResources) {
     val Id = """@\+id/(.*)""".r
     val androidJarLoader = ClasspathUtilities.toLoader(androidJarPath)
@@ -49,7 +51,7 @@ trait TypedResources extends AndroidProject {
             |  def view: View
             |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]  
             |}
-            |trait TypedView extends View { def view = this }
+            |trait TypedView extends View with TypedViewHolder { def view = this }
             |trait TypedActivityHolder {
             |  def activity: Activity
             |  def findView[T](tr: TypedResource[T]) = activity.findViewById(tr.id).asInstanceOf[T]
@@ -66,5 +68,5 @@ trait TypedResources extends AndroidProject {
             ), log
     )
     None
-  }
+  } describedAs ("Produce a file TR.scala that contains typed references to layout resources")
 }
