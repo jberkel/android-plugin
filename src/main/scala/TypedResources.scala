@@ -11,10 +11,20 @@ trait TypedResources extends AndroidProject {
   override def cleanAction = super.cleanAction dependsOn cleanTask(managedScalaPath)
   override def watchPaths = super.watchPaths +++ layoutResources
   
+
   /** File task that generates `typedResource` if it's older than any layout resource, or doesn't exist */
   lazy val generateTypedResources = fileTask(typedResource from layoutResources) {
     val Id = """@\+id/(.*)""".r
     val androidJarLoader = ClasspathUtilities.toLoader(androidJarPath)
+
+    def tryLoading(className: String) = {
+      try {
+        Some(androidJarLoader.loadClass(className)) 
+      } catch { 
+        case _ => None 
+      }
+    }
+
     val resources = layoutResources.get.flatMap { path =>
       XML.loadFile(path.asFile).descendant_or_self flatMap { node =>
         // all nodes
@@ -23,10 +33,10 @@ trait TypedResources extends AndroidProject {
           _.firstOption map { _.text } flatMap {
             // if it looks like a full classname
             case Id(id) if node.label.contains('.') => Some(id, node.label)
-            // otherwise it may be a widget
-            case Id(id) => try { Some(id,
-              androidJarLoader.loadClass("android.widget." + node.label).getName
-            ) } catch { case _ => None }
+            // otherwise it may be a widget or view
+            case Id(id) => {
+              List("android.widget.", "android.view.").map(pkg => tryLoading(pkg + node.label)).find(_.isDefined).flatMap(clazz => Some(id, clazz.get.getName))
+            }
             case _ => None
           }
         }
