@@ -77,10 +77,11 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   }
   
   def androidToolsPath = androidSdkPath / "tools"
+  // deprecated, need to remove apkbuilder
   def apkbuilderPath = androidToolsPath / apkbuilderName
-  def adbPath = androidToolsPath / adbName
+  def adbPath = platformToolsPath / adbName
   def androidPlatformPath = androidSdkPath / "platforms" / androidPlatformName
-  def platformToolsPath = androidPlatformPath / "tools"
+  def platformToolsPath = androidSdkPath / "platform-tools"
   def aaptPath = platformToolsPath / aaptName
   def aidlPath = platformToolsPath / aidlName
   def dxPath = platformToolsPath / dxName
