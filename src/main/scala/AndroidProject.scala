@@ -75,9 +75,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     case "android-2.2" => 8
   }
   
+  def androidPlatformToolsPath = androidSdkPath / "platform-tools"
   def androidToolsPath = androidSdkPath / "tools"
   def apkbuilderPath = androidToolsPath / apkbuilderName
-  def adbPath = androidToolsPath / adbName
+  def adbPath = androidPlatformToolsPath / adbName
   def androidPlatformPath = androidSdkPath / "platforms" / androidPlatformName
   def platformToolsPath = androidPlatformPath / "tools"
   def aaptPath = platformToolsPath / aaptName
