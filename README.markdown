@@ -18,7 +18,7 @@ and make the project definition in project/build/Project (for example):
       override def androidPlatformName = "android-2.1"
 
       // or preferably set the ANDROID_SDK_HOME environment variable
-      override def androidSdkPath = Path.fromFile(new File("/usr/local/Cellar/android-sdk/r5"))
+      override lazy val androidSdkPath = Path.fromFile(new File("/usr/local/Cellar/android-sdk/r5"))
 
       // set to the keystore alias you used when creating your keychain
       val keyalias = "my_keys"
