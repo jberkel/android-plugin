@@ -196,7 +196,7 @@ class Generator(val config:Config) {
     case "activity" => config.activity.capitalize
     case "platform" => config.platform
     case "scalaVersion" => config.scalaVersion
-    case "scalatestVersion" => if(config.scalaVersion == "2.7.7") "1.0" else "1.2"
+    case "scalatestVersion" => if(config.scalaVersion == "2.7.7") "1.1" else "1.2"
     case _ => fail("unknown substitution: " + v)
   })
 
