@@ -96,7 +96,7 @@ val projectDef = """
   |
   |  class MainProject(info: ProjectInfo) extends AndroidProject(info) with Defaults with MarketPublish {
   |    val keyalias  = "change-me"
-  |    val scalatest = "org.scalatest" % "scalatest" % "1.0" % "test"
+  |    val scalatest = "org.scalatest" % "scalatest" % "#{scalatestVersion}" % "test"
   |  }
   |
   |  class TestProject(info: ProjectInfo) extends AndroidTestProject(info) with Defaults
@@ -196,6 +196,7 @@ class Generator(val config:Config) {
     case "activity" => config.activity.capitalize
     case "platform" => config.platform
     case "scalaVersion" => config.scalaVersion
+    case "scalatestVersion" => if(config.scalaVersion == "2.7.7") "1.0" else "1.2"
     case _ => fail("unknown substitution: " + v)
   })
 
