@@ -51,7 +51,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   def scalaHomePath  = Path.fromFile(new File(System.getProperty("scala.home")))
   lazy val androidSdkPath = {
-    val envs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT")
+    val envs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
     val paths = for { e <- envs; p = System.getenv(e); if p != null } yield p
     if (paths.isEmpty) error("You need to set " + envs.mkString(" or "))
     Path.fromFile(paths.first)
