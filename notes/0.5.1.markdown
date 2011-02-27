@@ -1,0 +1,2 @@
+* Better compatibility with Scala 2.8.x
+* New Android API levels
