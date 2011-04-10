@@ -26,7 +26,10 @@ To build the package:
     > update
     > package
 
-To install and start the main activity in a running emulator:
+To install and start the main activity in the [Android Emulator][emu]
+(must already be running):
+
+[emu]: http://developer.android.com/guide/developing/tools/emulator.html
 
     > start-emulator
 
