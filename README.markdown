@@ -12,7 +12,7 @@ project that uses the plugin. If you don't have giter8 installed:
 
 Then, to create a new project with one of the Android templates:
 
-    $ g8 n8han/android-app
+    $ ~/bin/g8 n8han/android-app
 
 This will prompt you to customize a few values (press enter to accept
 defaults), then create the project structure and all needed files plus
