@@ -26,15 +26,11 @@ To build the package:
     > update
     > package
 
-To install the package into a running emulator:
-
-    > install-emulator
-
-To install and automatically start the main activity
+To install and start the main activity in a running emulator:
 
     > start-emulator
 
-To build a signed package for release into the Marketplace
+To build a signed package for release into the Marketplace:
 
     > sign-release
 
