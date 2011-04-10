@@ -10,7 +10,7 @@ project that uses the plugin. If you don't have giter8 installed:
     $ curl https://github.com/n8han/conscript/raw/master/setup.sh | sh
     $ ~/bin/cs n8han/giter8
 
-Then, to create a new project with one of the Android templates:
+Now create a new project with one of the Android templates:
 
     $ ~/bin/g8 n8han/android-app
 
@@ -32,7 +32,7 @@ To install the package into a running emulator:
 
 To install and automatically start the main activity
 
-    >start-emulator
+    > start-emulator
 
 To build a signed package for release into the Marketplace
 
