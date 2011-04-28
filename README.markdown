@@ -76,7 +76,7 @@ unpredictable.
 ##Building Java Android projects with sbt
 
 If you don't use Scala yet and want to use the plugin to build your existing
-Java app you can do by adding the `PlainJavaProject` trait to the project
+Java app you can do so by adding the `PlainJavaProject` trait to the project
 definition:
 
     class MainProject(info: ProjectInfo) extends AndroidProject(info)
