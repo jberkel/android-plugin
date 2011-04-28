@@ -73,6 +73,20 @@ is issued by the plugin when the same ID is used for different types
 of a resources; the type of resources retrieved by that ID will be
 unpredictable.
 
+##Building Java Android projects with sbt
+
+If you don't use Scala yet and want to use the plugin to build your existing
+Java app you can do by adding the `PlainJavaProject` trait to the project
+definition:
+
+    class MainProject(info: ProjectInfo) extends AndroidProject(info)
+      with PlainJavaProject {
+      // usual project configuration
+    }
+
+This will change the defaults to the directory structure expected by Android's
+`build.xml` file and skip the Proguard optimisation step.
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile

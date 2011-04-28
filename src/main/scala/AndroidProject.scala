@@ -94,17 +94,21 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def mapsJarPath = addonsPath / DefaultMapsJarName
   def mainAssetsPath = mainSourcePath / assetsDirectoryName
   def mainResPath = mainSourcePath / resDirectoryName
+  def genJavaSourcePath = info.projectPath / "gen"
   def classesMinJarPath = outputPath / classesMinJarName
   def classesDexPath =  outputPath / classesDexName
   def resourcesApkPath = outputPath / resourcesApkName
   def packageApkPath = outputPath / packageApkName
+  def skipProguard = false
+
+  override def mainSourceRoots = super.mainSourceRoots +++ (genJavaSourcePath##)
 
   lazy val aaptGenerate = aaptGenerateAction
   def aaptGenerateAction = aaptGenerateTask describedAs("Generate R.java.")
   def aaptGenerateTask = execTask {<x>
       {aaptPath.absolutePath} package -m -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath}
-         -I {androidJarPath.absolutePath} -J {mainJavaSourcePath.absolutePath}
-    </x>} dependsOn directory(mainJavaSourcePath)
+         -I {androidJarPath.absolutePath} -J {genJavaSourcePath.absolutePath}
+    </x>} dependsOn(directory(mainJavaSourcePath), directory(genJavaSourcePath))
 
   lazy val aidl = aidlAction
   def aidlAction = aidlTask describedAs("Generate Java classes from .aidl files.")
@@ -112,17 +116,21 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     val aidlPaths = descendents(mainSourceRoots, "*.aidl").getPaths
     if(aidlPaths.isEmpty)
       Process(true)
-    else 
-          aidlPaths.toList.map {ap =>
-            aidlPath.absolutePath :: "-o" + mainJavaSourcePath.absolutePath :: "-I" + mainJavaSourcePath.absolutePath :: ap :: Nil}.foldLeft(None.asInstanceOf[Option[ProcessBuilder]]){(f, s) => f match{
-              case None => Some(s)
-              case Some(first) => Some(first ## s)
-            }
-          }.get
+    else
+       aidlPaths.toList.map { ap =>
+            aidlPath.absolutePath ::
+               "-o" + genJavaSourcePath.absolutePath ::
+               "-I" + mainJavaSourcePath.absolutePath ::
+                ap :: Nil }.foldLeft(None.asInstanceOf[Option[ProcessBuilder]]) { (f, s) =>
+          f match {
+              case None        => Some(s)
+              case Some(first) => Some(first #&& s)
+          }
+        }.get
   }
   
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
-  
+
   /** Forward compatibility with sbt 0.6+ Scala build versions */
   def scalaLibraryJar = try {
     type xsbtProject = { def buildScalaInstance: { def libraryJar: File } }
@@ -132,36 +140,49 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   }
   lazy val proguard = proguardAction
   def proguardAction = proguardTask dependsOn(compile) describedAs("Optimize class files.")
-  def proguardTask = task { 
+  def proguardTask = task {
     val args = "-injars" ::  mainCompilePath.absolutePath+File.pathSeparator+
-                             scalaLibraryJar.getAbsolutePath+"(!META-INF/MANIFEST.MF,!library.properties)"+
-                             (if (!proguardInJars.getPaths.isEmpty) File.pathSeparator+proguardInJars.getPaths.map(_+"(!META-INF/MANIFEST.MF)").mkString(File.pathSeparator) else "") ::                             
-               "-outjars" :: classesMinJarPath.absolutePath ::
-               "-libraryjars" :: libraryJarPath.getPaths.mkString(File.pathSeparator) :: 
-               "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
-               "-keep public class * extends android.app.Activity" ::
-               "-keep public class * extends android.app.Service" ::
-               "-keep public class * extends android.appwidget.AppWidgetProvider" ::
-               "-keep public class * extends android.content.BroadcastReceiver" ::
-               "-keep public class * extends android.content.ContentProvider" ::
-               "-keep public class * extends android.view.View" ::
-               "-keep public class * extends android.app.Application" ::
-               "-keep public class "+manifestPackage+".** { public protected *; }" ::
-               "-keep public class * implements junit.framework.Test { public void test*(); }" :: proguardOption :: Nil
-               
+                           scalaLibraryJar.getAbsolutePath+"(!META-INF/MANIFEST.MF,!library.properties)"+
+                           (if (!proguardInJars.getPaths.isEmpty)
+                            File.pathSeparator+proguardInJars.getPaths.map(_+"(!META-INF/MANIFEST.MF)").mkString(File.pathSeparator) else "") ::
+             "-outjars" :: classesMinJarPath.absolutePath ::
+             "-libraryjars" :: libraryJarPath.getPaths.mkString(File.pathSeparator) ::
+             "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
+             "-keep public class * extends android.app.Activity" ::
+             "-keep public class * extends android.app.Service" ::
+             "-keep public class * extends android.appwidget.AppWidgetProvider" ::
+             "-keep public class * extends android.content.BroadcastReceiver" ::
+             "-keep public class * extends android.content.ContentProvider" ::
+             "-keep public class * extends android.view.View" ::
+             "-keep public class * extends android.app.Application" ::
+             "-keep public class "+manifestPackage+".** { public protected *; }" ::
+             "-keep public class * implements junit.framework.Test { public void test*(); }" :: proguardOption :: Nil
     val config = new ProGuardConfiguration
-    new ConfigurationParser(args.toArray[String], info.projectPath.asFile).parse(config)    
+    new ConfigurationParser(args.toArray[String], info.projectPath.asFile).parse(config)
     new ProGuard(config).execute
     None
   }
 
-  lazy val dx = dxAction
-  def dxAction = dxTask dependsOn(proguard) describedAs("Convert class files to dex files")
-  def dxTask = fileTask(classesDexPath from classesMinJarPath) { 
-     execTask {<x> {dxPath.absolutePath} {dxMemoryParameter} 
+  def dxProguardAction = dxProguardTask dependsOn(proguard) describedAs("Convert class files to dex files")
+  def dxProguardTask = fileTask(classesDexPath from classesMinJarPath) {
+     execTask {
+      <x> {dxPath.absolutePath} {dxMemoryParameter}
         --dex --output={classesDexPath.absolutePath} {classesMinJarPath.absolutePath}
-    </x> } run } 
-  
+      </x>
+     } run
+  }
+
+  def dxAction = dxTask dependsOn(compile) describedAs("Convert class files to dex files")
+  def dxTask = fileTask(classesDexPath from descendents(mainCompilePath, "*") +++ proguardInJars) {
+     execTask {
+      <x> {dxPath.absolutePath} {dxMemoryParameter}
+        --dex --output={classesDexPath.absolutePath}
+        {mainCompilePath.absolutePath} {proguardInJars.getPaths.mkString(" ")}
+      </x>
+     } run
+  }
+  lazy val dx = if (!skipProguard) dxProguardAction else dxAction
+
   lazy val aaptPackage = aaptPackageAction
   def aaptPackageAction = aaptPackageTask dependsOn(dx) describedAs("Package resources and assets.")
   def aaptPackageTask = execTask {<x>
