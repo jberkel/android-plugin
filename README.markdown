@@ -98,10 +98,19 @@ and install it locally (you need at least sbt 0.7.x to build it):
 
 Because the plugin gets cached in a project based on its version
 number you might need to use `sbt clean-plugins` to force a reload
-after `sbt publish-local`.
+after `sbt publish-local`. Don't hesitate to send a pull request!
+
+##Mailing list
+
+There's no official mailing list for the project but most contributors hang
+out in [scala-on-android][] or [simple-build-tool][].
 
 ##Credits
 
 This code is based on work by Walter Chang
 ([saisiyat](http://github.com/weihsiu/saisiyat/)), turned into a plugin by
 [Mark Harrah](http://github.com/harrah).
+
+
+[scala-on-android]: http://groups.google.com/group/scala-on-android
+[simple-build-tool]: http://groups.google.com/group/simple-build-tool
