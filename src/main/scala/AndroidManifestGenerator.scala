@@ -51,7 +51,7 @@ trait AndroidManifestGenerator extends AndroidProject {
     if (manifest.attribute(namespacePrefix, "versionName").isDefined) 
       error("android:versionName should not be defined in template")
     val applications = manifest \ "application"
-    val wasDebuggable = applications.exists(_.attribute(namespacePrefix + "debuggable").isDefined)
+    val wasDebuggable = applications.exists(_.attribute(namespacePrefix, "debuggable").isDefined)
 
     val verName = new PrefixedAttribute("android", "versionName", version.toString, Null)
     val verCode = new PrefixedAttribute("android", "versionCode", versionCode.value.toString, Null)
