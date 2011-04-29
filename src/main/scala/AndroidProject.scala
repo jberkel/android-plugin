@@ -172,7 +172,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def packageReleaseAction = packageTask(false) dependsOn(aaptPackage) describedAs("Package without signing.")
 
   lazy val cleanApk = cleanTask(packageApkPath) describedAs("Remove apk package")
-  def packageTask(signPackage: Boolean) = task {new ApkBuilder(this).build} dependsOn(cleanApk)
+  def packageTask(signPackage: Boolean) = task {new ApkBuilder(this, signPackage).build} dependsOn(cleanApk)
   
   lazy val installEmulator = installEmulatorAction
   def installEmulatorAction = installTask(true) dependsOn(packageDebug) describedAs("Install package on the default emulator.")
