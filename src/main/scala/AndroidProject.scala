@@ -227,12 +227,12 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val uninstallDevice = uninstallDeviceAction
   def uninstallDeviceAction = uninstallTask(false) describedAs("Uninstall package on the default device.")
 
-  def installTask(emulator: Boolean) = adbTask(emulator, "install "+packageApkPath.absolutePath)
-  def reinstallTask(emulator: Boolean) = adbTask(emulator, "install -r "+packageApkPath.absolutePath)
-  def startTask(emulator: Boolean) = adbTask(emulator, "shell am start -a android.intent.action.MAIN -n "+manifestPackage+"/"+launcherActivity)
-  def uninstallTask(emulator: Boolean) = adbTask(emulator, "uninstall "+manifestPackage)
+  def installTask(emulator: Boolean) = adbTask(emulator, { Unit => "install "+packageApkPath.absolutePath } )
+  def reinstallTask(emulator: Boolean) = adbTask(emulator, { Unit => "install -r "+packageApkPath.absolutePath })
+  def startTask(emulator: Boolean) = adbTask(emulator, { Unit => "shell am start -a android.intent.action.MAIN -n "+manifestPackage+"/"+launcherActivity })
+  def uninstallTask(emulator: Boolean) = adbTask(emulator, { Unit => "uninstall "+manifestPackage })
   
-  def adbTask(emulator: Boolean, action: String) = execTask {<x>
+  def adbTask(emulator: Boolean, action: Unit => String) = execTask {<x>
       {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action}
    </x>}
          

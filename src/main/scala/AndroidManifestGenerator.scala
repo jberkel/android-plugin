@@ -5,7 +5,7 @@ import Process._
 import scala.xml._
 
 object AndroidManifestGenerator {
-  val DefaultAndroidManifestTemplateName = "AndroidManifestIn.xml"
+  val DefaultAndroidManifestTemplateName = "AndroidManifest.xml"
 }
 
 /** Generates AndroidManifest.xml from AndroidManifestIn.xml, by applying various sbt properties.
@@ -23,6 +23,8 @@ trait AndroidManifestGenerator extends AndroidProject {
   def androidManifestTemplateName = DefaultAndroidManifestTemplateName 
   def androidManifestTemplatePath = mainSourcePath / androidManifestTemplateName
 
+  override def androidManifestPath = "src_managed" / "main" / androidManifestName
+
   override def incrementVersionNumber() {
     super.incrementVersionNumber()
 
@@ -36,8 +38,9 @@ trait AndroidManifestGenerator extends AndroidProject {
   def discardAndroidManifest() {
     FileUtilities.clean(androidManifestPath, log)
   }
-  
-  override def aaptGenerateTask = super.aaptGenerateTask dependsOn(generateAndroidManifest)
+
+  /// a customized manifest file is needed for the following actions  
+  override def aaptGenerateAction = super.aaptGenerateAction dependsOn(generateAndroidManifest)
 
   def generateAndroidManifestAction = fileTask(androidManifestPath from androidManifestTemplatePath) {
 
