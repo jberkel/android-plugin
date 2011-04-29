@@ -40,9 +40,7 @@ case class Config(
   val sdkVersion:String, val `package`:String, val scalaVersion:String, val activity:String)
 
 val config = Config(project, project, platform, apiLevel, pkg, scalaVersion, activity)
-val manifestXml = <manifest xmlns:android="http://schemas.android.com/apk/res/android" package={config.`package`}
-          android:versionCode="1"
-          android:versionName="0.1">
+val manifestXml = <manifest xmlns:android="http://schemas.android.com/apk/res/android" package={config.`package`}>
     <uses-sdk android:minSdkVersion={config.sdkVersion}/>
     <application android:label="@string/app_name" android:icon="@drawable/app_icon">
         <activity android:name={"."+config.activity} android:label="@string/app_name">
@@ -94,7 +92,7 @@ val projectDef = """
   |  lazy val main  = project(".", "#{project}", new MainProject(_))
   |  lazy val tests = project("tests",  "tests", new TestProject(_), main)
   |
-  |  class MainProject(info: ProjectInfo) extends AndroidProject(info) with Defaults with MarketPublish {
+  |  class MainProject(info: ProjectInfo) extends AndroidProject(info) with Defaults with MarketPublish with AndroidManifestGenerator {
   |    val keyalias  = "change-me"
   |    val scalatest = "org.scalatest" % "scalatest" % "#{scalatestVersion}" % "test"
   |  }
@@ -148,7 +146,7 @@ class Generator(val config:Config) {
   import scala.xml.Node
 
   val Resources = List("drawable", "layout", "values", "xml")
-  val Manifest = new File(config.target, "src/main/AndroidManifest.xml")
+  val Manifest = new File(config.target, "src/main/AndroidManifestIn.xml")
   val TestManifest = new File(config.target, "tests/src/main/AndroidManifest.xml")
   val Strings = new File(config.target, "src/main/res/values/strings.xml")
   val Project = new File(config.target, "project/build/" + config.project.capitalize + ".scala")
