@@ -73,6 +73,20 @@ is issued by the plugin when the same ID is used for different types
 of a resources; the type of resources retrieved by that ID will be
 unpredictable.
 
+##Building Java Android projects with sbt
+
+If you don't use Scala yet and want to use the plugin to build your existing
+Java app you can do so by adding the `PlainJavaProject` trait to the project
+definition:
+
+    class MainProject(info: ProjectInfo) extends AndroidProject(info)
+      with PlainJavaProject {
+      // usual project configuration
+    }
+
+This will change the defaults to the directory structure expected by Android's
+`build.xml` file and skip the Proguard optimisation step.
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile
@@ -84,10 +98,19 @@ and install it locally (you need at least sbt 0.7.x to build it):
 
 Because the plugin gets cached in a project based on its version
 number you might need to use `sbt clean-plugins` to force a reload
-after `sbt publish-local`.
+after `sbt publish-local`. Don't hesitate to send a pull request!
+
+##Mailing list
+
+There's no official mailing list for the project but most contributors hang
+out in [scala-on-android][] or [simple-build-tool][].
 
 ##Credits
 
 This code is based on work by Walter Chang
 ([saisiyat](http://github.com/weihsiu/saisiyat/)), turned into a plugin by
 [Mark Harrah](http://github.com/harrah).
+
+
+[scala-on-android]: http://groups.google.com/group/scala-on-android
+[simple-build-tool]: http://groups.google.com/group/simple-build-tool
