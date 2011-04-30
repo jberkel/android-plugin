@@ -139,6 +139,8 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
                "-outjars" :: classesMinJarPath.absolutePath ::
                "-libraryjars" :: libraryJarPath.getPaths.mkString(File.pathSeparator) :: 
                "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
+               "-dontnote scala.Enumeration" ::
+               "-dontnote org.xml.sax.EntityResolver" ::
                "-keep public class * extends android.app.Activity" ::
                "-keep public class * extends android.app.Service" ::
                "-keep public class * extends android.appwidget.AppWidgetProvider" ::
