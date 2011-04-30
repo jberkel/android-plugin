@@ -13,10 +13,13 @@ class ApkBuilder(project: AndroidProject, debug: Boolean) {
     project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, new PrintStream(outputStream))
   setDebugMode(debug)
 
-  def build() = {
+  def build() = try {
     sealApk
-    project.log.info(outputStream.toString)
     None
+  } catch {
+    case e: Throwable => Some(e.getCause.getMessage)
+  } finally {
+    project.log.info(outputStream.toString)
   }
   
   def getDebugKeystore = {
