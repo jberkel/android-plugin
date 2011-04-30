@@ -1,6 +1,18 @@
 import sbt._
 import java.io.{ByteArrayOutputStream, File, PrintStream}
 
+/**
+ * Build an APK - replaces the now-deprecated apkbuilder command-line executable.
+ *
+ * Google provides no supported means of building an APK from the command line.
+ * Instead, we need to use the `ApkBuilder` class within `sdklib.jar`.
+ *
+ * The source for `ApkBuilder` is
+ * [[http://android.git.kernel.org/?p=platform/sdk.git;a=blob;f=sdkmanager/libs/sdklib/src/com/android/sdklib/build/ApkBuilder.java here]].
+ *
+ * The source for Google's Ant task that uses it is
+ * [[http://android.git.kernel.org/?p=platform/sdk.git;a=blob;f=anttasks/src/com/android/ant/ApkBuilderTask.java here]].
+ */
 class ApkBuilder(project: AndroidProject, debug: Boolean) {
   
   val classLoader = ClasspathUtilities.toLoader(project.androidToolsPath / "lib" / "sdklib.jar")
