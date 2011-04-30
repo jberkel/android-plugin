@@ -1,5 +1,5 @@
 import sbt._
-import java.io.{File, PrintStream}
+import java.io.{ByteArrayOutputStream, File, PrintStream}
 
 class ApkBuilder(project: AndroidProject, debug: Boolean) {
   
@@ -8,12 +8,14 @@ class ApkBuilder(project: AndroidProject, debug: Boolean) {
   val constructor = klass.getConstructor(
     classOf[File], classOf[File], classOf[File], classOf[String], classOf[PrintStream])
   val keyStore = if (debug) getDebugKeystore else null
+  val outputStream = new ByteArrayOutputStream
   val builder = constructor.newInstance(
-    project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, null)
+    project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, new PrintStream(outputStream))
   setDebugMode(debug)
 
   def build() = {
     sealApk
+    project.log.info(outputStream.toString)
     None
   }
   
