@@ -233,7 +233,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def uninstallTask(emulator: Boolean) = adbTask(emulator, { Unit => "uninstall "+manifestPackage })
   
   def adbTask(emulator: Boolean, action: Unit => String) = execTask {<x>
-      {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action}
+      {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action()}
    </x>}
          
   lazy val manifest:scala.xml.Elem = scala.xml.XML.loadFile(androidManifestPath.asFile)
