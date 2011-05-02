@@ -2,5 +2,8 @@
 
 * Use the ApkBuilder class in sdklib.jar instead of the deprecated apkbuilder command-line executable ([Paul Butcher][paulbutcher])
 
+* Support for building standard Java Android projects ([Jan Berkel][jberkel])
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
+[jberkel]: https://github.com/jberkel
