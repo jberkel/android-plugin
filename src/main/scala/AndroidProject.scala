@@ -8,7 +8,6 @@ object AndroidProject {
   val DefaultAaptName = "aapt"
   val DefaultAdbName = "adb"
   val DefaultAidlName = "aidl"
-  val DefaultApkbuilderName = "apkbuilder"
   val DefaultDxName = "dx"
   val DefaultAndroidManifestName = "AndroidManifest.xml"
   val DefaultAndroidJarName = "android.jar"
@@ -36,7 +35,6 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def aaptName = DefaultAaptName // note: this is a .exe file in windows
   def adbName = DefaultAdbName
   def aidlName = DefaultAidlName
-  def apkbuilderName = DefaultApkbuilderName + osBatchSuffix
   def dxName = DefaultDxName + osBatchSuffix
   def androidManifestName = DefaultAndroidManifestName
   def androidJarName = DefaultAndroidJarName
@@ -79,8 +77,6 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   }
   
   def androidToolsPath = androidSdkPath / "tools"
-  // deprecated, need to remove apkbuilder
-  def apkbuilderPath = androidToolsPath / apkbuilderName
   def adbPath = platformToolsPath / adbName
   def androidPlatformPath = androidSdkPath / "platforms" / androidPlatformName
   def platformToolsPath = androidSdkPath / "platform-tools"
@@ -197,11 +193,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def packageReleaseAction = packageTask(false) dependsOn(aaptPackage) describedAs("Package without signing.")
 
   lazy val cleanApk = cleanTask(packageApkPath) describedAs("Remove apk package")
-  def packageTask(signPackage: Boolean) = execTask {<x>
-      {apkbuilderPath.absolutePath}  {packageApkPath.absolutePath}
-        {if (signPackage) "" else "-u"} -z {resourcesApkPath.absolutePath} -f {classesDexPath.absolutePath}
-        {proguardInJars.get.map(" -rj " + _.absolutePath)}
-  </x>} dependsOn(cleanApk)
+  def packageTask(signPackage: Boolean) = task {new ApkBuilder(this, signPackage).build} dependsOn(cleanApk)
   
   lazy val installEmulator = installEmulatorAction
   def installEmulatorAction = installTask(true) dependsOn(packageDebug) describedAs("Install package on the default emulator.")
