@@ -1,0 +1,3 @@
+* Update path to Google's Android add-ons ([nuriaion][nuriaion])
+
+[nuriaion]: https://github.com/Nuriaion
