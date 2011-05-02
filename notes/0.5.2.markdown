@@ -1,3 +1,6 @@
 * Update path to Google's Android add-ons ([nuriaion][nuriaion])
 
+* Use the ApkBuilder class in sdklib.jar instead of the deprecated apkbuilder command-line executable ([Paul Butcher][paulbutcher])
+
 [nuriaion]: https://github.com/Nuriaion
+[paulbutcher]: https://github.com/paulbutcher/
