@@ -55,7 +55,7 @@ on [cross-building][cb].
 If you would like your AndroidManifest.xml file to automatically inherit
 versionName and versionCode from your SBT project, add the 
 `AndroidManifestGenerator` trait to your project.  It will look for an
-AndroidManifestIn.xml file, and add versionName and versionCode to that
+AndroidManifest.xml file, and add versionName and versionCode to that
 template.
 
 When you want to increase your version number, just use the standard SBT

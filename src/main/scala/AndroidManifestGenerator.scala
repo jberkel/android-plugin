@@ -35,9 +35,18 @@ trait AndroidManifestGenerator extends AndroidProject {
   }
 
   /// Force regeneration of the manfest
-  def discardAndroidManifest() {
+  private def discardAndroidManifest() {
     FileUtilities.clean(androidManifestPath, log)
   }
+ 
+  def cleanAndroidManifestAction = task {
+    discardAndroidManifest()
+    None
+  } describedAs("Deletes the generated Android manifest.")
+  
+  lazy val cleanAndroidManifest = cleanAndroidManifestAction
+
+  override def cleanAction = super.cleanAction dependsOn(cleanAndroidManifest)
 
   /// a customized manifest file is needed for the following actions  
   override def aaptGenerateAction = super.aaptGenerateAction dependsOn(generateAndroidManifest)
