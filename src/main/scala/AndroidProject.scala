@@ -90,21 +90,22 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def mapsJarPath = addonsPath / DefaultMapsJarName
   def mainAssetsPath = mainSourcePath / assetsDirectoryName
   def mainResPath = mainSourcePath / resDirectoryName
-  def genJavaSourcePath = info.projectPath / "gen"
+  def managedJavaPath = "src_managed" / "main" / "java"
   def classesMinJarPath = outputPath / classesMinJarName
   def classesDexPath =  outputPath / classesDexName
   def resourcesApkPath = outputPath / resourcesApkName
   def packageApkPath = outputPath / packageApkName
   def skipProguard = false
 
-  override def mainSourceRoots = super.mainSourceRoots +++ (genJavaSourcePath##)
+  override def mainSourceRoots = super.mainSourceRoots +++ (managedJavaPath##)
+  override def cleanAction = super.cleanAction dependsOn cleanTask(managedJavaPath)
 
   lazy val aaptGenerate = aaptGenerateAction
   def aaptGenerateAction = aaptGenerateTask describedAs("Generate R.java.")
   def aaptGenerateTask = execTask {<x>
       {aaptPath.absolutePath} package -m -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath}
-         -I {androidJarPath.absolutePath} -J {genJavaSourcePath.absolutePath}
-    </x>} dependsOn(directory(mainJavaSourcePath), directory(genJavaSourcePath))
+         -I {androidJarPath.absolutePath} -J {managedJavaPath.absolutePath}
+    </x>} dependsOn(directory(mainJavaSourcePath), directory(managedJavaPath))
 
   lazy val aidl = aidlAction
   def aidlAction = aidlTask describedAs("Generate Java classes from .aidl files.")
@@ -115,7 +116,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     else
        aidlPaths.toList.map { ap =>
             aidlPath.absolutePath ::
-               "-o" + genJavaSourcePath.absolutePath ::
+               "-o" + managedJavaPath.absolutePath ::
                "-I" + mainJavaSourcePath.absolutePath ::
                 ap :: Nil }.foldLeft(None.asInstanceOf[Option[ProcessBuilder]]) { (f, s) =>
           f match {
