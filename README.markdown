@@ -35,7 +35,7 @@ To install and start the main activity in the [Android Emulator][emu]
 
 To build a signed package for release into the Marketplace:
 
-    > sign-release
+    > prepare-market
 
 ##Scala Versions
 
@@ -50,6 +50,17 @@ on [cross-building][cb].
 
 [cb]: http://code.google.com/p/simple-build-tool/wiki/CrossBuild
 
+##Android manifest files
+
+If you would like your AndroidManifest.xml file to automatically inherit
+versionName and versionCode from your SBT project, add the 
+`AndroidManifestGenerator` trait to your project.  It will look for an
+AndroidManifest.xml file, and add versionName and versionCode to that
+template.
+
+When you want to increase your version number, just use the standard SBT
+`increment-version` command.  
+ 
 ##Typed resources references
 
 As an enhancement to the Android build process, this plugin can
