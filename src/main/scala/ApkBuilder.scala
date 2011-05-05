@@ -24,7 +24,7 @@ class ApkBuilder(project: AndroidProject, debug: Boolean) {
   val builder = constructor.newInstance(
     project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, new PrintStream(outputStream))
   setDebugMode(debug)
-  addNativeLibraries((project.mainSourcePath / "libs").asFile, null)
+  addNativeLibraries(project.nativeLibrariesPath.asFile, null)
 
   def build() = try {
     sealApk

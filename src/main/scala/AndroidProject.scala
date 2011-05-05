@@ -90,6 +90,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   def androidManifestPath =  mainSourcePath / androidManifestName
   def androidJarPath = androidPlatformPath / androidJarName
+  def nativeLibrariesPath = mainSourcePath / "libs"
   def addonsPath = androidSdkPath / "add-ons" / ("addon_google_apis_google_inc_" + apiLevel) / "libs"
   def mapsJarPath = addonsPath / DefaultMapsJarName
   def mainAssetsPath = mainSourcePath / assetsDirectoryName
