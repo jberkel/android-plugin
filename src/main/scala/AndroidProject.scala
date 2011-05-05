@@ -11,7 +11,7 @@ object AndroidProject {
   val DefaultDxName = "dx"
   val DefaultAndroidManifestName = "AndroidManifest.xml"
   val DefaultAndroidJarName = "android.jar"
-  val DefaultMapsJarName = "maps.jar"  
+  val DefaultMapsJarName = "maps.jar"
   val DefaultAssetsDirectoryName = "assets"
   val DefaultResDirectoryName = "res"
   val DefaultClassesMinJarName = "classes.min.jar"
@@ -27,11 +27,11 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
   def libraryJarPath = androidJarPath +++ addonsJarPath
   override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
-  
+
   import AndroidProject._
-  
+
   def androidPlatformName:String
-   
+
   def aaptName = DefaultAaptName // note: this is a .exe file in windows
   def adbName = DefaultAdbName
   def aidlName = DefaultAidlName
@@ -57,7 +57,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def apiLevel = minSdkVersion.getOrElse(platformName2ApiLevel)
   def isWindows = System.getProperty("os.name").startsWith("Windows")
   def osBatchSuffix = if (isWindows) ".bat" else ""
-  
+
   def dxMemoryParameter = {
     // per http://code.google.com/p/android/issues/detail?id=4217, dx.bat
     // doesn't currently support -JXmx arguments.  For now, omit them in windows.
@@ -75,7 +75,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
     case "android-2.3.3" => 10
     case "android-3.0" => 11
   }
-  
+
   def androidToolsPath = androidSdkPath / "tools"
   def adbPath = platformToolsPath / adbName
   def androidPlatformPath = androidSdkPath / "platforms" / androidPlatformName
@@ -125,7 +125,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
           }
         }.get
   }
-  
+
   override def compileAction = super.compileAction dependsOn(aaptGenerate, aidl)
 
   /** Forward compatibility with sbt 0.6+ Scala build versions */
@@ -185,7 +185,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val aaptPackage = aaptPackageAction
   def aaptPackageAction = aaptPackageTask dependsOn(dx) describedAs("Package resources and assets.")
   def aaptPackageTask = execTask {<x>
-    {aaptPath.absolutePath} package -f -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath} 
+    {aaptPath.absolutePath} package -f -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath}
        -A {mainAssetsPath.absolutePath} -I {androidJarPath.absolutePath} -F {resourcesApkPath.absolutePath}
   </x>} dependsOn directory(mainAssetsPath)
 
@@ -197,7 +197,7 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   lazy val cleanApk = cleanTask(packageApkPath) describedAs("Remove apk package")
   def packageTask(signPackage: Boolean) = task {new ApkBuilder(this, signPackage).build} dependsOn(cleanApk)
-  
+
   lazy val installEmulator = installEmulatorAction
   def installEmulatorAction = installTask(true) dependsOn(packageDebug) describedAs("Install package on the default emulator.")
 
@@ -209,10 +209,10 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
 
   lazy val reinstallDevice = reinstallDeviceAction
   def reinstallDeviceAction = reinstallTask(false) dependsOn(packageDebug) describedAs("Reinstall package on the default device.")
-  
+
   lazy val startDevice = startDeviceAction
   def startDeviceAction = startTask(false) dependsOn(reinstallDevice) describedAs("Start package on device after installation")
-  
+
   lazy val startEmulator = startEmulatorAction
   def startEmulatorAction = startTask(true) dependsOn(reinstallEmulator) describedAs("Start package on emulator after installation")
 
@@ -226,19 +226,19 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
   def reinstallTask(emulator: Boolean) = adbTask(emulator, "install -r "+packageApkPath.absolutePath)
   def startTask(emulator: Boolean) = adbTask(emulator, "shell am start -a android.intent.action.MAIN -n "+manifestPackage+"/"+launcherActivity)
   def uninstallTask(emulator: Boolean) = adbTask(emulator, "uninstall "+manifestPackage)
-  
+
   def adbTask(emulator: Boolean, action: String) = execTask {<x>
       {adbPath.absolutePath} {if (emulator) "-e" else "-d"} {action}
    </x>}
-         
+
   lazy val manifest:scala.xml.Elem = scala.xml.XML.loadFile(androidManifestPath.asFile)
 
   lazy val minSdkVersion = usesSdk("minSdkVersion")
   lazy val maxSdkVersion = usesSdk("maxSdkVersion")
   lazy val manifestPackage = manifest.attribute("package").getOrElse(error("package not defined")).text
-    
+
   def usesSdk(s: String):Option[Int] = (manifest \ "uses-sdk").first.attribute(manifestSchema, s).map(_.text.toInt)
-  
+
   def launcherActivity:String = {
     for (activity <- (manifest \\ "activity")) {
       for(action <- (activity \\ "action")) {
@@ -260,22 +260,22 @@ abstract class AndroidProject(info: ProjectInfo) extends DefaultProject(info) {
         _.text match {
           case "com.google.android.maps" => Some(mapsJarPath)
           case _ => None
-        } 
-      }   
+        }
+      }
       if p.isDefined
     } yield p.get
   }
-  
+
   def directory(dir: Path) = fileTask(dir :: Nil) {
     FileUtilities.createDirectory(dir, log)
   }
-  
+
   override def ivyXML =
     <dependencies>
        <exclude module="httpclient" conf="compile"/>
-       <exclude module="httpcore" conf="compile"/>              
-       <exclude module="commons-logging" conf="compile"/>              
-       <exclude module="commons-codec" conf="compile"/>      
-       <exclude module="scala-library" conf="compile"/>                    
+       <exclude module="httpcore" conf="compile"/>
+       <exclude module="commons-logging" conf="compile"/>
+       <exclude module="commons-codec" conf="compile"/>
+       <exclude module="scala-library" conf="compile"/>
     </dependencies>
 }
