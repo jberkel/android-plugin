@@ -24,6 +24,7 @@ class ApkBuilder(project: Installable, debug: Boolean) {
   val builder = constructor.newInstance(
     project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, new PrintStream(outputStream))
   setDebugMode(debug)
+  addNativeLibraries(project.nativeLibrariesPath.asFile, null)
 
   def build() = try {
     sealApk
@@ -44,6 +45,13 @@ class ApkBuilder(project: Installable, debug: Boolean) {
     method.invoke(builder, debug.asInstanceOf[Object])
   }
   
+  def addNativeLibraries(nativeFolder: File, abiFilter: String) {
+    if (nativeFolder.exists && nativeFolder.isDirectory) {
+      val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
+      method.invoke(builder, nativeFolder, abiFilter)
+    }
+  } 
+
   def sealApk() {
     val method = klass.getMethod("sealApk")
     method.invoke(builder)
