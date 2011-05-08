@@ -4,6 +4,11 @@
 
 * Support for building standard Java Android projects ([Jan Berkel][jberkel])
 
+* AndroidManifestGenerator trait to control and increment
+  versionCode and versionName properties, contributed by 
+  [Kevin Hester][geeksville].
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
 [jberkel]: https://github.com/jberkel
+[geeksville]: https://github.com/geeksville
