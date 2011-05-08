@@ -30,8 +30,12 @@ trait Installable extends BaseAndroidProject {
   lazy val aaptPackage = aaptPackageAction
   def aaptPackageAction = aaptPackageTask dependsOn(dx) describedAs("Package resources and assets.")
   def aaptPackageTask = execTask {<x>
-    {aaptPath.absolutePath} package -f -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath}
-       -A {mainAssetsPath.absolutePath} -I {androidJarPath.absolutePath} -F {resourcesApkPath.absolutePath}
+    {aaptPath.absolutePath} package --auto-add-overlay -f
+      -M {androidManifestPath.absolutePath}
+      -S {resPaths.getPaths.mkString(" -S ")}
+      -A {mainAssetsPath.absolutePath}
+      -I {androidJarPath.absolutePath}
+      -F {resourcesApkPath.absolutePath}
   </x>} dependsOn directory(mainAssetsPath)
 
   lazy val packageDebug = packageDebugAction
@@ -56,7 +60,7 @@ trait Installable extends BaseAndroidProject {
     val args = "-injars" ::  mainCompilePath.absolutePath+File.pathSeparator+
                            scalaLibraryJar.getAbsolutePath+"(!META-INF/MANIFEST.MF,!library.properties)"+
                            (if (!proguardInJars.getPaths.isEmpty)
-                            File.pathSeparator+proguardInJars.getPaths.map(_+"(!META-INF/MANIFEST.MF)").mkString(File.pathSeparator) else "") ::
+                            File.pathSeparator+proguardInJars.getPaths.map(_+"(!META-INF/MANIFEST.MF,!**/R.class,!**/R$*.class,!**/TR.class,!**/TR$*.class)").mkString(File.pathSeparator) else "") ::
              "-outjars" :: classesMinJarPath.absolutePath ::
              "-libraryjars" :: libraryJarPath.getPaths.mkString(File.pathSeparator) ::
              "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::

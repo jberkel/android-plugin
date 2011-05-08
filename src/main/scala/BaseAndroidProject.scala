@@ -104,10 +104,25 @@ abstract class BaseAndroidProject(info: ProjectInfo) extends DefaultProject(info
 
   lazy val aaptGenerate = aaptGenerateAction
   def aaptGenerateAction = aaptGenerateTask describedAs("Generate R.java.")
-  def aaptGenerateTask = execTask {<x>
-      {aaptPath.absolutePath} package -m -M {androidManifestPath.absolutePath} -S {mainResPath.absolutePath}
-         -I {androidJarPath.absolutePath} -J {managedJavaPath.absolutePath}
-    </x>} dependsOn(directory(mainJavaSourcePath), directory(managedJavaPath))
+
+  def aaptGenerateTask = execTask { 
+    aaptGenerateCommands reduceLeft (_ #&& _)
+  } dependsOn(directory(managedJavaPath))
+
+  def aaptGenerateCommands = androidProjects map (project => aaptGenerateCommand(project))
+
+  def aaptGenerateCommand(project: BaseAndroidProject) = Process(<x>
+      {aaptPath.absolutePath} package --auto-add-overlay -m
+        --custom-package {project.manifestPackage}
+        -M {androidManifestPath.absolutePath}
+        -S {resPaths.getPaths.mkString(" -S ")}
+        -I {androidJarPath.absolutePath}
+        -J {managedJavaPath.absolutePath}
+    </x>)
+    
+  def androidProjects = projectClosure.filter(_.isInstanceOf[BaseAndroidProject]).map(_.asInstanceOf[BaseAndroidProject]).reverse
+    
+  def resPaths = (Path.emptyPathFinder /: androidProjects.map(_.mainResPath))(_ +++ _)
 
   lazy val aidl = aidlAction
   def aidlAction = aidlTask describedAs("Generate Java classes from .aidl files.")
