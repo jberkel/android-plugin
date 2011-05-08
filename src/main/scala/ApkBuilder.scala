@@ -13,7 +13,7 @@ import java.io.{ByteArrayOutputStream, File, PrintStream}
  * The source for Google's Ant task that uses it is
  * [[http://android.git.kernel.org/?p=platform/sdk.git;a=blob;f=anttasks/src/com/android/ant/ApkBuilderTask.java here]].
  */
-class ApkBuilder(project: AndroidProject, debug: Boolean) {
+class ApkBuilder(project: Installable, debug: Boolean) {
   
   val classLoader = ClasspathUtilities.toLoader(project.androidToolsPath / "lib" / "sdklib.jar")
   val klass = classLoader.loadClass("com.android.sdklib.build.ApkBuilder")
