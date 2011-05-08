@@ -1,7 +1,7 @@
 import sbt._
 import scala.xml._
 
-trait TypedResources extends AndroidProject {
+trait TypedResources extends BaseAndroidProject {
   def managedScalaPath = "src_managed" / "main" / "scala"
   /** Typed resource file to be generated, also includes interfaces to access these resources. */
   def typedResource = managedScalaPath / "TR.scala"
