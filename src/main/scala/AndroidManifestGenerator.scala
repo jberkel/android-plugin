@@ -51,7 +51,9 @@ trait AndroidManifestGenerator extends AndroidProject {
   /// a customized manifest file is needed for the following actions  
   override def aaptGenerateAction = super.aaptGenerateAction dependsOn(generateAndroidManifest)
 
-  def generateAndroidManifestAction = fileTask(androidManifestPath from androidManifestTemplatePath) {
+  def generateAndroidManifestAction =
+    fileTask(androidManifestPath from Seq(androidManifestTemplatePath,
+                                          envBackingPath)) {
 
     val namespacePrefix = "http://schemas.android.com/apk/res/android"
     val manifest = XML.loadFile(androidManifestTemplatePath.asFile)
