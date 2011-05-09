@@ -6,7 +6,7 @@ trait TypedResources extends BaseAndroidProject {
   /** Typed resource file to be generated, also includes interfaces to access these resources. */
   def typedResource = managedScalaPath / "TR.scala"
   abstract override def mainSourceRoots = super.mainSourceRoots +++ managedScalaPath
-  def layoutResources = mainResPath / "layout" ** "*.xml"
+  def layoutResources = resPaths / "layout" ** "*.xml"
   override def compileAction = super.compileAction dependsOn generateTypedResources
   override def cleanAction = super.cleanAction dependsOn cleanTask(managedScalaPath)
   override def watchPaths = super.watchPaths +++ layoutResources
