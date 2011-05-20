@@ -35,7 +35,7 @@ trait TypedResources extends BaseAndroidProject {
             case Id(id) if node.label.contains('.') => Some(id, node.label)
             // otherwise it may be a widget or view
             case Id(id) => {
-              List("android.widget.", "android.view.").map(pkg => tryLoading(pkg + node.label)).find(_.isDefined).flatMap(clazz => Some(id, clazz.get.getName))
+              List("android.widget.", "android.view.", "android.webkit.").map(pkg => tryLoading(pkg + node.label)).find(_.isDefined).flatMap(clazz => Some(id, clazz.get.getName))
             }
             case _ => None
           }
