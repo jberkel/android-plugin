@@ -98,6 +98,19 @@ definition:
 This will change the defaults to the directory structure expected by Android's
 `build.xml` file and skip the Proguard optimisation step.
 
+## Getting screenshots
+
+In the sbt console run:
+
+    > sbt screenshot-emulator
+
+or
+
+    > sbt screenshot-device
+
+The screenshots will be written to `emulator.png` / `device.png` in the project
+root directory.
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile

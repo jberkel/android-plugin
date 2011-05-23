@@ -7,4 +7,5 @@ class AndroidPlugin(info: ProjectInfo) extends PluginProject(info)
   Credentials(Path.fromFile(System.getProperty("user.home")) / ".ivy2" / ".credentials", log)
 
   val proguard = "net.sf.proguard" % "proguard" % "4.4"
+  val ddmlib   = "com.google.android.tools" % "ddmlib" % "r10"
 }
