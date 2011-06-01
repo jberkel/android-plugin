@@ -25,6 +25,7 @@ class ApkBuilder(project: Installable, debug: Boolean) {
     project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, new PrintStream(outputStream))
   setDebugMode(debug)
   addNativeLibraries(project.nativeLibrariesPath.asFile, null)
+  addResourcesFromJar(project.classesMinJarPath.asFile)
 
   def build() = try {
     sealApk
@@ -51,6 +52,15 @@ class ApkBuilder(project: Installable, debug: Boolean) {
       method.invoke(builder, nativeFolder, abiFilter)
     }
   } 
+
+  /// Copy most non class files from the given standard java jar file
+  ///
+  /// (used to let classloader.getResource work for legacy java libs
+  /// on android)
+  def addResourcesFromJar(jarFile: File) {
+    def method = klass.getMethod("addResourcesFromJar", classOf[File]) 
+    method.invoke(builder, jarFile)
+  }  
 
   def sealApk() {
     val method = klass.getMethod("sealApk")
