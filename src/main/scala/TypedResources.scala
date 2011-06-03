@@ -2,9 +2,15 @@ import sbt._
 import scala.xml._
 
 trait TypedResources extends BaseAndroidProject {
+  def trInPackageDirectory = false
   def managedScalaPath = "src_managed" / "main" / "scala"
   /** Typed resource file to be generated, also includes interfaces to access these resources. */
-  def typedResource = managedScalaPath / "TR.scala"
+  def typedResourcePath =
+    if(trInPackageDirectory)
+      Path.fromString(managedScalaPath, manifestPackage.replace('.', java.io.File.separatorChar))
+    else
+      managedScalaPath
+  def typedResource = typedResourcePath / "TR.scala"
   abstract override def mainSourceRoots = super.mainSourceRoots +++ managedScalaPath
   def layoutResources = mainResPath / "layout" ** "*.xml"
   override def compileAction = super.compileAction dependsOn generateTypedResources

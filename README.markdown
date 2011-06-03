@@ -84,6 +84,9 @@ is issued by the plugin when the same ID is used for different types
 of a resources; the type of resources retrieved by that ID will be
 unpredictable.
 
+It is possible to generate the `TR.scala` file in a directory that matches its
+package.  To do this, simply override `trInPackageDirectory` and make it true.
+
 ##Building Java Android projects with sbt
 
 If you don't use Scala yet and want to use the plugin to build your existing
