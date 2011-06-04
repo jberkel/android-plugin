@@ -10,7 +10,7 @@ trait TypedResources extends BaseAndroidProject {
   override def compileAction = super.compileAction dependsOn generateTypedResources
   override def cleanAction = super.cleanAction dependsOn cleanTask(managedScalaPath)
   override def watchPaths = super.watchPaths +++ layoutResources
-  
+
 
   /** File task that generates `typedResource` if it's older than any layout resource, or doesn't exist */
   lazy val generateTypedResources = fileTask(typedResource from layoutResources) {
@@ -19,9 +19,9 @@ trait TypedResources extends BaseAndroidProject {
 
     def tryLoading(className: String) = {
       try {
-        Some(androidJarLoader.loadClass(className)) 
-      } catch { 
-        case _ => None 
+        Some(androidJarLoader.loadClass(className))
+      } catch {
+        case _ => None
       }
     }
 
@@ -41,8 +41,8 @@ trait TypedResources extends BaseAndroidProject {
           }
         }
       }
-    }.foldLeft(Map.empty[String, String]) { 
-      case (m, (k, v)) => 
+    }.foldLeft(Map.empty[String, String]) {
+      case (m, (k, v)) =>
         m.get(k).foreach { v0 =>
           if (v0 != v) log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
         }
@@ -59,7 +59,7 @@ trait TypedResources extends BaseAndroidProject {
             |}
             |trait TypedViewHolder {
             |  def view: View
-            |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]  
+            |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]
             |}
             |trait TypedView extends View with TypedViewHolder { def view = this }
             |trait TypedActivityHolder {
