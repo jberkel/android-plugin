@@ -8,6 +8,10 @@
   versionCode and versionName properties 
   ([Kevin Hester][geeksville])
 
+* Integrated ddmlib to grab screenshots from emulator / device ([Jan Berkel][jberkel])
+
+* Android library project support ([Paul Butcher][paulbutcher])
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
 [jberkel]: https://github.com/jberkel

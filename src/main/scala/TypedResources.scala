@@ -4,13 +4,13 @@ import scala.xml._
 trait TypedResources extends BaseAndroidProject {
   def managedScalaPath = "src_managed" / "main" / "scala"
   /** Typed resource file to be generated, also includes interfaces to access these resources. */
-  def typedResource = managedScalaPath / "TR.scala"
+  def typedResource = manifestPackage.split('.').foldLeft(managedScalaPath)((p,s) => p/s) / "TR.scala"
   abstract override def mainSourceRoots = super.mainSourceRoots +++ managedScalaPath
-  def layoutResources = mainResPath / "layout" ** "*.xml"
+  def layoutResources = resPaths / "layout" ** "*.xml"
   override def compileAction = super.compileAction dependsOn generateTypedResources
   override def cleanAction = super.cleanAction dependsOn cleanTask(managedScalaPath)
   override def watchPaths = super.watchPaths +++ layoutResources
-  
+
 
   /** File task that generates `typedResource` if it's older than any layout resource, or doesn't exist */
   lazy val generateTypedResources = fileTask(typedResource from layoutResources) {
@@ -19,9 +19,9 @@ trait TypedResources extends BaseAndroidProject {
 
     def tryLoading(className: String) = {
       try {
-        Some(androidJarLoader.loadClass(className)) 
-      } catch { 
-        case _ => None 
+        Some(androidJarLoader.loadClass(className))
+      } catch {
+        case _ => None
       }
     }
 
@@ -35,14 +35,14 @@ trait TypedResources extends BaseAndroidProject {
             case Id(id) if node.label.contains('.') => Some(id, node.label)
             // otherwise it may be a widget or view
             case Id(id) => {
-              List("android.widget.", "android.view.").map(pkg => tryLoading(pkg + node.label)).find(_.isDefined).flatMap(clazz => Some(id, clazz.get.getName))
+              List("android.widget.", "android.view.", "android.webkit.").map(pkg => tryLoading(pkg + node.label)).find(_.isDefined).flatMap(clazz => Some(id, clazz.get.getName))
             }
             case _ => None
           }
         }
       }
-    }.foldLeft(Map.empty[String, String]) { 
-      case (m, (k, v)) => 
+    }.foldLeft(Map.empty[String, String]) {
+      case (m, (k, v)) =>
         m.get(k).foreach { v0 =>
           if (v0 != v) log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
         }
@@ -59,7 +59,7 @@ trait TypedResources extends BaseAndroidProject {
             |}
             |trait TypedViewHolder {
             |  def view: View
-            |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]  
+            |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]
             |}
             |trait TypedView extends View with TypedViewHolder { def view = this }
             |trait TypedActivityHolder {
