@@ -26,6 +26,7 @@ class ApkBuilder(project: Installable, debug: Boolean) {
   setDebugMode(debug)
 
   def build() = try {
+    project.log.info("Packaging "+project.packageApkPath)
     addNativeLibraries(project.nativeLibrariesPath.asFile, null)
     addResourcesFromJar(project.classesMinJarPath.asFile)
     sealApk
@@ -33,7 +34,7 @@ class ApkBuilder(project: Installable, debug: Boolean) {
   } catch {
     case e: Throwable => Some(e.getCause.getMessage)
   } finally {
-    project.log.info(outputStream.toString)
+    project.log.debug(outputStream.toString)
   }
   
   def getDebugKeystore = {
