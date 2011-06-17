@@ -12,6 +12,8 @@
 
 * Android library project support ([Paul Butcher][paulbutcher])
 
+* Include resources in apk ([Kevin Hester][geeksville])
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
 [jberkel]: https://github.com/jberkel
