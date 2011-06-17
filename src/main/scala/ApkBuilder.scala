@@ -24,10 +24,10 @@ class ApkBuilder(project: Installable, debug: Boolean) {
   val builder = constructor.newInstance(
     project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, new PrintStream(outputStream))
   setDebugMode(debug)
-  addNativeLibraries(project.nativeLibrariesPath.asFile, null)
-  addResourcesFromJar(project.classesMinJarPath.asFile)
 
   def build() = try {
+    addNativeLibraries(project.nativeLibrariesPath.asFile, null)
+    addResourcesFromJar(project.classesMinJarPath.asFile)
     sealApk
     None
   } catch {
@@ -58,8 +58,10 @@ class ApkBuilder(project: Installable, debug: Boolean) {
   /// (used to let classloader.getResource work for legacy java libs
   /// on android)
   def addResourcesFromJar(jarFile: File) {
-    def method = klass.getMethod("addResourcesFromJar", classOf[File]) 
-    method.invoke(builder, jarFile)
+    if (jarFile.exists) {
+      def method = klass.getMethod("addResourcesFromJar", classOf[File])
+      method.invoke(builder, jarFile)
+    }
   }  
 
   def sealApk() {
