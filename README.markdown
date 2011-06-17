@@ -112,6 +112,18 @@ or
 The screenshots will be written to `emulator.png` / `device.png` in the project
 root directory.
 
+## Using the NDK to build C/C++ libraries
+
+If you use the NDK in your project, you can add the `NdkSupport` trait to your
+project definition.  This will cause the `compile` command to call the
+`ndk-build` tool and the `clean` command to remove the `src/main/obj` and
+`src/main/libs` directories.  The plug-in expects your `Android.mk` and your
+C/C++ sources to be in the `src/main/jni` directory.
+
+In order for the NDK support to work, you should set the environment variable
+`ANDROID_NDK_HOME` to the root of the NDK (the directory that contains the
+`ndk-build` executable).
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile
