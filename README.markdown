@@ -22,6 +22,7 @@ skeleton tests, specs and activities.
 To build the package:
 
     $ cd <your app name>
+    $ export ANDROID_HOME=/path/to/sdk # or ANDROID_SDK_{HOME,ROOT}
     $ sbt # enter sbt's interactive mode
 
     > update
