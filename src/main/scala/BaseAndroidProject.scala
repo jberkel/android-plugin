@@ -1,53 +1,13 @@
-import proguard.{Configuration=>ProGuardConfiguration, ProGuard, ConfigurationParser}
-import java.io._
+//import proguard.{Configuration=>ProGuardConfiguration, ProGuard, ConfigurationParser}
 import sbt._
+
 import Process._
+import Keys._
 
-object BaseAndroidProject {
-  val DefaultAaptName = "aapt"
-  val DefaultAdbName = "adb"
-  val DefaultAidlName = "aidl"
-  val DefaultDxName = "dx"
-  val DefaultAndroidManifestName = "AndroidManifest.xml"
-  val DefaultAndroidJarName = "android.jar"
-  val DefaultMapsJarName = "maps.jar"
-  val DefaultAssetsDirectoryName = "assets"
-  val DefaultResDirectoryName = "res"
-  val DefaultClassesMinJarName = "classes.min.jar"
-  val DefaultClassesDexName = "classes.dex"
-  val DefaultResourcesApkName = "resources.apk"
-  val DefaultDxJavaOpts = "-JXmx512m"
-  val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
-  val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
-}
+object BaseAndroidProject extends Plugin {
+  val Android = config("Android")
 
-abstract class BaseAndroidProject(info: ProjectInfo) extends DefaultProject(info) {
-  def proguardOption = ""
-  def proguardInJars = runClasspath --- proguardExclude
-  def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
-  def libraryJarPath = androidJarPath +++ addonsJarPath
-  override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
-
-  import BaseAndroidProject._
-
-  def androidPlatformName:String
-
-  def aaptName = DefaultAaptName // note: this is a .exe file in windows
-  def adbName = DefaultAdbName
-  def aidlName = DefaultAidlName
-  def dxName = DefaultDxName + osBatchSuffix
-  def androidManifestName = DefaultAndroidManifestName
-  def androidJarName = DefaultAndroidJarName
-  def mapsJarName = DefaultMapsJarName
-  def assetsDirectoryName = DefaultAssetsDirectoryName
-  def resDirectoryName = DefaultResDirectoryName
-  def classesMinJarName = DefaultClassesMinJarName
-  def classesDexName = DefaultClassesDexName
-  def packageApkName = artifactBaseName + ".apk"
-  def resourcesApkName = DefaultResourcesApkName
-  def dxJavaOpts = DefaultDxJavaOpts
-  def manifestSchema = DefaultManifestSchema
-
+  /*
   lazy val androidSdkPath = determineAndroidSdkPath.getOrElse(error("Android SDK not found."+
             "You might need to set "+DefaultEnvs.mkString(" or ")))
 
@@ -65,6 +25,7 @@ abstract class BaseAndroidProject(info: ProjectInfo) extends DefaultProject(info
     // doesn't currently support -JXmx arguments.  For now, omit them in windows.
     if (isWindows) "" else dxJavaOpts
   }
+
   def platformName2ApiLevel:Int = androidPlatformName match {
     case "android-1.0" => 1
     case "android-1.1" => 2
@@ -174,6 +135,78 @@ abstract class BaseAndroidProject(info: ProjectInfo) extends DefaultProject(info
   def directory(dir: Path) = fileTask(dir :: Nil) {
     FileUtilities.createDirectory(dir, log)
   }
+  */
+
+  /** Default Settings */
+  val aptName = SettingKey[String]("apt-name")
+  val dbName = SettingKey[String]("db-name") 
+  val idlName = SettingKey[String]("idl-name")
+  val dxName = SettingKey[String]("dx-name")
+  val manifestName = SettingKey[String]("manifest-name")
+  val jarName = SettingKey[String]("jar-name")
+  val mapsJarName = SettingKey[String]("maps-jar-name")
+  val assetsDirectoryName = SettingKey[String]("assets-dir-name")
+  val resDirectoryName = SettingKey[String]("res-dir-name")
+  val classesMinJarName = SettingKey[String]("classes-min-jar-name")
+  val classesDexName = SettingKey[String]("classes-dex-name")
+  val resourcesApkName = SettingKey[String]("resources-apk-name")
+  val dxJavaOpts = SettingKey[String]("dx-java-opts")
+  val manifestSchema = SettingKey[String]("manifest-schema")
+  val envs = SettingKey[Seq[String]]("envs")
+
+  /** Tasks */
+  val aaptGenerate = TaskKey[Seq[File]]("apt-generate")
+
+  /** Commands */
+  
+  override val settings = inConfig(Android) (Seq (
+    // Default Settings
+    aptName := "aapt",
+    dbName := "adb",
+    idlName := "aidl",
+    dxName := "dx",
+    manifestName := "AndroidManifest.xml",
+    jarName := "android.jar",
+    mapsJarName := "maps.jar",
+    assetsDirectoryName := "assests",
+    resDirectoryName := "res",
+    classesMinJarName := "classes.min.jar",
+    classesDexName := "classes.dex",
+    resourcesApkName := "resources.apk", 
+    dxJavaOpts := "-JXmx512m",
+    manifestSchema := "http://schemas.android.com/apk/res/android",
+    envs := Seq("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
+  ))
+}
+
+/*
+abstract class BaseAndroidProject(info: ProjectInfo) extends DefaultProject(info) {
+  def proguardOption = ""
+  def proguardInJars = runClasspath --- proguardExclude
+  def proguardExclude = libraryJarPath +++ mainCompilePath +++ mainResourcesPath +++ managedClasspath(Configurations.Provided)
+  def libraryJarPath = androidJarPath +++ addonsJarPath
+  override def unmanagedClasspath = super.unmanagedClasspath +++ libraryJarPath
+
+  import BaseAndroidProject._
+
+  def androidPlatformName:String
+
+  def aaptName = DefaultAaptName // note: this is a .exe file in windows
+  def adbName = DefaultAdbName
+  def aidlName = DefaultAidlName
+  def dxName = DefaultDxName + osBatchSuffix
+  def androidManifestName = DefaultAndroidManifestName
+  def androidJarName = DefaultAndroidJarName
+  def mapsJarName = DefaultMapsJarName
+  def assetsDirectoryName = DefaultAssetsDirectoryName
+  def resDirectoryName = DefaultResDirectoryName
+  def classesMinJarName = DefaultClassesMinJarName
+  def classesDexName = DefaultClassesDexName
+  def packageApkName = artifactBaseName + ".apk"
+  def resourcesApkName = DefaultResourcesApkName
+  def dxJavaOpts = DefaultDxJavaOpts
+  def manifestSchema = DefaultManifestSchema
+
 
   override def ivyXML =
     <dependencies>
@@ -184,3 +217,4 @@ abstract class BaseAndroidProject(info: ProjectInfo) extends DefaultProject(info
        <exclude module="scala-library" conf="compile"/>
     </dependencies>
 }
+*/
