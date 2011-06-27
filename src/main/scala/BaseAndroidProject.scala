@@ -45,9 +45,17 @@ object BaseAndroidProject extends Plugin {
 
   val manifestPath = SettingKey[File]("manifest-path")
   val jarPath = SettingKey[File]("jar-path")
+  val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
   val addonsPath = SettingKey[File]("addons-path")
   val mapsJarPath = SettingKey[File]("maps-jar-path")
-  val mainAssetPath = SettingKey[File]("main-asset-path")
+  val mainAssetsPath = SettingKey[File]("main-asset-path")
+  val mainResPath = SettingKey[File]("main-res-path")
+  val managedJavaPath = SettingKey[File]("managed-java-path")
+  val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
+  val classesDexPath = SettingKey[File]("classes-dex-path")
+  val resourcesApkPath = SettingKey[File]("resources-apk-path")
+  val packageApkPath = SettingKey[File]("package-apk-path")
+  val skipProguard = SettingKey[Boolean]("skip-proguard")
 
   // Helpers
   private def determineAndroidSdkPath(es: Seq[String]) = {
@@ -119,6 +127,22 @@ object BaseAndroidProject extends Plugin {
     dxPath <<= (platformToolsPath, osDxName) (_ / _),
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
     jarPath <<= (platformPath, jarName) (_ / _),
+    nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
+    addonsPath <<= (sdkPath, apiLevel) { (sPath, api) =>
+      sPath / "add-ons" / ("addon_google_apis_google_inc_" + api) / "libs"
+    },
+    mapsJarPath <<= (addonsPath, mapsJarName) (_ / _),
+    mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
+    mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _),
+    managedJavaPath := file("src_managed") / "main" / "java",
+    classesMinJarPath <<= (target, classesMinJarName) (_ / _),
+    classesDexPath <<= (target, classesDexName) (_ / _),
+    resourcesApkPath <<= (target, resourcesApkName) (_ / _),
+    packageApkPath <<= (target, packageApkName) (_ / _),
+    skipProguard := false,
+
+    sourceDirectories <+= managedJavaPath.identity,
+    cleanFiles <+= managedJavaPath.identity,
 
     sdkPath <<= (envs) { es => 
       determineAndroidSdkPath(es).getOrElse(error(
