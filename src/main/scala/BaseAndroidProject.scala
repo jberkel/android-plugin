@@ -21,10 +21,19 @@ object BaseAndroidProject extends Plugin {
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
 
+  // Determined on OS
+  val packageApkName = SettingKey[String]("package-apk-name")
+  val osDxName = SettingKey[String]("os-dx-name")
+
   // Override this setting
   val platformName = SettingKey[String]("platform-name", "Targetted android platform")
 
   // Determined Settings 
+  val manifestPackage = SettingKey[String]("manifest-package")
+  val minSdkVersion = SettingKey[Option[Int]]("min-sdk-version")
+  val maxSdkVersion = SettingKey[Option[Int]]("max-sdk-version")
+  val apiLevel = SettingKey[Int]("api-level")
+
   val sdkPath = SettingKey[File]("sdk-path")
   val toolsPath = SettingKey[File]("tools-path")
   val dbPath = SettingKey[File]("db-path")
@@ -46,6 +55,32 @@ object BaseAndroidProject extends Plugin {
     if (paths.isEmpty) None else Some(Path(paths.head).asFile)
   }
 
+  private def isWindows = System.getProperty("os.name").startsWith("Windows")
+  private def osBatchSuffix = if (isWindows) ".bat" else ""
+
+  private def dxMemoryParameter(javaOpts: String) = {
+    // per http://code.google.com/p/android/issues/detail?id=4217, dx.bat
+    // doesn't currently support -JXmx arguments.  For now, omit them in windows.
+    if (isWindows) "" else javaOpts
+  }
+
+  private def platformName2ApiLevel(pName: String) = pName match {
+    case "android-1.0" => 1
+    case "android-1.1" => 2
+    case "android-1.5" => 3
+    case "android-1.6" => 4
+    case "android-2.0" => 5
+    case "android-2.1" => 7
+    case "android-2.2" => 8
+    case "android-2.3" => 9
+    case "android-2.3.3" => 10
+    case "android-3.0" => 11
+  }
+
+  private def manifest(mpath: File) = xml.XML.loadFile(mpath)
+  private def usesSdk(mpath: File, schema: String, key: String) = 
+    (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
+
   override val settings = inConfig(Android) (Seq (
     aptName := "aapt",
     dbName := "adb",
@@ -63,13 +98,25 @@ object BaseAndroidProject extends Plugin {
     manifestSchema := "http://schemas.android.com/apk/res/android",
     envs := Seq("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME"),
 
+    packageApkName <<= (artifact) (_.name + ".apk"),
+    osDxName <<= (dxName) (_ + osBatchSuffix),
+
+    apiLevel <<= (minSdkVersion, platformName) { (min, pName) =>
+      min.getOrElse(platformName2ApiLevel(pName))
+    },
+    manifestPackage <<= (manifestPath) {
+      manifest(_).attribute("package").getOrElse(error("package not defined")).text
+    },
+    minSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "minSdkVersion")),
+    maxSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "maxSdkVersion")),
+
     toolsPath <<= (sdkPath) (_ / "tools"),
     dbPath <<= (platformToolsPath, dbName) (_ / _),
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
     platformToolsPath <<= (sdkPath) (_ / "platform-tools"),
     aptPath <<= (platformToolsPath, aptName) (_ / _),
     idlPath <<= (platformToolsPath, idlName) (_ / _),
-    dxPath <<= (platformToolsPath, dxName) (_ / _),
+    dxPath <<= (platformToolsPath, osDxName) (_ / _),
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
     jarPath <<= (platformPath, jarName) (_ / _),
 
