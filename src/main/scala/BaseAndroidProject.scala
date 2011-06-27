@@ -57,7 +57,48 @@ object BaseAndroidProject extends Plugin {
   val packageApkPath = SettingKey[File]("package-apk-path")
   val skipProguard = SettingKey[Boolean]("skip-proguard")
 
+  val addonsJarPath = SettingKey[Seq[File]]("addons-jar-path")
+
+  /** Tasks */
+  val aptGenerate = TaskKey[Unit]("apt-generate")
+  private def aptGenerateTask: Project.Initialize[Task[Unit]] = 
+    (manifestPackage, aptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
+    (mPackage, aPath, mPath, resPath, jPath, javaPath) => Process (<x>
+      {aPath.absolutePath} package --auto-add-overlay -m
+        --custom-package {manifestPackage}
+        -M {mPath.absolutePath}
+        -S {resPath.absolutePath}
+        -I {jPath.absolutePath}
+        -J {javaPath.absolutePath}
+    </x>) !
+  }
+
+  val aidlGenerate = TaskKey[Unit]("aidl-generate")
+  private def aidlGenerateTask: Project.Initialize[Task[Unit]] = 
+    (sourceDirectories, idlPath, managedJavaPath, javaSource) map {
+    (sDirs, idPath, javaPath, jSource) =>
+    val aidlPaths = sDirs.map(_ * "*.aidl").reduceLeft(_ +++ _).get
+    if (aidlPaths.isEmpty)
+      Process(true)
+    else
+      aidlPaths.map { ap =>
+        idPath.absolutePath ::
+          "-o" + javaPath.absolutePath ::
+          "-I" + jSource.absolutePath ::
+          ap.absolutePath :: Nil 
+      }.foldLeft(None.asInstanceOf[Option[ProcessBuilder]]) { (f, s) =>
+        f match {
+          case None => Some(s)
+          case Some(first) => Some(first #&& s)
+        }
+      }.get
+  }
+
   // Helpers
+  def adbTask(emulator: Boolean, action: => String) = (dbPath) map { dPath => <x>
+    {dPath.absolutePath} {if (emulator) "-e" else "-d"} {action}
+  </x>}
+
   private def determineAndroidSdkPath(es: Seq[String]) = {
     val paths = for ( e <- es; p = System.getenv(e); if p != null) yield p
     if (paths.isEmpty) None else Some(Path(paths.head).asFile)
@@ -141,8 +182,27 @@ object BaseAndroidProject extends Plugin {
     packageApkPath <<= (target, packageApkName) (_ / _),
     skipProguard := false,
 
+    addonsJarPath <<= (manifestPath, manifestSchema, mapsJarPath) { 
+      (mPath, man, mapsPath) =>
+      for {
+        lib <- manifest(mPath) \ "application" \ "uses-library"
+        p = lib.attribute(man, "name").flatMap {
+          _.text match {
+            case "com.google.android.maps" => Some(mapsPath)
+            case _ => None
+          }
+        }
+        if p.isDefined
+      } yield p.get 
+    },
+
     sourceDirectories <+= managedJavaPath.identity,
     cleanFiles <+= managedJavaPath.identity,
+
+    aptGenerate <<= aptGenerateTask,
+    aidlGenerate <<= aidlGenerateTask,
+
+    compile <<= compile dependsOn (aptGenerate, aidlGenerate),
 
     sdkPath <<= (envs) { es => 
       determineAndroidSdkPath(es).getOrElse(error(
