@@ -4,6 +4,8 @@ name := "sbt-android-plugin"
 
 version := "0.5.2-SNAPSHOT" 
 
+scalacOptions += "-deprecation"
+
 publishTo := Some("Scala Tools Nexus" at 
                   "http://nexus.scala-tools.org/content/repositories/releases/")
 
