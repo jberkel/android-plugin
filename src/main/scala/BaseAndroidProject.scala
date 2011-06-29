@@ -21,7 +21,7 @@ object DefaultAValues {
   val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
 }
 
-object BaseAndroidProject extends Plugin {
+object Android extends Plugin {
   import DefaultAValues._
 
   private def aptGenerateTask: Project.Initialize[Task[Unit]] = 
@@ -88,7 +88,7 @@ object BaseAndroidProject extends Plugin {
   private def usesSdk(mpath: File, schema: String, key: String) = 
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
-  override val settings = inConfig(Android) (Seq (
+  override val settings = inConfig(AndroidKeys.Android) (Seq (
     aaptName := DefaultAaaptName,
     adbName := DefaultAadbName,
     aidlName := DefaultAaidlName,
