@@ -6,9 +6,9 @@ object AndroidKeys {
   val Android = config("android")
 
   /** Default Settings */
-  val aptName = SettingKey[String]("apt-name")
-  val dbName = SettingKey[String]("db-name")
-  val idlName = SettingKey[String]("idl-name")
+  val aaptName = SettingKey[String]("aapt-name")
+  val adbName = SettingKey[String]("adb-name")
+  val aidlName = SettingKey[String]("aidl-name")
   val dxName = SettingKey[String]("dx-name")
   val manifestName = SettingKey[String]("manifest-name")
   val jarName = SettingKey[String]("jar-name")

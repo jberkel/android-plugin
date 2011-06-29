@@ -3,7 +3,27 @@ import Keys._
 
 import AndroidKeys._
 
+object DefaultAValues {
+  val DefaultAaaptName = "aapt"
+  val DefaultAadbName = "adb"
+  val DefaultAaidlName = "aidl"
+  val DefaultDxName = "dx"
+  val DefaultAndroidManifestName = "AndroidManifest.xml"
+  val DefaultAndroidJarName = "android.jar"
+  val DefaultMapsJarName = "maps.jar"
+  val DefaultAssetsDirectoryName = "assets"
+  val DefaultResDirectoryName = "res"
+  val DefaultClassesMinJarName = "classes.min.jar"
+  val DefaultClassesDexName = "classes.dex"
+  val DefaultResourcesApkName = "resources.apk"
+  val DefaultDxJavaOpts = "-JXmx512m"
+  val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
+  val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
+}
+
 object BaseAndroidProject extends Plugin {
+  import DefaultAValues._
+
   private def aptGenerateTask: Project.Initialize[Task[Unit]] = 
     (manifestPackage, aptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
     (mPackage, aPath, mPath, resPath, jPath, javaPath) => Process (<x>
@@ -69,21 +89,21 @@ object BaseAndroidProject extends Plugin {
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
   override val settings = inConfig(Android) (Seq (
-    aptName := "aapt",
-    dbName := "adb",
-    idlName := "aidl",
-    dxName := "dx",
-    manifestName := "AndroidManifest.xml",
-    jarName := "android.jar",
-    mapsJarName := "maps.jar",
-    assetsDirectoryName := "assets",
-    resDirectoryName := "res",
-    classesMinJarName := "classes.min.jar",
-    classesDexName := "classes.dex",
-    resourcesApkName := "resources.apk",
-    dxJavaOpts := "-JXmx512m",
-    manifestSchema := "http://schemas.android.com/apk/res/android",
-    envs := Seq("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME"),
+    aaptName := DefaultAaaptName,
+    adbName := DefaultAadbName,
+    aidlName := DefaultAaidlName,
+    dxName := DefaultDxName,
+    manifestName := DefaultAndroidManifestName, 
+    jarName := DefaultAndroidJarName, 
+    mapsJarName := DefaultMapsJarName,
+    assetsDirectoryName := DefaultAssetsDirectoryName,
+    resDirectoryName := DefaultResDirectoryName,
+    classesMinJarName := DefaultClassesMinJarName,
+    classesDexName := DefaultClassesDexName,
+    resourcesApkName := DefaultResourcesApkName,
+    dxJavaOpts := DefaultDxJavaOpts,
+    manifestSchema := DefaultManifestSchema, 
+    envs := DefaultEnvs, 
 
     packageApkName <<= (artifact) (_.name + ".apk"),
     osDxName <<= (dxName) (_ + osBatchSuffix),
@@ -98,11 +118,11 @@ object BaseAndroidProject extends Plugin {
     maxSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "maxSdkVersion")),
 
     toolsPath <<= (sdkPath) (_ / "tools"),
-    dbPath <<= (platformToolsPath, dbName) (_ / _),
+    dbPath <<= (platformToolsPath, adbName) (_ / _),
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
     platformToolsPath <<= (sdkPath) (_ / "platform-tools"),
-    aptPath <<= (platformToolsPath, aptName) (_ / _),
-    idlPath <<= (platformToolsPath, idlName) (_ / _),
+    aptPath <<= (platformToolsPath, aaptName) (_ / _),
+    idlPath <<= (platformToolsPath, aidlName) (_ / _),
     dxPath <<= (platformToolsPath, osDxName) (_ / _),
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
     jarPath <<= (platformPath, jarName) (_ / _),
