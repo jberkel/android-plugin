@@ -64,8 +64,33 @@ object AndroidKeys {
   val aptGenerate = TaskKey[Unit]("apt-generate")
   val aidlGenerate = TaskKey[Unit]("aidl-generate")
 
+  /** Installable Tasks */
+  val installEmulator = TaskKey[Unit]("install-emulator")
+  val uninstallEmulator = TaskKey[Unit]("uninstall-emulator")
+
+  val installDevice = TaskKey[Unit]("install-device")
+  val uninstallDevice = TaskKey[Unit]("uninstall-device")
+
+  val reinstallEmulator = TaskKey[Unit]("reinstall-emulator")
+  val reinstallDevice = TaskKey[Unit]("reinstall-device")
+
+  val aaptPackage = TaskKey[Unit]("aapt-package")
+
   // Helpers
-  def adbTask(emulator: Boolean, action: => String) = (dbPath) map { dPath => <x>
-    {dPath.absolutePath} {if (emulator) "-e" else "-d"} {action}
-  </x>}
+  def adbTask(dPath: String, emulator: Boolean, action: => String): Unit = 
+    Process (<x>
+      {dPath} {if (emulator) "-e" else "-d"} {action}
+    </x>) !
+
+  def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
+    adbTask(dp.absolutePath, emulator, "install "+p.absolutePath) 
+  }
+
+  def reinstallTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
+    adbTask(dp.absolutePath, emulator, "install -r"+p.absolutePath)
+  }
+
+  def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage) map { (dp, m) =>
+    adbTask(dp.absolutePath, emulator, "uninstall "+m)
+  }
 }
