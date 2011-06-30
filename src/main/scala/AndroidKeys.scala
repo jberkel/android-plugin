@@ -93,48 +93,4 @@ object AndroidKeys {
   /** ddm Support tasks */
   val screenshotEmulator = TaskKey[File]("screenshot-emulator", "Take a screenshot from the emulator")
   val screenshotDevice = TaskKey[File]("screenshot-device", "Take a screenshot from the device")
-
-  // Helpers
-  def adbTask(dPath: String, emulator: Boolean, action: => String): Unit = 
-    Process (<x>
-      {dPath} {if (emulator) "-e" else "-d"} {action}
-    </x>) !
-
-  def startTask(emulator: Boolean) = 
-    (dbPath, manifestSchema, manifestPackage, manifestPath) map { 
-      (dp, schema, mPackage, amPath) =>
-      adbTask(dp.absolutePath, 
-              emulator, 
-              "shell am start -a android.intent.action.MAIN -n "+mPackage+"/"+
-              launcherActivity(schema, amPath, mPackage))
-  }
-
-  def launcherActivity(schema: String, amPath: File, mPackage: String) = {
-    val launcher = for (
-         activity <- (manifest(amPath) \\ "activity");
-         action <- (activity \\ "action");
-         val name = action.attribute(schema, "name").getOrElse(error{ 
-            "action name not defined"
-          }).text;
-         if name == "android.intent.action.MAIN"
-    ) yield {
-      val act = activity.attribute(schema, "name").getOrElse(error("activity name not defined")).text
-      if (act.contains(".")) act else mPackage+"."+act
-    }
-    launcher.headOption.getOrElse("")
-  }
-
-  def manifest(mpath: File) = xml.XML.loadFile(mpath)
-
-  def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install "+p.absolutePath) 
-  }
-
-  def reinstallTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install -r"+p.absolutePath)
-  }
-
-  def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage) map { (dp, m) =>
-    adbTask(dp.absolutePath, emulator, "uninstall "+m)
-  }
 }

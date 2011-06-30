@@ -2,28 +2,12 @@ import sbt._
 import Keys._
 
 import AndroidKeys._
-
-object DefaultAValues {
-  val DefaultAaaptName = "aapt"
-  val DefaultAadbName = "adb"
-  val DefaultAaidlName = "aidl"
-  val DefaultDxName = "dx"
-  val DefaultAndroidManifestName = "AndroidManifest.xml"
-  val DefaultAndroidJarName = "android.jar"
-  val DefaultMapsJarName = "maps.jar"
-  val DefaultAssetsDirectoryName = "assets"
-  val DefaultResDirectoryName = "res"
-  val DefaultClassesMinJarName = "classes.min.jar"
-  val DefaultClassesDexName = "classes.dex"
-  val DefaultResourcesApkName = "resources.apk"
-  val DefaultDxJavaOpts = "-JXmx512m"
-  val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
-  val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
-}
+import AndroidHelpers._
+import DefaultAValues._
 
 object Android extends Plugin {
-  import DefaultAValues._
 
+  /** Base Task definitions */
   private def aptGenerateTask: Project.Initialize[Task[Unit]] = 
     (manifestPackage, aptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
     (mPackage, aPath, mPath, resPath, jPath, javaPath) => Process (<x>
@@ -55,37 +39,6 @@ object Android extends Plugin {
         }
       }.get
   }
-
-  // Internal Helpers
-  private def determineAndroidSdkPath(es: Seq[String]) = {
-    val paths = for ( e <- es; p = System.getenv(e); if p != null) yield p
-    if (paths.isEmpty) None else Some(Path(paths.head).asFile)
-  }
-
-  private def isWindows = System.getProperty("os.name").startsWith("Windows")
-  private def osBatchSuffix = if (isWindows) ".bat" else ""
-
-  private def dxMemoryParameter(javaOpts: String) = {
-    // per http://code.google.com/p/android/issues/detail?id=4217, dx.bat
-    // doesn't currently support -JXmx arguments.  For now, omit them in windows.
-    if (isWindows) "" else javaOpts
-  }
-
-  private def platformName2ApiLevel(pName: String) = pName match {
-    case "android-1.0" => 1
-    case "android-1.1" => 2
-    case "android-1.5" => 3
-    case "android-1.6" => 4
-    case "android-2.0" => 5
-    case "android-2.1" => 7
-    case "android-2.2" => 8
-    case "android-2.3" => 9
-    case "android-2.3.3" => 10
-    case "android-3.0" => 11
-  }
-
-  private def usesSdk(mpath: File, schema: String, key: String) = 
-    (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
   override val settings = inConfig(AndroidConfig) (Seq (
     aaptName := DefaultAaaptName,
@@ -129,7 +82,7 @@ object Android extends Plugin {
     addonsPath <<= (sdkPath, apiLevel) { (sPath, api) =>
       sPath / "add-ons" / ("addon_google_apis_google_inc_" + api) / "libs"
     },
-    mapsJarPath <<= (addonsPath, mapsJarName) (_ / _),
+    mapsJarPath <<= (addonsPath) (_ / DefaultMapsJarName),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _),
     managedJavaPath := file("src_managed") / "main" / "java",
