@@ -60,6 +60,12 @@ object AndroidKeys {
 
   val addonsJarPath = SettingKey[Seq[File]]("addons-jar-path")
 
+  val keyalias = SettingKey[String]("key-alias")
+  val keystorePath = SettingKey[String]("key-store-path")
+  val zipAlignPath = SettingKey[File]("zip-align-path", "Path to zipalign")
+  val packageAlignedName = SettingKey[String]("package-aligned-name")
+  val packageAlignedPath = SettingKey[File]("package-aligned-path")
+
   /** General Tasks */
   val aptGenerate = TaskKey[Unit]("apt-generate")
   val aidlGenerate = TaskKey[Unit]("aidl-generate")
@@ -85,6 +91,15 @@ object AndroidKeys {
   /** Startable Tasks */
   val startDevice = TaskKey[Unit]("start-device", "Start package on device after installation")
   val startEmulator = TaskKey[Unit]("start-emulator", "Start package on emulator after installation")
+
+  /** ddm Support tasks */
+  val screenshotEmulator = TaskKey[File]("screenshot-emulator", "Take a screenshot from the emulator")
+  val screenshotDevice = TaskKey[File]("screenshot-device", "Take a screenshot from the device")
+
+  /** MarketPublish tasks */
+  val prepareMarket = TaskKey[Unit]("prepare-market", "Prepare asset for Market publication.")
+  val zipAlign = TaskKey[Unit]("zip-align", "Run zipalign on signed jar.")
+  val signRelease = TaskKey[Unit]("sign-release", "Sign with key alias using key-alias and keystore path.")
 
   // Helpers
   def adbTask(dPath: String, emulator: Boolean, action: => String): Unit = 
