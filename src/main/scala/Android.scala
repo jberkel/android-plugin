@@ -84,7 +84,6 @@ object Android extends Plugin {
     case "android-3.0" => 11
   }
 
-  private def manifest(mpath: File) = xml.XML.loadFile(mpath)
   private def usesSdk(mpath: File, schema: String, key: String) = 
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
