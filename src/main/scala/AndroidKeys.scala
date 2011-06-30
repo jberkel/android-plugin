@@ -60,7 +60,7 @@ object AndroidKeys {
 
   val addonsJarPath = SettingKey[Seq[File]]("addons-jar-path")
 
-  /** Tasks */
+  /** General Tasks */
   val aptGenerate = TaskKey[Unit]("apt-generate")
   val aidlGenerate = TaskKey[Unit]("aidl-generate")
 
@@ -74,13 +74,49 @@ object AndroidKeys {
   val reinstallEmulator = TaskKey[Unit]("reinstall-emulator")
   val reinstallDevice = TaskKey[Unit]("reinstall-device")
 
-  val aaptPackage = TaskKey[Unit]("aapt-package")
+  val aaptPackage = TaskKey[Unit]("aapt-package", "Package resources and assets.")
+  val pacakgeDebug = TaskKey[Unit]("package-debug", "Package and sign with a debug key.")
+  val packageRelease = TaskKey[Unit]("package-release", "Package without signing.")
+
+  // Resource generated Seq[File]?
+  val proguard = TaskKey[Unit]("proguard", "Optimize class files.")
+  val dx = TaskKey[Unit]("dx", "Convert class files to dex files")
+
+  /** Startable Tasks */
+  val startDevice = TaskKey[Unit]("start-device", "Start package on device after installation")
+  val startEmulator = TaskKey[Unit]("start-emulator", "Start package on emulator after installation")
 
   // Helpers
   def adbTask(dPath: String, emulator: Boolean, action: => String): Unit = 
     Process (<x>
       {dPath} {if (emulator) "-e" else "-d"} {action}
     </x>) !
+
+  def startTask(emulator: Boolean) = 
+    (dbPath, manifestSchema, manifestPackage, manifestPath) map { 
+      (dp, schema, mPackage, amPath) =>
+      adbTask(dp.absolutePath, 
+              emulator, 
+              "shell am start -a android.intent.action.MAIN -n "+mPackage+"/"+
+              launcherActivity(schema, amPath, mPackage))
+  }
+
+  def launcherActivity(schema: String, amPath: File, mPackage: String) = {
+    val launcher = for (
+         activity <- (manifest(amPath) \\ "activity");
+         action <- (activity \\ "action");
+         val name = action.attribute(schema, "name").getOrElse(error{ 
+            "action name not defined"
+          }).text;
+         if name == "android.intent.action.MAIN"
+    ) yield {
+      val act = activity.attribute(schema, "name").getOrElse(error("activity name not defined")).text
+      if (act.contains(".")) act else mPackage+"."+act
+    }
+    launcher.headOption.getOrElse("")
+  }
+
+  def manifest(mpath: File) = xml.XML.loadFile(mpath)
 
   def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
     adbTask(dp.absolutePath, emulator, "install "+p.absolutePath) 
