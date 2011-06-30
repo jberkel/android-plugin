@@ -87,7 +87,7 @@ object Android extends Plugin {
   private def usesSdk(mpath: File, schema: String, key: String) = 
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
-  override val settings = inConfig(AndroidKeys.Android) (Seq (
+  override val settings = inConfig(AndroidConfig) (Seq (
     aaptName := DefaultAaaptName,
     adbName := DefaultAadbName,
     aidlName := DefaultAaidlName,
