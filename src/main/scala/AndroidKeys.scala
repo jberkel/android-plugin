@@ -44,7 +44,7 @@ object AndroidKeys {
   val dbPath = SettingKey[File]("db-path")
   val platformPath = SettingKey[File]("platform-path")
   val platformToolsPath = SettingKey[File]("platform-tools-path")
-  val aptPath = SettingKey[File]("apt-path")
+  val aaptPath = SettingKey[File]("apt-path")
   val idlPath = SettingKey[File]("idl-path")
   val dxPath = SettingKey[File]("dx-path")
 

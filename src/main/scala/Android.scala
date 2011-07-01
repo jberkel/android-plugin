@@ -9,7 +9,7 @@ object Android extends Plugin {
 
   /** Base Task definitions */
   private def aptGenerateTask: Project.Initialize[Task[Unit]] = 
-    (manifestPackage, aptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
     (mPackage, aPath, mPath, resPath, jPath, javaPath) => Process (<x>
       {aPath.absolutePath} package --auto-add-overlay -m
         --custom-package {manifestPackage}
@@ -40,6 +40,18 @@ object Android extends Plugin {
       }.get
   }
 
+  private def aaptPackageTask: Project.Initialize[Task[Unit]] = 
+  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath) map {
+    (apPath, manPath, rPath, assetPath, jPath, resApkPath) => Process(<x>
+      {apPath} package --auto-add-overlay -f
+        -M {manPath}
+        -S {rPath}
+        -A {assetPath}
+        -I {jPath}
+        -F {resApkPath}
+    </x>) !
+  }
+  
   override val settings = inConfig(AndroidConfig) (Seq (
     aaptName := DefaultAaaptName,
     adbName := DefaultAadbName,
@@ -73,7 +85,7 @@ object Android extends Plugin {
     dbPath <<= (platformToolsPath, adbName) (_ / _),
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
     platformToolsPath <<= (sdkPath) (_ / "platform-tools"),
-    aptPath <<= (platformToolsPath, aaptName) (_ / _),
+    aaptPath <<= (platformToolsPath, aaptName) (_ / _),
     idlPath <<= (platformToolsPath, aidlName) (_ / _),
     dxPath <<= (platformToolsPath, osDxName) (_ / _),
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
@@ -118,6 +130,20 @@ object Android extends Plugin {
       determineAndroidSdkPath(es).getOrElse(error(
         "Android SDK not found. You might need to set %s".format(es.mkString(" or "))
       ))
-    }
+    },
+
+    // Installable Tasks
+    managedResourceDirectories <+= mainAssetsPath.identity, 
+
+    installEmulator <<= installTask(emulator = true),
+    uninstallEmulator <<= uninstallTask(emulator = true),
+    reinstallEmulator <<= reinstallTask(emulator = true),
+    
+    installDevice <<= installTask(emulator = false),
+    uninstallDevice <<= uninstallTask(emulator = false),
+    reinstallDevice <<= reinstallTask(emulator = false),
+
+    aaptPackage <<= aaptPackageTask,
+    aaptPackage <<= aaptPackage dependsOn dx
   ))
 }
