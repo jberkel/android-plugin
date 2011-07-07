@@ -9,6 +9,10 @@ Android project.
 object AndroidKeys {
   val AndroidConfig = config("android")
 
+  /** Proguard Settings */
+  val proguardOption = SettingKey[String]("proguard-option")
+  val libraryJarPath = SettingKey[Seq[File]]("library-path") 
+
   /** Default Settings */
   val aaptName = SettingKey[String]("aapt-name")
   val adbName = SettingKey[String]("adb-name")
@@ -63,6 +67,10 @@ object AndroidKeys {
   val skipProguard = SettingKey[Boolean]("skip-proguard")
 
   val addonsJarPath = SettingKey[Seq[File]]("addons-jar-path")
+
+  /** Proguard Tasks */
+  val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
+  val proguardExclude = TaskKey[Seq[File]]("proguard-exclude") 
 
   /** General Tasks */
   val aptGenerate = TaskKey[Unit]("apt-generate")

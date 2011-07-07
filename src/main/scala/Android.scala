@@ -1,3 +1,5 @@
+import proguard.{Configuration=>ProGuardConfiguration, ProGuard, ConfigurationParser}
+
 import sbt._
 import Keys._
 
@@ -51,7 +53,26 @@ object Android extends Plugin {
         -F {resApkPath}
     </x>) !
   }
-  
+ 
+  private def dxTask: Project.Initialize[Task[Unit]] = 
+    (skipProguard, dxJavaOpts, dxPath, target, 
+     proguardInJars, classesDexPath, classesMinJarPath) map { 
+      (skipProguard, javaOpts, dxPath, output, 
+     proguardInJars, classesDexPath, classesMinJarPath) =>
+      val outputs = if (!skipProguard) {
+        classesMinJarPath get
+      } else {
+        proguardInJars +++ output get
+      }
+      Process(
+      <x>
+        {dxPath} {dxMemoryParameter(javaOpts)}
+        --dex --output={classesDexPath}
+        {outputs.mkString(" ")}
+      </x>
+      ) !
+    }
+
   override val settings = inConfig(AndroidConfig) (Seq (
     aaptName := DefaultAaaptName,
     adbName := DefaultAadbName,
@@ -118,6 +139,19 @@ object Android extends Plugin {
       } yield p.get 
     },
 
+    proguardOption := "",
+    libraryJarPath <<= (jarPath, addonsJarPath) (_ +++ _ get),
+    proguardExclude <<= 
+      (libraryJarPath, classDirectory, resourceDirectory, managedClasspath) map {
+        (libPath, classDirectory, resourceDirectory, managedClasspath) =>
+          val temp = libPath +++ classDirectory +++ resourceDirectory 
+          managedClasspath.foldLeft(temp)(_ +++ _.data) get
+      },
+    proguardInJars <<= (fullClasspath, proguardExclude) map {
+      (runClasspath, proguardExclude) =>
+      runClasspath.map(_.data) --- proguardExclude get
+    },
+
     sourceDirectories <+= managedJavaPath.identity,
     cleanFiles <+= managedJavaPath.identity,
 
@@ -144,6 +178,8 @@ object Android extends Plugin {
     reinstallDevice <<= reinstallTask(emulator = false),
 
     aaptPackage <<= aaptPackageTask,
-    aaptPackage <<= aaptPackage dependsOn dx
+    aaptPackage <<= aaptPackage dependsOn dx,
+    dx <<= dxTask,
+    dx <<= dx dependsOn compile
   ))
 }

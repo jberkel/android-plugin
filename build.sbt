@@ -12,8 +12,8 @@ publishTo := Some("Scala Tools Nexus" at
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 libraryDependencies ++= Seq(
-  "net.sf.proguard" % "proguard" % "4.4",
-  "com.google.android.tools" % "ddmlib" % "r10" 
+  "com.google.android.tools" % "ddmlib" % "r10", 
+  "net.sf.proguard" % "proguard" % "4.4"
 )
 
 sbtPlugin := true
