@@ -87,10 +87,9 @@ object AndroidKeys {
   val reinstallDevice = TaskKey[Unit]("reinstall-device")
 
   val aaptPackage = TaskKey[Unit]("aapt-package", "Package resources and assets.")
-  val pacakgeDebug = TaskKey[Unit]("package-debug", "Package and sign with a debug key.")
+  val packageDebug = TaskKey[Unit]("package-debug", "Package and sign with a debug key.")
   val packageRelease = TaskKey[Unit]("package-release", "Package without signing.")
 
-  // Resource generated Seq[File]?
   val proguard = TaskKey[Unit]("proguard", "Optimize class files.")
   val dx = TaskKey[Unit]("dx", "Convert class files to dex files")
 

@@ -55,14 +55,14 @@ object Android extends Plugin {
   }
  
   private def dxTask: Project.Initialize[Task[Unit]] = 
-    (skipProguard, dxJavaOpts, dxPath, target, 
+    (skipProguard, dxJavaOpts, dxPath, classDirectory, 
      proguardInJars, classesDexPath, classesMinJarPath) map { 
-      (skipProguard, javaOpts, dxPath, output, 
+      (skipProguard, javaOpts, dxPath, classDirectory, 
      proguardInJars, classesDexPath, classesMinJarPath) =>
       val outputs = if (!skipProguard) {
         classesMinJarPath get
       } else {
-        proguardInJars +++ output get
+        proguardInJars +++ classDirectory get
       }
       Process(
       <x>
@@ -71,6 +71,37 @@ object Android extends Plugin {
         {outputs.mkString(" ")}
       </x>
       ) !
+    }
+
+  private def proguardTask: Project.Initialize[Task[Unit]] =
+    (scalaInstance, classDirectory, proguardInJars, 
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
+      (scalaInstance, classDirectory, proguardInJars, 
+       classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
+      val args = 
+            "-injars" :: classDirectory.absolutePath + Path.sep +
+             scalaInstance.libraryJar.absolutePath + 
+             "(!META-INF/MANIFEST.MF,!library.properties)" +
+             (if (!proguardInJars.isEmpty)
+             Path.sep +
+             proguardInJars.map(_+"(!META-INF/MANIFEST.MF,!**/R.class,!**/R$*.class,!**/TR.class,!**/TR$*.class)").mkString(Path.sep.toString) else "") ::
+             "-outjars" :: classesMinJarPath.absolutePath ::
+             "-libraryjars" :: libraryJarPath.mkString(Path.sep.toString) ::
+             "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
+             "-dontnote scala.Enumeration" ::
+             "-dontnote org.xml.sax.EntityResolver" ::
+             "-keep public class * extends android.app.Activity" ::
+             "-keep public class * extends android.app.Service" ::
+             "-keep public class * extends android.appwidget.AppWidgetProvider" ::
+             "-keep public class * extends android.content.BroadcastReceiver" ::
+             "-keep public class * extends android.content.ContentProvider" ::
+             "-keep public class * extends android.view.View" ::
+             "-keep public class * extends android.app.Application" ::
+             "-keep public class "+manifestPackage+".** { public protected *; }" ::
+             "-keep public class * implements junit.framework.Test { public void test*(); }" :: proguardOption :: Nil
+      val config = new ProGuardConfiguration
+      new ConfigurationParser(args.toArray[String]).parse(config)
+      new ProGuard(config).execute
     }
 
   override val settings = inConfig(AndroidConfig) (Seq (
@@ -180,6 +211,15 @@ object Android extends Plugin {
     aaptPackage <<= aaptPackageTask,
     aaptPackage <<= aaptPackage dependsOn dx,
     dx <<= dxTask,
-    dx <<= dx dependsOn compile
+    dx <<= dx dependsOn compile,
+
+    proguard <<= proguardTask,
+    proguard <<= proguard dependsOn compile,
+
+    // Fill in implemenation later
+    packageDebug := (),
+    packageRelease := (),
+    packageDebug <<= packageDebug dependsOn aaptPackage,
+    packageRelease <<= packageRelease dependsOn aaptPackage
   ))
 }
