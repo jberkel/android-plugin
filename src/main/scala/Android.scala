@@ -104,7 +104,16 @@ object Android extends Plugin {
       new ProGuard(config).execute
     }
 
+  // TODO: Move the managed sources and resources outside of AndroidConfig
   override val settings = inConfig(AndroidConfig) (Seq (
+    // Handle the defaults
+    sourceDirectory <<= (sourceDirectory in Global).identity,
+    resourceDirectory <<= (resourceDirectory in Compile).identity,
+    classDirectory <<= (classDirectory in Global).identity,
+    javaSource <<= (javaSource in Global).identity,
+    managedClasspath <<= (managedClasspath in Runtime).identity,
+    fullClasspath <<= (fullClasspath in Runtime).identity,
+
     aaptName := DefaultAaaptName,
     adbName := DefaultAadbName,
     aidlName := DefaultAaidlName,
