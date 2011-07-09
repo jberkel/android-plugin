@@ -216,10 +216,24 @@ object Android extends Plugin {
     proguard <<= proguardTask,
     proguard <<= proguard dependsOn compile,
 
+    startDevice <<= startTask(false),
+    startEmulator <<= startTask(true),
+    startDevice <<= startDevice dependsOn reinstallDevice,
+    startEmulator <<= startEmulator dependsOn reinstallEmulator,
+
     // Fill in implemenation later
     packageDebug := (),
     packageRelease := (),
     packageDebug <<= packageDebug dependsOn aaptPackage,
-    packageRelease <<= packageRelease dependsOn aaptPackage
+    packageRelease <<= packageRelease dependsOn aaptPackage,
+    
+    screenshotDevice <<= (dbPath) map { p => 
+      screenshot(false, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "device.png")
+      file("device.png")
+    },
+    screenshotEmulator <<= (dbPath) map { p => 
+      screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator.png")
+      file("emulator.png")
+    }
   ))
 }
