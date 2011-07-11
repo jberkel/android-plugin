@@ -7,7 +7,7 @@ import Keys._
 Android project. 
  */
 object AndroidKeys {
-  val AndroidConfig = config("android")
+  val AndroidConfig = config("android") extend (Compile)
 
   /** Proguard Settings */
   val proguardOption = SettingKey[String]("proguard-option")

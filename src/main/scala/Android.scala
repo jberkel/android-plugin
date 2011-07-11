@@ -105,12 +105,14 @@ object Android extends Plugin {
     }
 
   // TODO: Move the managed sources and resources outside of AndroidConfig
-  override val settings = inConfig(AndroidConfig) (Seq (
-    // Handle the defaults
-    sourceDirectory <<= (sourceDirectory in Global).identity,
+  override val settings = inConfig(AndroidConfig)(Seq (
+    // Handle the delegates for android settings
+    classDirectory <<= (classDirectory in Compile).identity,
+    sourceDirectory <<= (sourceDirectory in Compile).identity,
+    sourceDirectories <<= (sourceDirectories in Compile).identity,
     resourceDirectory <<= (resourceDirectory in Compile).identity,
-    classDirectory <<= (classDirectory in Global).identity,
-    javaSource <<= (javaSource in Global).identity,
+    resourceDirectories <<= (resourceDirectories in Compile).identity,
+    javaSource <<= (javaSource in Compile).identity,
     managedClasspath <<= (managedClasspath in Runtime).identity,
     fullClasspath <<= (fullClasspath in Runtime).identity,
 
@@ -192,13 +194,8 @@ object Android extends Plugin {
       runClasspath.map(_.data) --- proguardExclude get
     },
 
-    sourceDirectories <+= managedJavaPath.identity,
-    cleanFiles <+= managedJavaPath.identity,
-
     aptGenerate <<= aptGenerateTask,
     aidlGenerate <<= aidlGenerateTask,
-
-    compile <<= compile dependsOn (aptGenerate, aidlGenerate),
 
     sdkPath <<= (envs) { es => 
       determineAndroidSdkPath(es).getOrElse(error(
@@ -206,9 +203,13 @@ object Android extends Plugin {
       ))
     },
 
-    // Installable Tasks
-    managedResourceDirectories <+= mainAssetsPath.identity, 
+    sourceDirectories <+= (managedJavaPath).identity,
+    cleanFiles <+= (managedJavaPath).identity,
+    resourceDirectories <+= (mainAssetsPath).identity, 
 
+    compile in Compile  <<= compile in Compile dependsOn (aptGenerate, aidlGenerate),
+
+    // Installable Tasks
     installEmulator <<= installTask(emulator = true),
     uninstallEmulator <<= uninstallTask(emulator = true),
     reinstallEmulator <<= reinstallTask(emulator = true),
@@ -220,10 +221,10 @@ object Android extends Plugin {
     aaptPackage <<= aaptPackageTask,
     aaptPackage <<= aaptPackage dependsOn dx,
     dx <<= dxTask,
-    dx <<= dx dependsOn compile,
+    dx <<= dx dependsOn (compile in Compile),
 
     proguard <<= proguardTask,
-    proguard <<= proguard dependsOn compile,
+    proguard <<= proguard dependsOn (compile in Compile),
 
     startDevice <<= startTask(false),
     startEmulator <<= startTask(true),

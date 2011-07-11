@@ -46,7 +46,6 @@ object MarketPublish extends Plugin {
 
     // Configuring Tasks
     cleanAligned <<= (packageAlignedPath) map (IO.delete(_)),
-    cleanFiles <+= packageAlignedPath.identity,
 
     prepareMarket <<= prepareMarketTask,
     prepareMarket <<= prepareMarket dependsOn zipAlign,
@@ -56,5 +55,7 @@ object MarketPublish extends Plugin {
 
     signRelease <<= signReleaseTask,
     signRelease <<= signRelease dependsOn packageRelease
-  ))
+  )) ++ Seq (
+    cleanFiles <+= (packageAlignedPath in AndroidConfig).identity
+  )
 }
