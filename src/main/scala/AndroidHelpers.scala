@@ -73,18 +73,6 @@ object AndroidHelpers {
 
   def manifest(mpath: File) = xml.XML.loadFile(mpath)
 
-  def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install "+p.absolutePath) 
-  }
-
-  def reinstallTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install -r"+p.absolutePath)
-  }
-
-  def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage) map { (dp, m) =>
-    adbTask(dp.absolutePath, emulator, "uninstall "+m)
-  }
-
   def bridge(path: String) = {
     AndroidDebugBridge.init(false)
     java.lang.Runtime.getRuntime().addShutdownHook(new Thread() { override def run() { AndroidDebugBridge.terminate() }})
