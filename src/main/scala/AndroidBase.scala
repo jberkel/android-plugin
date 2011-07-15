@@ -6,7 +6,7 @@ import AndroidHelpers._
 
 object AndroidBase {
 
-  private def aaptGenerateTask: Project.Initialize[Task[Unit]] = 
+  private def aaptGenerateTask =
     (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
     (mPackage, aPath, mPath, resPath, jPath, javaPath) => 
     Process (<x>
@@ -17,6 +17,8 @@ object AndroidBase {
         -I {jPath.absolutePath}
         -J {javaPath.absolutePath}
     </x>) !
+
+    javaPath ** "*.java" get
   }
 
   private def aidlGenerateTask: Project.Initialize[Task[Unit]] = 
@@ -109,18 +111,19 @@ object AndroidBase {
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
-    unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))), 
-
     sdkPath <<= (envs) { es => 
       determineAndroidSdkPath(es).getOrElse(error(
         "Android SDK not found. You might need to set %s".format(es.mkString(" or "))
       ))
     },
 
-    sourceDirectories <+= (managedJavaPath).identity,
-    cleanFiles <+= (managedJavaPath).identity,
-    resourceDirectories <+= (mainAssetsPath).identity, 
+    unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))), 
 
-    compile in Compile  <<= compile in Compile dependsOn (aaptGenerate, aidlGenerate)
+    sourceGenerators in Compile <+= aaptGenerate.identity,
+
+    cleanFiles <+= (managedJavaPath).identity,
+    resourceDirectories <+= (mainAssetsPath).identity,
+
+    compile in Compile  <<= compile in Compile dependsOn aidlGenerate
   )
 }
