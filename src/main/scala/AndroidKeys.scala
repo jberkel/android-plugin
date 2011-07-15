@@ -93,7 +93,7 @@ object AndroidKeys {
 
   /** Base Tasks */
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")
-  val aidlGenerate = TaskKey[Unit]("aidl-generate", 
+  val aidlGenerate = TaskKey[Seq[File]]("aidl-generate", 
     "Generate Java classes from .aidl files.")
 
   val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")

@@ -21,7 +21,7 @@ object AndroidBase {
     javaPath ** "*.java" get
   }
 
-  private def aidlGenerateTask: Project.Initialize[Task[Unit]] = 
+  private def aidlGenerateTask =
     (sourceDirectories, idlPath, managedJavaPath, javaSource) map {
     (sDirs, idPath, javaPath, jSource) =>
     val aidlPaths = sDirs.map(_ * "*.aidl").reduceLeft(_ +++ _).get
@@ -40,6 +40,8 @@ object AndroidBase {
         }
       }.get
     processor !
+
+    javaPath ** "*.java" get
   }
 
   lazy val settings: Seq[Setting[_]] = Seq (
@@ -119,11 +121,9 @@ object AndroidBase {
 
     unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))), 
 
-    sourceGenerators in Compile <+= aaptGenerate.identity,
+    sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
 
     cleanFiles <+= (managedJavaPath).identity,
-    resourceDirectories <+= (mainAssetsPath).identity,
-
-    compile in Compile  <<= compile in Compile dependsOn aidlGenerate
+    resourceDirectories <+= (mainAssetsPath).identity
   )
 }
