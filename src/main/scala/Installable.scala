@@ -7,7 +7,7 @@ import AndroidHelpers._
 
 import java.io.{File => JFile}
 
-object Installable {
+object AndroidInstall {
 
   private def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
     adbTask(dp.absolutePath, emulator, "install "+p.absolutePath) 
@@ -19,30 +19,6 @@ object Installable {
 
   private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage) map { (dp, m) =>
     adbTask(dp.absolutePath, emulator, "uninstall "+m)
-  }
-
-  private def startTask(emulator: Boolean) = 
-    (dbPath, manifestSchema, manifestPackage, manifestPath) map { 
-      (dp, schema, mPackage, amPath) =>
-      adbTask(dp.absolutePath, 
-              emulator, 
-              "shell am start -a android.intent.action.MAIN -n "+mPackage+"/"+
-              launcherActivity(schema, amPath, mPackage))
-  }
-
-  private def launcherActivity(schema: String, amPath: File, mPackage: String) = {
-    val launcher = for (
-         activity <- (manifest(amPath) \\ "activity");
-         action <- (activity \\ "action");
-         val name = action.attribute(schema, "name").getOrElse(error{ 
-            "action name not defined"
-          }).text;
-         if name == "android.intent.action.MAIN"
-    ) yield {
-      val act = activity.attribute(schema, "name").getOrElse(error("activity name not defined")).text
-      if (act.contains(".")) act else mPackage+"."+act
-    }
-    launcher.headOption.getOrElse("")
   }
 
   private def aaptPackageTask: Project.Initialize[Task[Unit]] = 
@@ -124,7 +100,7 @@ object Installable {
     reinstallDevice <<= reinstallTask(emulator = false)
   )
 
-  lazy val installableSettings: Seq[Setting[_]] = installerTasks ++ 
+  lazy val settings: Seq[Setting[_]] = installerTasks ++ 
     installerKeys.map(t => t <<= t dependsOn packageDebug) ++ Seq (
     uninstallEmulator <<= uninstallTask(emulator = true),
     uninstallDevice <<= uninstallTask(emulator = false),
@@ -140,12 +116,6 @@ object Installable {
 
     proguard <<= proguardTask,
     proguard <<= proguard dependsOn (compile in Compile),
-
-    startDevice <<= startTask(false),
-    startEmulator <<= startTask(true),
-
-    startDevice <<= startDevice dependsOn reinstallDevice,
-    startEmulator <<= startEmulator dependsOn reinstallEmulator,
 
     packageConfig <<= 
       (toolsPath, packageApkPath, resourcesApkPath, 

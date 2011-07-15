@@ -7,7 +7,7 @@ import Keys._
 Android project. 
  */
 object AndroidKeys {
-  val AndroidConfig = config("android") extend (Compile)
+  val Android= config("android") extend (Compile)
 
   /** Proguard Settings */
   val proguardOption = SettingKey[String]("proguard-option")
@@ -74,8 +74,8 @@ object AndroidKeys {
   val proguardExclude = TaskKey[Seq[File]]("proguard-exclude") 
 
   /** General Tasks */
-  val aptGenerate = TaskKey[Unit]("apt-generate")
-  val aidlGenerate = TaskKey[Unit]("aidl-generate")
+  val aaptGenerate = TaskKey[Unit]("aapt-generate", "Generate R.java")
+  val aidlGenerate = TaskKey[Unit]("aidl-generate", "Generate Java classes from .aidl files.")
 
   /** Installable Tasks */
   val installEmulator = TaskKey[Unit]("install-emulator")
@@ -97,6 +97,8 @@ object AndroidKeys {
   val dx = TaskKey[Unit]("dx", "Convert class files to dex files")
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
+
+  val makeManagedJavaPath = TaskKey[Unit]("make-managed-java-path")
 
   /** Startable Tasks */
   val startDevice = TaskKey[Unit]("start-device", "Start package on device after installation")

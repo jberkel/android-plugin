@@ -3,7 +3,7 @@ import sbt._
 import Keys._
 import AndroidKeys._
 
-object MarketPublish extends Plugin {
+object AndroidMarketPublish {
 
   val keyalias = SettingKey[String]("key-alias")
   val keystorePath = SettingKey[File]("key-store-path")
@@ -37,7 +37,7 @@ object MarketPublish extends Plugin {
 
   private def getPassword = SimpleReader.readLine("\nEnter keystore password: ").get
 
-  val marketSettings = inConfig(AndroidConfig) (Seq(
+  lazy val settings = inConfig(Android) (Seq(
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
@@ -56,6 +56,7 @@ object MarketPublish extends Plugin {
     signRelease <<= signReleaseTask,
     signRelease <<= signRelease dependsOn packageRelease
   )) ++ Seq (
-    cleanFiles <+= (packageAlignedPath in AndroidConfig).identity
+    cleanFiles <+= (packageAlignedPath in Android).identity,
+    prepareMarket <<= (prepareMarket in Android).identity
   )
 }
