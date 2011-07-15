@@ -53,34 +53,41 @@ object AndroidInstall {
     }
 
   private def proguardTask: Project.Initialize[Task[Unit]] =
-    (scalaInstance, classDirectory, proguardInJars, 
+    (skipProguard, scalaInstance, classDirectory, proguardInJars, streams, 
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
-      (scalaInstance, classDirectory, proguardInJars, 
+      (skipProguard, scalaInstance, classDirectory, proguardInJars, streams,
        classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
-      val args = 
-            "-injars" :: classDirectory.absolutePath + JFile.pathSeparator +
-             scalaInstance.libraryJar.absolutePath + 
-             "(!META-INF/MANIFEST.MF,!library.properties)" +
-             (if (!proguardInJars.isEmpty)
-             JFile.pathSeparator +
-             proguardInJars.map(_+"(!META-INF/MANIFEST.MF,!**/R.class,!**/R$*.class,!**/TR.class,!**/TR$*.class)").mkString(JFile.pathSeparator) else "") ::
-             "-outjars" :: classesMinJarPath.absolutePath ::
-             "-libraryjars" :: libraryJarPath.mkString(JFile.pathSeparator) ::
-             "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
-             "-dontnote scala.Enumeration" ::
-             "-dontnote org.xml.sax.EntityResolver" ::
-             "-keep public class * extends android.app.Activity" ::
-             "-keep public class * extends android.app.Service" ::
-             "-keep public class * extends android.appwidget.AppWidgetProvider" ::
-             "-keep public class * extends android.content.BroadcastReceiver" ::
-             "-keep public class * extends android.content.ContentProvider" ::
-             "-keep public class * extends android.view.View" ::
-             "-keep public class * extends android.app.Application" ::
-             "-keep public class "+manifestPackage+".** { public protected *; }" ::
-             "-keep public class * implements junit.framework.Test { public void test*(); }" :: proguardOption :: Nil
-      val config = new ProGuardConfiguration
-      new ConfigurationParser(args.toArray[String]).parse(config)
-      new ProGuard(config).execute
+      skipProguard match {
+        case false => 
+          val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class", 
+                               "TR.class", "TR$.class") 
+          val args = 
+                "-injars" :: classDirectory.absolutePath + JFile.pathSeparator +
+                 scalaInstance.libraryJar.absolutePath + 
+                 "(!META-INF/MANIFEST.MF,!library.properties)" +
+                 (if (!proguardInJars.isEmpty)
+                 JFile.pathSeparator +
+                 proguardInJars.map(_+manifestr.mkString("(", ",!**/", ")")).mkString(JFile.pathSeparator) else "") ::
+                 "-outjars" :: classesMinJarPath.absolutePath ::
+                 "-libraryjars" :: libraryJarPath.mkString(JFile.pathSeparator) ::
+                 "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
+                 "-dontnote scala.Enumeration" ::
+                 "-dontnote org.xml.sax.EntityResolver" ::
+                 "-keep public class * extends android.app.Activity" ::
+                 "-keep public class * extends android.app.Service" ::
+                 "-keep public class * extends android.appwidget.AppWidgetProvider" ::
+                 "-keep public class * extends android.content.BroadcastReceiver" ::
+                 "-keep public class * extends android.content.ContentProvider" ::
+                 "-keep public class * extends android.view.View" ::
+                 "-keep public class * extends android.app.Application" ::
+                 "-keep public class "+manifestPackage+".** { public protected *; }" ::
+                 "-keep public class * implements junit.framework.Test { public void test*(); }" :: 
+                 proguardOption :: Nil
+          val config = new ProGuardConfiguration
+          new ConfigurationParser(args.toArray[String]).parse(config)
+          new ProGuard(config).execute
+        case true => streams.log.info("Skipping Proguard")
+      }
     }
 
   private def packageTask(debug: Boolean) = (packageConfig, streams) map { (c, s) =>
@@ -110,7 +117,7 @@ object AndroidInstall {
     aaptPackage <<= aaptPackageTask,
     aaptPackage <<= aaptPackage dependsOn (makeAssetPath, dx),
     dx <<= dxTask,
-    dx <<= dx dependsOn (compile in Compile),
+    dx <<= dx dependsOn proguard,
 
     cleanApk <<= (packageApkPath) map (IO.delete(_)),
 
@@ -119,7 +126,8 @@ object AndroidInstall {
 
     packageConfig <<= 
       (toolsPath, packageApkPath, resourcesApkPath, 
-       classesDexPath, nativeLibrariesPath, classesMinJarPath) (ApkConfig(_, _, _, _, _, _)),
+       classesDexPath, nativeLibrariesPath, classesMinJarPath) 
+      (ApkConfig(_, _, _, _, _, _)),
     packageDebug <<= packageTask(true),
     packageRelease <<= packageTask(false),
     packageDebug <<= packageDebug dependsOn (cleanApk, aaptPackage),
