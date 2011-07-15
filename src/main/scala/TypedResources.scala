@@ -7,8 +7,8 @@ import AndroidKeys._
 
 object TypedResources {
   private def generateTypedResourcesTask =
-    (typedResource, layoutResources, jarPath, streams) map {
-    (typedResource, layoutResources, jarPath, s) =>
+    (typedResource, layoutResources, jarPath, manifestPackage, streams) map {
+    (typedResource, layoutResources, jarPath, manifestPackage, s) =>
       val Id = """@\+id/(.*)""".r
       val androidJarLoader = ClasspathUtilities.toLoader(jarPath)
 
@@ -77,7 +77,7 @@ object TypedResources {
             )
         )
         s.log.info("Wrote %s" format(typedResource))
-        typedResource
+        Seq(typedResource)
     }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
@@ -87,10 +87,10 @@ object TypedResources {
     },
     layoutResources <<= (mainResPath) (_ / "layout" ** "*.xml" get),
 
-    sourceDirectories in Compile <+= managedScalaPath.identity,
-    watchSources in Compile <++= (layoutResources) map (ls => ls),
+    generateTypedResources <<= generateTypedResourcesTask,
 
-    generateTypedResources <<= generateTypedResourcesTask
+    sourceGenerators in Compile <+= generateTypedResources.identity,
+    watchSources in Compile <++= (layoutResources) map (ls => ls)
   )) ++ Seq (
     cleanFiles <+= (managedScalaPath in Android).identity,
     generateTypedResources <<= (generateTypedResources in Android).identity
