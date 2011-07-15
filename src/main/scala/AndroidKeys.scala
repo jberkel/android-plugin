@@ -129,6 +129,13 @@ object AndroidKeys {
   val startEmulator = TaskKey[Unit]("start-emulator", 
     "Start package on emulator after installation")
 
+  val emulatorStart = InputKey[Process]("emulator-start", 
+    "Launches a user specified avd")
+  val emulatorStop = InputKey[Int]("emulator-stop",
+    "Kills the running emulator.")
+  val listDevices = TaskKey[Unit]("list-devices",
+    "List devices from the adb server.") 
+
   /** ddm Support tasks */
   val screenshotEmulator = TaskKey[File]("screenshot-emulator", 
     "Take a screenshot from the emulator")

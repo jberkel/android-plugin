@@ -8,7 +8,7 @@ object AndroidProject extends Plugin {
 
   lazy val defaultAliases = Seq (
     startEmulator, installEmulator, reinstallEmulator, uninstallEmulator,
-    startDevice, installDevice, reinstallDevice, uninstallDevice
+    startDevice, installDevice, reinstallDevice, uninstallDevice, listDevices
   )
 
   override lazy val settings = inConfig(Android)(
