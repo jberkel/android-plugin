@@ -5,6 +5,8 @@ import Keys._
 import AndroidKeys._
 import AndroidHelpers._
 
+import java.io.{File => JFile}
+
 object Installable {
 
   private def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
@@ -12,7 +14,7 @@ object Installable {
   }
 
   private def reinstallTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install -r"+p.absolutePath)
+    adbTask(dp.absolutePath, emulator, "install -r "+p.absolutePath)
   }
 
   private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage) map { (dp, m) =>
@@ -63,7 +65,7 @@ object Installable {
       val outputs = if (!skipProguard) {
         classesMinJarPath get
       } else {
-        proguardInJars +++ classDirectory get
+        classDirectory +++ proguardInJars get
       }
       Process(
       <x>
@@ -80,14 +82,14 @@ object Installable {
       (scalaInstance, classDirectory, proguardInJars, 
        classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
       val args = 
-            "-injars" :: classDirectory.absolutePath + Path.sep +
+            "-injars" :: classDirectory.absolutePath + JFile.pathSeparator +
              scalaInstance.libraryJar.absolutePath + 
              "(!META-INF/MANIFEST.MF,!library.properties)" +
              (if (!proguardInJars.isEmpty)
-             Path.sep +
-             proguardInJars.map(_+"(!META-INF/MANIFEST.MF,!**/R.class,!**/R$*.class,!**/TR.class,!**/TR$*.class)").mkString(Path.sep.toString) else "") ::
+             JFile.pathSeparator +
+             proguardInJars.map(_+"(!META-INF/MANIFEST.MF,!**/R.class,!**/R$*.class,!**/TR.class,!**/TR$*.class)").mkString(JFile.pathSeparator) else "") ::
              "-outjars" :: classesMinJarPath.absolutePath ::
-             "-libraryjars" :: libraryJarPath.mkString(Path.sep.toString) ::
+             "-libraryjars" :: libraryJarPath.mkString(JFile.pathSeparator) ::
              "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
              "-dontnote scala.Enumeration" ::
              "-dontnote org.xml.sax.EntityResolver" ::
@@ -105,31 +107,52 @@ object Installable {
       new ProGuard(config).execute
     }
 
-  lazy val installableSettings = Seq (
+  private def packageTask(debug: Boolean) = (packageConfig, streams) map { (c, s) =>
+    val builder = new ApkBuilder(c, debug)
+    builder.build.fold(s.log.error(_), s.log.info(_))
+    s.log.debug(builder.outputStream.toString)
+  }
+
+  lazy val installerKeys = Seq(installEmulator,reinstallEmulator,
+                               installDevice,reinstallDevice)
+
+  lazy val installerTasks = Seq (
     installEmulator <<= installTask(emulator = true),
-    uninstallEmulator <<= uninstallTask(emulator = true),
     reinstallEmulator <<= reinstallTask(emulator = true),
-    
+
     installDevice <<= installTask(emulator = false),
+    reinstallDevice <<= reinstallTask(emulator = false)
+  )
+
+  lazy val installableSettings: Seq[Setting[_]] = installerTasks ++ 
+    installerKeys.map(t => t <<= t dependsOn packageDebug) ++ Seq (
+    uninstallEmulator <<= uninstallTask(emulator = true),
     uninstallDevice <<= uninstallTask(emulator = false),
-    reinstallDevice <<= reinstallTask(emulator = false),
+
+    makeAssetPath <<= directory(mainAssetsPath), 
 
     aaptPackage <<= aaptPackageTask,
-    aaptPackage <<= aaptPackage dependsOn dx,
+    aaptPackage <<= aaptPackage dependsOn (makeAssetPath, dx),
     dx <<= dxTask,
     dx <<= dx dependsOn (compile in Compile),
+
+    cleanApk <<= (packageApkPath) map (IO.delete(_)),
 
     proguard <<= proguardTask,
     proguard <<= proguard dependsOn (compile in Compile),
 
     startDevice <<= startTask(false),
     startEmulator <<= startTask(true),
+
     startDevice <<= startDevice dependsOn reinstallDevice,
     startEmulator <<= startEmulator dependsOn reinstallEmulator,
 
-    packageDebug := (),
-    packageRelease := (),
-    packageDebug <<= packageDebug dependsOn aaptPackage,
-    packageRelease <<= packageRelease dependsOn aaptPackage
+    packageConfig <<= 
+      (toolsPath, packageApkPath, resourcesApkPath, 
+       classesDexPath, nativeLibrariesPath, classesMinJarPath) (ApkConfig(_, _, _, _, _, _)),
+    packageDebug <<= packageTask(true),
+    packageRelease <<= packageTask(false),
+    packageDebug <<= packageDebug dependsOn (cleanApk, aaptPackage),
+    packageRelease <<= packageRelease dependsOn (cleanApk, aaptPackage)
   )
 }

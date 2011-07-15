@@ -68,6 +68,7 @@ object AndroidKeys {
 
   val addonsJarPath = SettingKey[Seq[File]]("addons-jar-path")
 
+  val packageConfig = SettingKey[ApkConfig]("package-config", "Generates a Apk Config")
   /** Proguard Tasks */
   val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
   val proguardExclude = TaskKey[Seq[File]]("proguard-exclude") 
@@ -87,11 +88,15 @@ object AndroidKeys {
   val reinstallDevice = TaskKey[Unit]("reinstall-device")
 
   val aaptPackage = TaskKey[Unit]("aapt-package", "Package resources and assets.")
+
   val packageDebug = TaskKey[Unit]("package-debug", "Package and sign with a debug key.")
   val packageRelease = TaskKey[Unit]("package-release", "Package without signing.")
+  val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
 
   val proguard = TaskKey[Unit]("proguard", "Optimize class files.")
   val dx = TaskKey[Unit]("dx", "Convert class files to dex files")
+
+  val makeAssetPath = TaskKey[Unit]("make-assest-path")
 
   /** Startable Tasks */
   val startDevice = TaskKey[Unit]("start-device", "Start package on device after installation")

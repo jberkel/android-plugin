@@ -12,6 +12,9 @@ import javax.imageio.ImageIO
 import AndroidKeys._
 
 object AndroidHelpers {
+
+  def directory(path: SettingKey[File]) = path map (IO.createDirectory(_))
+
   def determineAndroidSdkPath(es: Seq[String]) = {
     val paths = for ( e <- es; p = System.getenv(e); if p != null) yield p
     if (paths.isEmpty) None else Some(Path(paths.head).asFile)
