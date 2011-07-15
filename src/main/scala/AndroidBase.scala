@@ -11,7 +11,7 @@ object AndroidBase {
     (mPackage, aPath, mPath, resPath, jPath, javaPath) => 
     Process (<x>
       {aPath.absolutePath} package --auto-add-overlay -m
-        --custom-package {manifestPackage}
+        --custom-package {mPackage}
         -M {mPath.absolutePath}
         -S {resPath.absolutePath}
         -I {jPath.absolutePath}
@@ -103,7 +103,10 @@ object AndroidBase {
       runClasspath.map(_.data) --- proguardExclude get
     },
 
+    makeManagedJavaPath <<= directory(managedJavaPath),
+
     aaptGenerate <<= aaptGenerateTask,
+    aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
     unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))), 
