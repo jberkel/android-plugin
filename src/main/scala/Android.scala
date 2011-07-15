@@ -10,7 +10,8 @@ object Android extends Plugin {
   /** Base Task definitions */
   private def aptGenerateTask: Project.Initialize[Task[Unit]] = 
     (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath) => Process (<x>
+    (mPackage, aPath, mPath, resPath, jPath, javaPath) => 
+    Process (<x>
       {aPath.absolutePath} package --auto-add-overlay -m
         --custom-package {manifestPackage}
         -M {mPath.absolutePath}
@@ -24,7 +25,7 @@ object Android extends Plugin {
     (sourceDirectories, idlPath, managedJavaPath, javaSource) map {
     (sDirs, idPath, javaPath, jSource) =>
     val aidlPaths = sDirs.map(_ * "*.aidl").reduceLeft(_ +++ _).get
-    if (aidlPaths.isEmpty)
+    val processor = if (aidlPaths.isEmpty)
       Process(true)
     else
       aidlPaths.map { ap =>
@@ -38,6 +39,7 @@ object Android extends Plugin {
           case Some(first) => Some(first #&& s)
         }
       }.get
+    processor !
   }
 
   import Installable.installableSettings
@@ -133,6 +135,8 @@ object Android extends Plugin {
 
     aptGenerate <<= aptGenerateTask,
     aidlGenerate <<= aidlGenerateTask,
+
+    unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))), 
 
     sdkPath <<= (envs) { es => 
       determineAndroidSdkPath(es).getOrElse(error(
