@@ -5,18 +5,6 @@ import AndroidKeys._
 
 object AndroidMarketPublish {
 
-  val keyalias = SettingKey[String]("key-alias")
-  val keystorePath = SettingKey[File]("key-store-path")
-  val zipAlignPath = SettingKey[File]("zip-align-path", "Path to zipalign")
-  val packageAlignedName = SettingKey[String]("package-aligned-name")
-  val packageAlignedPath = SettingKey[File]("package-aligned-path")
-
-  val prepareMarket = TaskKey[Unit]("prepare-market", "Prepare asset for Market publication.")
-  val zipAlign = TaskKey[Unit]("zip-align", "Run zipalign on signed jar.")
-  val signRelease = TaskKey[Unit]("sign-release", "Sign with key alias using key-alias and keystore path.")
-
-  val cleanAligned = TaskKey[Unit]("clean-aligned", "Remove zipaligned jar")
-
   private def prepareMarketTask = (packageAlignedPath, streams) map { (path, s) =>
     s.log.success("Ready for publication: \n" + path)
   }
