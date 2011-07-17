@@ -29,6 +29,7 @@ class ApkBuilder(project: Installable, debug: Boolean) {
     project.log.info("Packaging "+project.packageApkPath)
     addNativeLibraries(project.nativeLibrariesPath.asFile, null)
     addResourcesFromJar(project.classesMinJarPath.asFile)
+    addSourceFolder(project.mainResourcesPath.asFile)
     sealApk
     None
   } catch {
@@ -64,6 +65,14 @@ class ApkBuilder(project: Installable, debug: Boolean) {
       method.invoke(builder, jarFile)
     }
   }
+
+  def addSourceFolder(folder: File) {
+    if (folder.exists) {
+      def method = klass.getMethod("addSourceFolder", classOf[File])
+      method.invoke(builder, folder)
+    }
+  }
+
 
   def sealApk() {
     val method = klass.getMethod("sealApk")
