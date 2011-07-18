@@ -131,7 +131,7 @@ object AndroidKeys {
 
   val emulatorStart = InputKey[Unit]("emulator-start", 
     "Launches a user specified avd")
-  val emulatorStop = InputKey[Unit]("emulator-stop",
+  val emulatorStop = TaskKey[Unit]("emulator-stop",
     "Kills the running emulator.")
   val listDevices = TaskKey[Unit]("list-devices",
     "List devices from the adb server.") 

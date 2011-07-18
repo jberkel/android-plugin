@@ -8,7 +8,6 @@ import complete.DefaultParsers._
 import scala.collection.mutable.{Map => MMap}
 
 object AndroidLaunch {
-  private var avdEmulators = MMap[String, Process]() 
 
   private def startTask(emulator: Boolean) = 
     (dbPath, manifestSchema, manifestPackage, manifestPath) map { 
@@ -34,32 +33,28 @@ object AndroidLaunch {
     launcher.headOption.getOrElse("")
   }
 
-  val avdParser = (s: State) => {
+  val installedAvds = (s: State) => {
     val avds = (Path.userHome / ".android" / "avd" * "*.ini").get
-    Space ~> avds.map(f => token(f.base)).reduceLeft(_ | _)
-  }
-
-  val runningEmulators = (s: State) => {
-    val avds = avdEmulators.keys
-    Space ~> avds.map(f => token(f)).reduceLeft(_ | _)
+    Space ~> avds.map(f => token(f.base))
+                 .reduceLeftOption(_ | _).getOrElse(token("none"))
   }
 
   private def emulatorStartTask = (parsedTask: TaskKey[String]) =>
     (parsedTask, toolsPath) map { (avd, toolsPath) =>
-      avdEmulators(avd) = "%s/emulator -avd %s".format(toolsPath, avd) run
+      "%s/emulator -avd %s".format(toolsPath, avd).run
+      ()
     }
 
   private def listDevicesTask: Project.Initialize[Task[Unit]] = (dbPath) map {
     _ +" devices".format(dbPath) !
   }
 
-  private def emulatorStopTask = (parsedTask: TaskKey[String]) =>
-    (parsedTask, streams) map { (avd, s) =>
-      s.log.info("Stopping %s".format(avd))
-      avdEmulators.get(avd).map(_.destroy)
-      avdEmulators -= avd
-      ()
-    }
+  private def emulatorStopTask = (dbPath, streams) map { (dbPath, s) =>
+    s.log.info("Stopping emulators")
+    val serial = "%s -e get-serialno".format(dbPath).!!
+    "%s -s %s emu kill".format(dbPath, serial).!
+    ()
+  }
 
   lazy val settings: Seq[Setting[_]] = Seq (
     startDevice <<= startTask(false),
@@ -69,7 +64,7 @@ object AndroidLaunch {
     startEmulator <<= startEmulator dependsOn reinstallEmulator,
 
     listDevices <<= listDevicesTask,
-    emulatorStart <<= InputTask(avdParser)(emulatorStartTask),
-    emulatorStop <<= InputTask(runningEmulators)(emulatorStopTask) 
+    emulatorStart <<= InputTask(installedAvds)(emulatorStartTask),
+    emulatorStop <<= emulatorStopTask 
   )
 }
