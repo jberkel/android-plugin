@@ -5,8 +5,11 @@ import AndroidKeys._
 import AndroidHelpers._
 
 import complete.DefaultParsers._
+import scala.collection.mutable.{Map => MMap}
 
 object AndroidLaunch {
+  private var avdEmulators = MMap[String, Process]() 
+
   private def startTask(emulator: Boolean) = 
     (dbPath, manifestSchema, manifestPackage, manifestPath) map { 
       (dp, schema, mPackage, amPath) =>
@@ -36,20 +39,27 @@ object AndroidLaunch {
     Space ~> avds.map(f => token(f.base)).reduceLeft(_ | _)
   }
 
+  val runningEmulators = (s: State) => {
+    val avds = avdEmulators.keys
+    Space ~> avds.map(f => token(f)).reduceLeft(_ | _)
+  }
+
   private def emulatorStartTask = (parsedTask: TaskKey[String]) =>
     (parsedTask, toolsPath) map { (avd, toolsPath) =>
-    "%s/emulator -avd %s".format(toolsPath, avd) run
-  }
+      avdEmulators(avd) = "%s/emulator -avd %s".format(toolsPath, avd) run
+    }
 
   private def listDevicesTask: Project.Initialize[Task[Unit]] = (dbPath) map {
     _ +" devices".format(dbPath) !
   }
 
-  private def emulatorStopTask = inputTask { (argTask: TaskKey[Seq[String]]) =>
-    (argTask, dbPath) map { (args, dbPath) =>
-      "%s -s %s shell stop".format(dbPath, args.head) !
+  private def emulatorStopTask = (parsedTask: TaskKey[String]) =>
+    (parsedTask, streams) map { (avd, s) =>
+      s.log.info("Stopping %s".format(avd))
+      avdEmulators.get(avd).map(_.destroy)
+      avdEmulators -= avd
+      ()
     }
-  }
 
   lazy val settings: Seq[Setting[_]] = Seq (
     startDevice <<= startTask(false),
@@ -60,6 +70,6 @@ object AndroidLaunch {
 
     listDevices <<= listDevicesTask,
     emulatorStart <<= InputTask(avdParser)(emulatorStartTask),
-    emulatorStop <<= emulatorStopTask
+    emulatorStop <<= InputTask(runningEmulators)(emulatorStopTask) 
   )
 }
