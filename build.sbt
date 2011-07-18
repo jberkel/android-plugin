@@ -17,9 +17,3 @@ libraryDependencies ++= Seq(
 )
 
 sbtPlugin := true
-
-// These settings should go in ~/.sbt/plugins/user.scala until issue #52 is resolved
-
-posterousEmail := "blah@example.com"
-
-posterousPassword := "this is not really my password"
