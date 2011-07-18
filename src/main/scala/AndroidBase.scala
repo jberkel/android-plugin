@@ -107,10 +107,7 @@ object AndroidBase {
       runClasspath.map(_.data) --- proguardExclude get
     },
 
-    makeManagedJavaPath <<= directory(managedJavaPath),
-
     aaptGenerate <<= aaptGenerateTask,
-    aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
     sdkPath <<= (envs) { es => 

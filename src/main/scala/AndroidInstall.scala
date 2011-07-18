@@ -125,12 +125,12 @@ object AndroidInstall {
     proguard <<= proguard dependsOn (compile in Compile),
 
     packageConfig <<= 
-      (toolsPath, packageApkPath, resourcesApkPath, 
-       classesDexPath, nativeLibrariesPath, classesMinJarPath) 
-      (ApkConfig(_, _, _, _, _, _)),
+      (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
+       nativeLibrariesPath, classesMinJarPath, resourceDirectory) 
+      (ApkConfig(_, _, _, _, _, _, _)),
     packageDebug <<= packageTask(true),
-    packageRelease <<= packageTask(false),
-    packageDebug <<= packageDebug dependsOn (cleanApk, aaptPackage),
-    packageRelease <<= packageRelease dependsOn (cleanApk, aaptPackage)
-  )
+    packageRelease <<= packageTask(false)
+  ) ++ Seq(packageDebug, packageRelease).map {
+    t => t <<= t dependsOn (cleanApk, aaptPackage)
+  }
 }

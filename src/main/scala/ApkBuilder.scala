@@ -9,7 +9,8 @@ case class ApkConfig(
   resourcesApkPath: File,
   classesDexPath: File,
   nativeLibrariesPath: File,
-  classesMinJarPath: File
+  classesMinJarPath: File,
+  resourceDirectory: File
 ) 
 
 /**
@@ -38,6 +39,7 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
   def build() = try {
     addNativeLibraries(project.nativeLibrariesPath, null)
     addResourcesFromJar(project.classesMinJarPath)
+    addSourceFolder(project.resourceDirectory)
     sealApk
     Right("Packaging "+project.packageApkPath)
   } catch {
@@ -71,6 +73,13 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
       method.invoke(builder, jarFile)
     }
   }  
+
+  def addSourceFolder(folder: File) {
+    if (folder.exists) {
+      def method = klass.getMethod("addSourceFolder", classOf[File])
+      method.invoke(builder, folder)
+    }
+  }
 
   def sealApk() {
     val method = klass.getMethod("sealApk")
