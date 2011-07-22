@@ -18,7 +18,7 @@ object AndroidBase {
         -J {javaPath.absolutePath}
     </x>) !
 
-    javaPath ** "*.java" get
+    javaPath ** "R.java" get
   }
 
   private def aidlGenerateTask =
@@ -41,10 +41,12 @@ object AndroidBase {
       }.get
     processor !
 
-    javaPath ** "*.java" get
+    val rPath = javaPath ** "R.java"
+    javaPath ** "*.java" --- (rPath) get
   }
 
-  lazy val settings: Seq[Setting[_]] = Seq (
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (
+    AndroidDefaults.settings ++ Seq (
     packageApkName <<= (artifact) (_.name + ".apk"),
     osDxName <<= (dxName) (_ + osBatchSuffix),
 
@@ -107,7 +109,10 @@ object AndroidBase {
       runClasspath.map(_.data) --- proguardExclude get
     },
 
+    makeManagedJavaPath <<= directory(managedJavaPath),
+
     aaptGenerate <<= aaptGenerateTask,
+    aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
     sdkPath <<= (envs) { es => 
@@ -122,5 +127,15 @@ object AndroidBase {
 
     cleanFiles <+= (managedJavaPath).identity,
     resourceDirectories <+= (mainAssetsPath).identity
-  )
+  ) ++ Seq (
+    // Handle the delegates for android settings
+    classDirectory <<= (classDirectory in Compile).identity,
+    sourceDirectory <<= (sourceDirectory in Compile).identity,
+    sourceDirectories <<= (sourceDirectories in Compile).identity,
+    resourceDirectory <<= (resourceDirectory in Compile).identity,
+    resourceDirectories <<= (resourceDirectories in Compile).identity,
+    javaSource <<= (javaSource in Compile).identity,
+    managedClasspath <<= (managedClasspath in Runtime).identity,
+    fullClasspath <<= (fullClasspath in Runtime).identity
+  ))
 }
