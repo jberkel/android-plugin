@@ -39,12 +39,7 @@ object AndroidKeys {
   val packageApkName = SettingKey[String]("package-apk-name")
   val osDxName = SettingKey[String]("os-dx-name")
 
-  /** Base Settings */
-  val manifestPackage = SettingKey[String]("manifest-package")
-  val minSdkVersion = SettingKey[Option[Int]]("min-sdk-version")
-  val maxSdkVersion = SettingKey[Option[Int]]("max-sdk-version")
-  val apiLevel = SettingKey[Int]("api-level")
-
+  /** Path Settings */
   val sdkPath = SettingKey[File]("sdk-path")
   val toolsPath = SettingKey[File]("tools-path")
   val dbPath = SettingKey[File]("db-path")
@@ -53,9 +48,15 @@ object AndroidKeys {
   val aaptPath = SettingKey[File]("apt-path")
   val idlPath = SettingKey[File]("idl-path")
   val dxPath = SettingKey[File]("dx-path")
+  val jarPath = SettingKey[File]("jar-path")
+
+  /** Base Settings */
+  val manifestPackage = SettingKey[String]("manifest-package")
+  val minSdkVersion = SettingKey[Option[Int]]("min-sdk-version")
+  val maxSdkVersion = SettingKey[Option[Int]]("max-sdk-version")
+  val apiLevel = SettingKey[Int]("api-level")
 
   val manifestPath = SettingKey[File]("manifest-path")
-  val jarPath = SettingKey[File]("jar-path")
   val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
   val addonsPath = SettingKey[File]("addons-path")
   val mapsJarPath = SettingKey[File]("maps-jar-path")
@@ -123,18 +124,11 @@ object AndroidKeys {
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
 
-  /** Startable Tasks */
+  /** Launch Tasks */
   val startDevice = TaskKey[Unit]("start-device", 
     "Start package on device after installation")
   val startEmulator = TaskKey[Unit]("start-emulator", 
     "Start package on emulator after installation")
-
-  val emulatorStart = InputKey[Unit]("emulator-start", 
-    "Launches a user specified avd")
-  val emulatorStop = TaskKey[Unit]("emulator-stop",
-    "Kills the running emulator.")
-  val listDevices = TaskKey[Unit]("list-devices",
-    "List devices from the adb server.") 
 
   /** ddm Support tasks */
   val screenshotEmulator = TaskKey[File]("screenshot-emulator", 

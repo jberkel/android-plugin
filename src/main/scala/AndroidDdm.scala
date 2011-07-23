@@ -62,7 +62,7 @@ object AndroidDdm {
     def toOutputStream(format: String, o: OutputStream) = ImageIO.write(r, format, o)
   }
 
-  lazy val settings: Seq[Setting[_]] = Seq (
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     screenshotDevice <<= (dbPath) map { p => 
       screenshot(false, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "device.png")
       file("device.png")
@@ -71,5 +71,8 @@ object AndroidDdm {
       screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator.png")
       file("emulator.png")
     }
+  )) ++ Seq (
+    screenshotDevice <<= (screenshotDevice in Android).identity,
+    screenshotEmulator <<= (screenshotEmulator in Android).identity
   )
 }

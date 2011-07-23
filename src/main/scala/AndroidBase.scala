@@ -45,37 +45,21 @@ object AndroidBase {
     javaPath ** "*.java" --- (rPath) get
   }
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (
-    AndroidDefaults.settings ++ Seq (
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     packageApkName <<= (artifact) (_.name + ".apk"),
-    osDxName <<= (dxName) (_ + osBatchSuffix),
+    manifestPath <<= (sourceDirectory, manifestName) (_ / _),
 
-    apiLevel <<= (minSdkVersion, platformName) { (min, pName) =>
-      min.getOrElse(platformName2ApiLevel(pName))
-    },
     manifestPackage <<= (manifestPath) {
       manifest(_).attribute("package").getOrElse(error("package not defined")).text
     },
     minSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "minSdkVersion")),
     maxSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "maxSdkVersion")),
 
-    toolsPath <<= (sdkPath) (_ / "tools"),
-    dbPath <<= (platformToolsPath, adbName) (_ / _),
-    platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
-    platformToolsPath <<= (sdkPath) (_ / "platform-tools"),
-    aaptPath <<= (platformToolsPath, aaptName) (_ / _),
-    idlPath <<= (platformToolsPath, aidlName) (_ / _),
-    dxPath <<= (platformToolsPath, osDxName) (_ / _),
-    manifestPath <<= (sourceDirectory, manifestName) (_ / _),
-    jarPath <<= (platformPath, jarName) (_ / _),
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
-    addonsPath <<= (sdkPath, apiLevel) { (sPath, api) =>
-      sPath / "add-ons" / ("addon_google_apis_google_inc_" + api) / "libs"
-    },
-    mapsJarPath <<= (addonsPath) (_ / AndroidDefaults.DefaultMapsJarName),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _),
     managedJavaPath := file("src_managed") / "main" / "java",
+
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
@@ -96,8 +80,19 @@ object AndroidBase {
       } yield p.get 
     },
 
-    proguardOption := "",
+    apiLevel <<= (minSdkVersion, platformName) { (min, pName) =>
+      min.getOrElse(platformName2ApiLevel(pName))
+    },
+
+    mapsJarPath <<= (addonsPath) (_ / AndroidDefaults.DefaultMapsJarName),
+
+    addonsPath <<= (sdkPath, apiLevel) { (sPath, api) =>
+      sPath / "add-ons" / ("addon_google_apis_google_inc_" + api) / "libs"
+    },
+
     libraryJarPath <<= (jarPath, addonsJarPath) (_ +++ _ get),
+
+    proguardOption := "",
     proguardExclude <<= 
       (libraryJarPath, classDirectory, resourceDirectory, managedClasspath) map {
         (libPath, classDirectory, resourceDirectory, managedClasspath) =>
@@ -114,12 +109,6 @@ object AndroidBase {
     aaptGenerate <<= aaptGenerateTask,
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
-
-    sdkPath <<= (envs) { es => 
-      determineAndroidSdkPath(es).getOrElse(error(
-        "Android SDK not found. You might need to set %s".format(es.mkString(" or "))
-      ))
-    },
 
     unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))), 
 
