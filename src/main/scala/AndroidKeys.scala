@@ -44,13 +44,12 @@ object AndroidKeys {
   val toolsPath = SettingKey[File]("tools-path")
   val dbPath = SettingKey[File]("db-path")
   val platformPath = SettingKey[File]("platform-path")
-  val platformToolsPath = SettingKey[File]("platform-tools-path")
   val aaptPath = SettingKey[File]("apt-path")
   val idlPath = SettingKey[File]("idl-path")
   val dxPath = SettingKey[File]("dx-path")
-  val jarPath = SettingKey[File]("jar-path")
 
   /** Base Settings */
+  val platformToolsPath = SettingKey[File]("platform-tools-path")
   val manifestPackage = SettingKey[String]("manifest-package")
   val minSdkVersion = SettingKey[Option[Int]]("min-sdk-version")
   val maxSdkVersion = SettingKey[Option[Int]]("max-sdk-version")
@@ -59,6 +58,7 @@ object AndroidKeys {
   val manifestPath = SettingKey[File]("manifest-path")
   val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
   val addonsPath = SettingKey[File]("addons-path")
+  val jarPath = SettingKey[File]("jar-path")
   val mapsJarPath = SettingKey[File]("maps-jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = SettingKey[File]("main-res-path")

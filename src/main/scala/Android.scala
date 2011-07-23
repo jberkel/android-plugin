@@ -44,12 +44,20 @@ object AndroidProject extends Plugin {
     AndroidDdm.settings
 
   // Android path and defaults can load for every project
+  // No aggregation of the emulator runnables
   override lazy val settings: Seq[Setting[_]] = 
     AndroidPath.settings ++ inConfig(Android) (Seq (
       listDevices <<= listDevicesTask,
       emulatorStart <<= InputTask(installedAvds)(emulatorStartTask),
       emulatorStop <<= emulatorStopTask
     )) ++ Seq (
-      listDevices <<= (listDevices in Android).identity 
-    )
+      listDevices <<= (listDevices in Android).identity
+    ) ++ Seq (
+      listDevices, 
+      listDevices in Android,
+      emulatorStart in Android, 
+      emulatorStop in Android
+    ).map {
+      aggregate in _ := false
+    }
 }
