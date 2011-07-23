@@ -46,6 +46,8 @@ object AndroidBase {
   }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
+    platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
+
     packageApkName <<= (artifact) (_.name + ".apk"),
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
 
@@ -58,7 +60,7 @@ object AndroidBase {
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _),
-    managedJavaPath := file("src_managed") / "main" / "java",
+    managedJavaPath <<= (baseDirectory) (_ / "src_managed" / "main" / "java"),
 
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
@@ -84,6 +86,7 @@ object AndroidBase {
       min.getOrElse(platformName2ApiLevel(pName))
     },
 
+    jarPath <<= (platformPath, jarName) (_ / _),
     mapsJarPath <<= (addonsPath) (_ / AndroidDefaults.DefaultMapsJarName),
 
     addonsPath <<= (sdkPath, apiLevel) { (sPath, api) =>

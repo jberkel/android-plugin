@@ -12,12 +12,10 @@ object AndroidPath {
 
     toolsPath <<= (sdkPath) (_ / "tools"),
     dbPath <<= (platformToolsPath, adbName) (_ / _),
-    platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
     platformToolsPath <<= (sdkPath) (_ / "platform-tools"),
     aaptPath <<= (platformToolsPath, aaptName) (_ / _),
     idlPath <<= (platformToolsPath, aidlName) (_ / _),
     dxPath <<= (platformToolsPath, osDxName) (_ / _),
-    jarPath <<= (platformPath, jarName) (_ / _),
 
     sdkPath <<= (envs) { es => 
       determineAndroidSdkPath(es).getOrElse(error(
