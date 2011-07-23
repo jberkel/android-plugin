@@ -4,9 +4,6 @@ import Keys._
 import AndroidKeys._
 import AndroidHelpers._
 
-import complete.DefaultParsers._
-import scala.collection.mutable.{Map => MMap}
-
 object AndroidLaunch {
 
   private def startTask(emulator: Boolean) = 
@@ -33,38 +30,17 @@ object AndroidLaunch {
     launcher.headOption.getOrElse("")
   }
 
-  val installedAvds = (s: State) => {
-    val avds = (Path.userHome / ".android" / "avd" * "*.ini").get
-    Space ~> avds.map(f => token(f.base))
-                 .reduceLeftOption(_ | _).getOrElse(token("none"))
-  }
+  lazy val aliasKeys = Seq (startDevice, startEmulator)
 
-  private def emulatorStartTask = (parsedTask: TaskKey[String]) =>
-    (parsedTask, toolsPath) map { (avd, toolsPath) =>
-      "%s/emulator -avd %s".format(toolsPath, avd).run
-      ()
-    }
+  lazy val defaultAliases = aliasKeys map (k => k <<= (k in Android).identity)
 
-  private def listDevicesTask: Project.Initialize[Task[Unit]] = (dbPath) map {
-    _ +" devices".format(dbPath) !
-  }
+  lazy val settings: Seq[Setting[_]] = 
+    AndroidInstall.settings ++ 
+    inConfig(Android) (Seq (
+      startDevice <<= startTask(false),
+      startEmulator <<= startTask(true),
 
-  private def emulatorStopTask = (dbPath, streams) map { (dbPath, s) =>
-    s.log.info("Stopping emulators")
-    val serial = "%s -e get-serialno".format(dbPath).!!
-    "%s -s %s emu kill".format(dbPath, serial).!
-    ()
-  }
-
-  lazy val settings: Seq[Setting[_]] = Seq (
-    startDevice <<= startTask(false),
-    startEmulator <<= startTask(true),
-
-    startDevice <<= startDevice dependsOn reinstallDevice,
-    startEmulator <<= startEmulator dependsOn reinstallEmulator,
-
-    listDevices <<= listDevicesTask,
-    emulatorStart <<= InputTask(installedAvds)(emulatorStartTask),
-    emulatorStop <<= emulatorStopTask 
-  )
+      startDevice <<= startDevice dependsOn reinstallDevice,
+      startEmulator <<= startEmulator dependsOn reinstallEmulator
+    )) ++ defaultAliases
 }

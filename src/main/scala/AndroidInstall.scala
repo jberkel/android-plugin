@@ -96,9 +96,6 @@ object AndroidInstall {
     s.log.debug(builder.outputStream.toString)
   }
 
-  lazy val installerKeys = Seq(installEmulator,reinstallEmulator,
-                               installDevice,reinstallDevice)
-
   lazy val installerTasks = Seq (
     installEmulator <<= installTask(emulator = true),
     reinstallEmulator <<= reinstallTask(emulator = true),
@@ -107,8 +104,13 @@ object AndroidInstall {
     reinstallDevice <<= reinstallTask(emulator = false)
   )
 
-  lazy val settings: Seq[Setting[_]] = installerTasks ++ 
-    installerKeys.map(t => t <<= t dependsOn packageDebug) ++ Seq (
+  lazy val aliasKeys = Seq(installEmulator,reinstallEmulator,
+                               installDevice,reinstallDevice)
+
+  lazy val defaultAliases = aliasKeys map (k => k <<= (k in Android).identity)
+
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ 
+    aliasKeys.map(t => t <<= t dependsOn packageDebug) ++ Seq (
     uninstallEmulator <<= uninstallTask(emulator = true),
     uninstallDevice <<= uninstallTask(emulator = false),
 
@@ -132,5 +134,5 @@ object AndroidInstall {
     packageRelease <<= packageTask(false)
   ) ++ Seq(packageDebug, packageRelease).map {
     t => t <<= t dependsOn (cleanApk, aaptPackage)
-  }
+  }) ++ defaultAliases
 }
