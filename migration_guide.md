@@ -9,15 +9,15 @@ made sense for definition mixin's are now objects.
 For those of you who are familiar with the android plugin's previous definition,
 here's a quick match to the important things:
 
-`AndroidProject` => `AndroidProject.androidSettings`
-`BaseAndroidProject` => `AndroidBase.settings`
-`AndroidLibraryProject` => `AndroidBase.settings`
-`DdmSupport` => `AndroidDdm.settings`
-`Startable` => `AndroidLaunch.settings`
-`Installable` => `AndroidInstall.settings`
-`TypedResources` => `TypedResources.settings`
-`MarketPublish` => `AndroidMarketPublish.settings`
-`AndroidManifestGenerator` => `AndroidManifestGenerator.settings`
+ * `AndroidProject` => `AndroidProject.androidSettings`
+ * `BaseAndroidProject` => `AndroidBase.settings`
+ * `AndroidLibraryProject` => `AndroidBase.settings`
+ * `DdmSupport` => `AndroidDdm.settings`
+ * `Startable` => `AndroidLaunch.settings`
+ * `Installable` => `AndroidInstall.settings`
+ * `TypedResources` => `TypedResources.settings`
+ * `MarketPublish` => `AndroidMarketPublish.settings`
+ * `AndroidManifestGenerator` => `AndroidManifestGenerator.settings`
 
 ## Overriding settings
 
