@@ -157,4 +157,8 @@ object AndroidKeys {
 
   val cleanManifest = TaskKey[Unit]("clean-manifest",
     "Deletes the generated Android manifest") 
+
+  /** Test Project Tasks */
+  val testEmulator = TaskKey[Unit]("test-emulator", "runs tests in emulator")
+  val testDevice = TaskKey[Unit]("test-device", "runs tests on device")  
 }
