@@ -1,6 +1,12 @@
 #Usage
 
-Requires [sbt](http://simple-build-tool.googlecode.com/) and the [Android SDK](http://developer.android.com/sdk/index.html) (`brew install sbt android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
+Requires [sbt](http://simple-build-tool.googlecode.com/) and the 
+[Android SDK](http://developer.android.com/sdk/index.html) 
+(`brew install sbt android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
+
+For those who are familiar with the 0.7.x plugin, there is a 
+[migration guide](https://github.com/philcali/android-plugin/blob/master/migration_guide.md)
+for a quick reference.
 
 Using a [giter8][g8] template is the easiest way to create a new
 project that uses the plugin. If you don't have giter8 installed:
@@ -96,20 +102,6 @@ Since Android's resource IDs are scoped to the application, a warning
 is issued by the plugin when the same ID is used for different types
 of a resources; the type of resources retrieved by that ID will be
 unpredictable.
-
-##Building Java Android projects with sbt
-
-If you don't use Scala yet and want to use the plugin to build your existing
-Java app you can do so by adding the `PlainJavaProject` trait to the project
-definition:
-
-    class MainProject(info: ProjectInfo) extends AndroidProject(info)
-      with PlainJavaProject {
-      // usual project configuration
-    }
-
-This will change the defaults to the directory structure expected by Android's
-`build.xml` file and skip the Proguard optimisation step.
 
 ## Getting screenshots
 
