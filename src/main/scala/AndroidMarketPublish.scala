@@ -25,7 +25,7 @@ object AndroidMarketPublish {
 
   private def getPassword = SimpleReader.readLine("\nEnter keystore password: ").get
 
-  lazy val settings = inConfig(Android) (Seq(
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
