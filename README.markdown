@@ -1,4 +1,4 @@
-##Usage
+#Usage
 
 Requires [sbt](http://simple-build-tool.googlecode.com/) and the [Android SDK](http://developer.android.com/sdk/index.html) (`brew install sbt android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
 
@@ -38,6 +38,20 @@ To install and start the main activity in the [Android Emulator][emu]
 To build a signed package for release into the Marketplace:
 
     > prepare-market
+
+##Launching the emulator from sbt
+
+A developer can now fire up the Android Emulator from the sbt terminal:
+
+    > android:emulator-start <my_avd>
+
+To list all devices or emulators
+
+    > android:list-devices
+
+To stop the emulator:
+
+    > android:emulator-stop
 
 ##Scala Versions
 
