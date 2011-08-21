@@ -10,8 +10,7 @@ project that uses the plugin. If you don't have giter8 installed:
 
 [g8]: https://github.com/n8han/giter8#readme
 
-    $ curl https:/raw.github.com/n8han/conscript/master/setup.sh | sh
-Directory name was wrong
+    $ curl https://raw.github.com/n8han/conscript/master/setup.sh | sh
     $ ~/bin/cs n8han/giter8
 
 Now create a new project with one of the Android templates:
