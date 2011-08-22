@@ -1,79 +1,48 @@
-
-
 import sbt._
-import Process._
+
+import Keys._
+import AndroidKeys._
+
 import scala.xml._
 
 object AndroidManifestGenerator {
-  val DefaultAndroidManifestTemplateName = "AndroidManifest.xml"
-}
+  private def generateManifestTask = 
+    (manifestPath, manifestTemplatePath, versionCode, version) map {
+    (manifestPath, manifestTemplatePath, versionCode, version) =>
+      
+      val namespacePrefix = "http://schemas.android.com/apk/res/android"
+      val manifest = XML.loadFile(manifestTemplatePath)
+      if (manifest.attribute(namespacePrefix,"versionCode").isDefined) 
+        error("android:versionCode should not be defined in template")
+      if (manifest.attribute(namespacePrefix, "versionName").isDefined) 
+        error("android:versionName should not be defined in template")
+      val applications = manifest \ "application"
+      val wasDebuggable = 
+        applications.exists(_.attribute(namespacePrefix, "debuggable").isDefined)
 
-/** Generates AndroidManifest.xml from AndroidManifestIn.xml, by applying various sbt properties.
+      val verName = 
+        new PrefixedAttribute("android", "versionName", version, Null)
+      val verCode = 
+        new PrefixedAttribute("android", "versionCode", versionCode.toString, Null)
 
-This plug-in currently generates the manifest versionCode and versionName attributes.  It would be
-possible to also generate correct settings for debug for market vs. debug builds but that is TODO.
-*/
-trait AndroidManifestGenerator extends AndroidProject {
-  import AndroidManifestGenerator._
+      val newManifest = manifest % verName % verCode
 
-  /// The android version code - stored as a property, starts at 1 and increments whenever the user
-  /// calls incrementVersion
-  lazy val versionCode = propertyOptional[Int](1)
+      XML.save(manifestTemplatePath.absolutePath, newManifest)
 
-  def androidManifestTemplateName = DefaultAndroidManifestTemplateName 
-  def androidManifestTemplatePath = mainSourcePath / androidManifestTemplateName
+      manifestPath
+    }
 
-  override def androidManifestPath = "src_managed" / "main" / androidManifestName
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
+    manifestTemplateName := "AndroidManifest.xml",
+    manifestTemplatePath <<= (sourceDirectory in Compile, manifestTemplateName)(_/_),
+    
+    manifestPath <<= (baseDirectory, manifestName) (_ / "src_managed" / "main" / _),
+    cleanManifest <<= (manifestPath) map (IO.delete(_)),
 
-  override def incrementVersionNumber() {
-    super.incrementVersionNumber()
-
-    versionCode() = versionCode.value + 1
-    log.info("Android version code incremented to " + versionCode.value + ".  Manifest will be regenerated.")
-
-    discardAndroidManifest()
-  }
-
-  /// Force regeneration of the manfest
-  private def discardAndroidManifest() {
-    FileUtilities.clean(androidManifestPath, log)
-  }
- 
-  def cleanAndroidManifestAction = task {
-    discardAndroidManifest()
-    None
-  } describedAs("Deletes the generated Android manifest.")
-  
-  lazy val cleanAndroidManifest = cleanAndroidManifestAction
-
-  override def cleanAction = super.cleanAction dependsOn(cleanAndroidManifest)
-
-  /// a customized manifest file is needed for the following actions  
-  override def aaptGenerateAction = super.aaptGenerateAction dependsOn(generateAndroidManifest)
-
-  def generateAndroidManifestAction =
-    fileTask(androidManifestPath from Seq(androidManifestTemplatePath,
-                                          envBackingPath)) {
-
-    val namespacePrefix = "http://schemas.android.com/apk/res/android"
-    val manifest = XML.loadFile(androidManifestTemplatePath.asFile)
-    if (manifest.attribute(namespacePrefix,"versionCode").isDefined) 
-      error("android:versionCode should not be defined in template")
-    if (manifest.attribute(namespacePrefix, "versionName").isDefined) 
-      error("android:versionName should not be defined in template")
-    val applications = manifest \ "application"
-    val wasDebuggable = applications.exists(_.attribute(namespacePrefix, "debuggable").isDefined)
-
-    val verName = new PrefixedAttribute("android", "versionName", version.toString, Null)
-    val verCode = new PrefixedAttribute("android", "versionCode", versionCode.value.toString, Null)
-
-    val newManifest = manifest % verName % verCode
-
-    // Write the modified manifest
-    XML.save(androidManifestPath.absolutePath, newManifest)
-
-    None
-  } describedAs("Generates a customized AndroidManifest.xml with current build number and debug settings.")
-
-  lazy val generateAndroidManifest = generateAndroidManifestAction
+    generateManifest <<= generateManifestTask,
+    generateManifest <<= generateManifest dependsOn makeManagedJavaPath,
+    aaptGenerate <<= aaptGenerate dependsOn generateManifest 
+  )) ++ Seq (
+    cleanFiles <+= (manifestPath in Android).identity
+  )
 }
