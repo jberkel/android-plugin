@@ -131,10 +131,16 @@ object AndroidKeys {
     "Start package on emulator after installation")
 
   /** ddm Support tasks */
+  val stopBridge = TaskKey[Unit]("stop-bridge",
+    "Terminates the ADB debugging bridge")
   val screenshotEmulator = TaskKey[File]("screenshot-emulator",
     "Take a screenshot from the emulator")
   val screenshotDevice = TaskKey[File]("screenshot-device",
     "Take a screenshot from the device")
+  val hprofEmulator = TaskKey[Unit]("hprof-emulator",
+    "Take a dump of the current heap from the emulator")
+  val hprofDevice = TaskKey[Unit]("hprof-device",
+    "Take a dump of the current heap from the device")
 
   /** Market Publish tasks */
   val prepareMarket = TaskKey[Unit]("prepare-market",
