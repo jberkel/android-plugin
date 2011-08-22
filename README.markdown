@@ -1,10 +1,10 @@
 #Usage
 
-Requires [sbt](http://simple-build-tool.googlecode.com/) and the 
-[Android SDK](http://developer.android.com/sdk/index.html) 
+Requires [sbt](http://simple-build-tool.googlecode.com/) and the
+[Android SDK](http://developer.android.com/sdk/index.html)
 (`brew install sbt android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
 
-For those who are familiar with the 0.7.x plugin, there is a 
+For those who are familiar with the 0.7.x plugin, there is a
 [migration guide](https://github.com/philcali/android-plugin/blob/master/migration_guide.md)
 for a quick reference.
 
@@ -69,14 +69,14 @@ Whenever you change build versions, you'll need to run `update` again
 to fetch dependencies. For more information, see the sbt documentation
 on [cross-building][cb].
 
-[cb]: https://github.com/harrah/xsbt/wiki/Cross-Build 
+[cb]: https://github.com/harrah/xsbt/wiki/Cross-Build
 
 ##Android manifest files
 
 If you would like your AndroidManifest.xml file to automatically inherit
-versionName and versionCode from your SBT project, add the 
-`AndroidManifestGenerator.settings` build settings to your project.  
-It will look for an AndroidManifest.xml file, and add versionName 
+versionName and versionCode from your SBT project, add the
+`AndroidManifestGenerator.settings` build settings to your project.
+It will look for an AndroidManifest.xml file, and add versionName
 and versionCode to that template.
 
 ##Typed resources references
@@ -122,7 +122,7 @@ and install it locally (you need at least sbt 0.10.x to build it):
 
     $ git clone git://github.com/philcali/android-plugin.git
     $ cd android-plugin
-    $ sbt publish-local    
+    $ sbt publish-local
 
 Because the plugin gets cached in a project based on its version
 number you might need to use `sbt clean-plugins` to force a reload
@@ -137,7 +137,7 @@ out in [scala-on-android][] or [simple-build-tool][].
 
 This code is based on work by Walter Chang
 ([saisiyat](http://github.com/weihsiu/saisiyat/)), turned into a plugin by
-[Mark Harrah](http://github.com/harrah), and maintained by 
+[Mark Harrah](http://github.com/harrah), and maintained by
 [Jan Berkel](https://github.com/jberkel).
 
 
