@@ -1,9 +1,13 @@
 import sbt._
+import Process._
 
 import com.android.ddmlib.AndroidDebugBridge
 import com.android.ddmlib.IDevice
 import com.android.ddmlib.Log
 import com.android.ddmlib.RawImage
+import com.android.ddmlib.ClientData
+import com.android.ddmlib.Client
+import com.android.ddmlib.ClientData.IHprofDumpHandler
 
 import java.io.{File, OutputStream, IOException}
 import java.awt.image.{BufferedImage, RenderedImage}
@@ -12,7 +16,25 @@ import javax.imageio.ImageIO
 trait DdmSupport extends BaseAndroidProject {
 
   lazy val bridge = {
-    AndroidDebugBridge.init(false)
+    ClientData.setHprofDumpHandler(new IHprofDumpHandler() {
+      override def onSuccess(path: String, client: Client) {
+        error(path)
+      }
+      override def onSuccess(data: Array[Byte], client: Client) {
+        val pkg = client.getClientData.getClientDescription
+        val tmp = new java.io.File(pkg+".tmp")
+        val fos = new java.io.FileOutputStream(tmp)
+        fos.write(data)
+        fos.close()
+        <x> hprof-conv {tmp.getName} {pkg+".hprof"} </x> ! log
+        tmp.delete()
+        log.info("head dump written to "+pkg+".hprof")
+      }
+      override def onEndFailure(client: Client, message:String) {
+        error(message)
+      }
+    })
+    AndroidDebugBridge.init(true)
     Runtime.getRuntime().addShutdownHook(new Thread() { override def run() { AndroidDebugBridge.terminate() }})
     AndroidDebugBridge.createBridge(adbPath.absolutePath, false)
   }
@@ -28,6 +50,31 @@ trait DdmSupport extends BaseAndroidProject {
     screenshot(false, false).getOrElse(error("could not get screenshot")).toFile("png", "device.png")
     None
   } describedAs("take a screenshot from the device")
+
+
+  lazy val hprofEmulator = hprofEmulatorAction
+  def hprofEmulatorAction = task {
+    dumpHprof(manifestPackage, true)
+    None
+  } describedAs("dump hprof on emulator")
+
+  lazy val hprofDevice = hprofDeviceAction
+  def hprofDeviceAction = task {
+    dumpHprof(manifestPackage, false)
+    None
+  } describedAs("dump hprof on device")
+
+
+  def dumpHprof(app: String, emulator: Boolean)  {
+    withDevice(emulator) { device =>
+      val client = device.getClient(app)
+      if (client != null) {
+        client.dumpHprof()
+      } else {
+        error("could not get client "+app+", is it running?")
+      }
+    }
+  }
 
 
   // ported from http://dustingram.com/wiki/Device_Screenshots_with_the_Android_Debug_Bridge
