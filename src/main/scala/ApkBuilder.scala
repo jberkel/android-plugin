@@ -1,5 +1,17 @@
 import sbt._
+import classpath._
 import java.io.{ByteArrayOutputStream, File, PrintStream}
+
+// Replaces the Installable argument
+case class ApkConfig(
+  androidToolsPath: File, 
+  packageApkPath: File,
+  resourcesApkPath: File,
+  classesDexPath: File,
+  nativeLibrariesPath: File,
+  classesMinJarPath: File,
+  resourceDirectory: File
+) 
 
 /**
  * Build an APK - replaces the now-deprecated apkbuilder command-line executable.
@@ -13,8 +25,7 @@ import java.io.{ByteArrayOutputStream, File, PrintStream}
  * The source for Google's Ant task that uses it is
  * [[http://android.git.kernel.org/?p=platform/sdk.git;a=blob;f=anttasks/src/com/android/ant/ApkBuilderTask.java here]].
  */
-class ApkBuilder(project: Installable, debug: Boolean) {
-
+class ApkBuilder(project: ApkConfig, debug: Boolean) {
   val classLoader = ClasspathUtilities.toLoader(project.androidToolsPath / "lib" / "sdklib.jar")
   val klass = classLoader.loadClass("com.android.sdklib.build.ApkBuilder")
   val constructor = klass.getConstructor(
@@ -22,38 +33,35 @@ class ApkBuilder(project: Installable, debug: Boolean) {
   val keyStore = if (debug) getDebugKeystore else null
   val outputStream = new ByteArrayOutputStream
   val builder = constructor.newInstance(
-    project.packageApkPath.asFile, project.resourcesApkPath.asFile, project.classesDexPath.asFile, keyStore, new PrintStream(outputStream))
+    project.packageApkPath, project.resourcesApkPath, project.classesDexPath, keyStore, new PrintStream(outputStream))
   setDebugMode(debug)
 
   def build() = try {
-    project.log.info("Packaging "+project.packageApkPath)
-    addNativeLibraries(project.nativeLibrariesPath.asFile, null)
-    addResourcesFromJar(project.classesMinJarPath.asFile)
-    addSourceFolder(project.mainResourcesPath.asFile)
+    addNativeLibraries(project.nativeLibrariesPath, null)
+    addResourcesFromJar(project.classesMinJarPath)
+    addSourceFolder(project.resourceDirectory)
     sealApk
-    None
+    Right("Packaging "+project.packageApkPath)
   } catch {
-    case e: Throwable => Some(e.getCause.getMessage)
-  } finally {
-    project.log.debug(outputStream.toString)
+    case e: Throwable => Left(e.getCause.getMessage)
   }
-
+  
   def getDebugKeystore = {
     val method = klass.getMethod("getDebugKeystore")
     method.invoke(null).asInstanceOf[String]
   }
-
+  
   def setDebugMode(debug: Boolean) {
     val method = klass.getMethod("setDebugMode", classOf[Boolean])
     method.invoke(builder, debug.asInstanceOf[Object])
   }
-
+  
   def addNativeLibraries(nativeFolder: File, abiFilter: String) {
     if (nativeFolder.exists && nativeFolder.isDirectory) {
       val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
       method.invoke(builder, nativeFolder, abiFilter)
     }
-  }
+  } 
 
   /// Copy most non class files from the given standard java jar file
   ///
@@ -64,7 +72,7 @@ class ApkBuilder(project: Installable, debug: Boolean) {
       def method = klass.getMethod("addResourcesFromJar", classOf[File])
       method.invoke(builder, jarFile)
     }
-  }
+  }  
 
   def addSourceFolder(folder: File) {
     if (folder.exists) {
@@ -72,7 +80,6 @@ class ApkBuilder(project: Installable, debug: Boolean) {
       method.invoke(builder, folder)
     }
   }
-
 
   def sealApk() {
     val method = klass.getMethod("sealApk")
