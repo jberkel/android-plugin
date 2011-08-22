@@ -119,7 +119,7 @@ root directory.
 If you need make modifications to the plugin itself, you can compile
 and install it locally (you need at least sbt 0.10.x to build it):
 
-    $ git clone git://github.com/philcali/android-plugin.git
+    $ git clone git://github.com/jberkel/android-plugin.git
     $ cd android-plugin
     $ sbt publish-local
 
