@@ -1,12 +1,11 @@
 #Usage
 
-Requires [sbt](http://simple-build-tool.googlecode.com/) and the
-[Android SDK](http://developer.android.com/sdk/index.html)
-(`brew install sbt android-sdk` when using [homebrew](http://github.com/mxcl/homebrew) on OSX).
+Requires [sbt][] and the [Android SDK][]
+(`brew install sbt android-sdk` when using [homebrew][] on OSX).
 
-For those who are familiar with the 0.7.x plugin, there is a
-[migration guide](https://github.com/philcali/android-plugin/blob/master/migration_guide.md)
-for a quick reference.
+For those who are familiar with the 0.7.x plugin, there is a [migration guide][]
+for a quick reference. The 0.7.x version is no longer maintained - it
+still available on the [0.7.x][] branch.
 
 Using a [giter8][g8] template is the easiest way to create a new
 project that uses the plugin. If you don't have giter8 installed:
@@ -143,3 +142,8 @@ This code is based on work by Walter Chang
 
 [scala-on-android]: http://groups.google.com/group/scala-on-android
 [simple-build-tool]: http://groups.google.com/group/simple-build-tool
+[0.7.x]: https://github.com/jberkel/android-plugin/tree/0.7.x
+[migration guide]: https://github.com/philcali/android-plugin/blob/master/migration_guide.md
+[homebrew]: https://github.com/mxcl/homebrew
+[sbt]: http://simple-build-tool.googlecode.com/
+[Android SDK]: http://developer.android.com/sdk/index.html
