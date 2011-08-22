@@ -63,11 +63,11 @@ object AndroidDdm {
   }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
-    screenshotDevice <<= (dbPath) map { p => 
+    screenshotDevice <<= (dbPath) map { p =>
       screenshot(false, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "device.png")
       file("device.png")
     },
-    screenshotEmulator <<= (dbPath) map { p => 
+    screenshotEmulator <<= (dbPath) map { p =>
       screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator.png")
       file("emulator.png")
     }
