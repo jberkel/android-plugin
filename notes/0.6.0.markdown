@@ -14,7 +14,10 @@
 
 * Include resources in apk ([Kevin Hester][geeksville])
 
+* Plugin ported to sbt 0.10.x ([Philip Cali][philcali])
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
 [jberkel]: https://github.com/jberkel
 [geeksville]: https://github.com/geeksville
+[philcali]: https://github.com/philcali
