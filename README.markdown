@@ -4,8 +4,8 @@ Requires [sbt][] and the [Android SDK][]
 (`brew install sbt android-sdk` when using [homebrew][] on OSX).
 
 For those who are familiar with the 0.7.x plugin, there is a [migration guide][]
-for a quick reference. The 0.7.x version is no longer maintained - it
-still available on the [0.7.x][] branch.
+for a quick reference. The 0.7.x version is no longer maintained - but it is
+still available in the [0.7.x][] branch.
 
 Using a [giter8][] template is the easiest way to create a new
 project that uses the plugin. If you don't have giter8 installed:
