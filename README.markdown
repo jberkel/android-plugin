@@ -140,7 +140,7 @@ This code is based on work by Walter Chang
 [scala-on-android]: http://groups.google.com/group/scala-on-android
 [simple-build-tool]: http://groups.google.com/group/simple-build-tool
 [0.7.x]: https://github.com/jberkel/android-plugin/tree/0.7.x
-[migration guide]: https://github.com/philcali/android-plugin/blob/master/migration_guide.md
+[migration guide]: https://github.com/jberkel/android-plugin/blob/master/migration_guide.md
 [homebrew]: https://github.com/mxcl/homebrew
 [giter8]: https://github.com/n8han/giter8#readme
 [Android SDK]: http://developer.android.com/sdk/index.html
