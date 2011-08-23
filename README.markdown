@@ -119,10 +119,6 @@ and install it locally (you need at least sbt 0.10.x to build it):
     $ cd android-plugin
     $ sbt publish-local
 
-Because the plugin gets cached in a project based on its version
-number you might need to use `sbt clean-plugins` to force a reload
-after `sbt publish-local`. Don't hesitate to send a pull request!
-
 ##Mailing list
 
 There's no official mailing list for the project but most contributors hang
