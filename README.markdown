@@ -136,7 +136,7 @@ This code is based on work by Walter Chang
 [Jan Berkel](https://github.com/jberkel).
 
 
-[sbt]: https://github.com/harrah/xsbt
+[sbt]: https://github.com/harrah/xsbt/wiki
 [scala-on-android]: http://groups.google.com/group/scala-on-android
 [simple-build-tool]: http://groups.google.com/group/simple-build-tool
 [0.7.x]: https://github.com/jberkel/android-plugin/tree/0.7.x
