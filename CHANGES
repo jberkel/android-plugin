@@ -1,6 +1,6 @@
 == 0.4.x
 
- * CHANGES no longer maintained, cf notes/x.y.z.markdown 
+ * CHANGES no longer maintained, cf notes/x.y.z.markdown
 
 == 0.4 06/02/10
 
@@ -13,7 +13,7 @@
  * removed dependencies to ant+antelese
 
 == 0.2 05/12/09
- 
+
  * use ANDROID_SDK_HOME for locating SDK
  * exclude Android provided artifacts (commons-*)
  * added project generator script
