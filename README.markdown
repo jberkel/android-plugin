@@ -101,14 +101,19 @@ unpredictable.
 
 In the sbt console run:
 
-    > sbt screenshot-emulator
+    > screenshot-emulator
 
 or
 
-    > sbt screenshot-device
+    > screenshot-device
 
 The screenshots will be written to `emulator.png` / `device.png` in the project
 root directory.
+
+## Fetch hprof memory dumps
+
+    > hprof-emulator
+    > hprof-device
 
 ##Hacking on the plugin
 

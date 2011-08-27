@@ -137,6 +137,8 @@ object AndroidDdm {
     }
   )) ++ Seq (
     screenshotDevice <<= (screenshotDevice in Android).identity,
-    screenshotEmulator <<= (screenshotEmulator in Android).identity
+    screenshotEmulator <<= (screenshotEmulator in Android).identity,
+    hprofEmulator <<= (hprofEmulator in Android).identity,
+    hprofDevice <<= (hprofDevice in Android).identity
   )
 }
