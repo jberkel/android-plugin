@@ -1,3 +1,5 @@
+* Plugin ported to sbt 0.10.x ([Philip Cali][philcali])
+
 * Update path to Google's Android add-ons ([nuriaion][nuriaion])
 
 * Use the ApkBuilder class in sdklib.jar instead of the deprecated apkbuilder command-line executable ([Paul Butcher][paulbutcher])
@@ -8,13 +10,11 @@
   versionCode and versionName properties 
   ([Kevin Hester][geeksville])
 
-* Integrated ddmlib to grab screenshots from emulator / device ([Jan Berkel][jberkel])
+* Integrated ddmlib to grab screenshots and memory dumps from emulator / device ([Jan Berkel][jberkel])
 
 * Android library project support ([Paul Butcher][paulbutcher])
 
 * Include resources in apk ([Kevin Hester][geeksville])
-
-* Plugin ported to sbt 0.10.x ([Philip Cali][philcali])
 
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
