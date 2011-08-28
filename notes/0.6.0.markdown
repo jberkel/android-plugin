@@ -7,7 +7,7 @@
 * Support for building standard Java Android projects ([Jan Berkel][jberkel])
 
 * AndroidManifestGenerator trait to control and increment
-  versionCode and versionName properties 
+  versionCode and versionName properties
   ([Kevin Hester][geeksville])
 
 * Integrated ddmlib to grab screenshots and memory dumps from emulator / device ([Jan Berkel][jberkel])
