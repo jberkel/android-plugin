@@ -35,21 +35,18 @@ object AndroidInstall {
 
   private def dxTask: Project.Initialize[Task[Unit]] =
     (skipProguard, dxJavaOpts, dxPath, classDirectory,
-     proguardInJars, classesDexPath, classesMinJarPath) map {
+     proguardInJars, classesDexPath, classesMinJarPath, streams) map {
       (skipProguard, javaOpts, dxPath, classDirectory,
-     proguardInJars, classesDexPath, classesMinJarPath) =>
+     proguardInJars, classesDexPath, classesMinJarPath, streams) =>
       val outputs = if (!skipProguard) {
         classesMinJarPath get
       } else {
         classDirectory +++ proguardInJars get
       }
-      Process(
-      <x>
-        {dxPath} {dxMemoryParameter(javaOpts)}
-        --dex --output={classesDexPath}
-        {outputs.mkString(" ")}
-      </x>
-      ) !
+      val dxCmd = String.format("%s %s --dex --output=%s %s",
+        dxPath, dxMemoryParameter(javaOpts), classesDexPath, outputs.mkString(" "))
+      streams.log.debug(dxCmd)
+      Process(dxCmd) !
     }
 
   private def proguardTask: Project.Initialize[Task[Unit]] =
