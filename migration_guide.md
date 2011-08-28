@@ -35,8 +35,3 @@ skipProguard in Android := true
 
 Every setting and task used in the plugin can be found in `AndroidKeys`, akin to 
 `sbt.Keys._`
-
-## Not ported
-
-The `PlainJavaProject` definition was not ported, mainly because I refuse to write
-java these days. I will welcome a pull request, though.
