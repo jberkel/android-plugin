@@ -85,6 +85,7 @@ object AndroidInstall {
                  proguardOption :: Nil
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String]).parse(config)
+          streams.log.debug("executing proguard: "+args.mkString("\n"))
           new ProGuard(config).execute
         case true => streams.log.info("Skipping Proguard")
       }
