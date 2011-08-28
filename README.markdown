@@ -115,6 +115,24 @@ root directory.
     > hprof-emulator
     > hprof-device
 
+##Building Java Android projects with sbt
+
+If you don't use Scala yet and want to use the plugin to build your existing
+Java app you can do by adding the `PlainJavaProject.settings` to your settings:
+
+```scala
+object AndroidBuild extends Build {
+  lazy val main = Project (
+    "My Project",
+    file("."),
+    settings = General.fullAndroidSettings ++ PlainJavaProject.settings
+  )
+}
+```
+
+This will change the defaults to the directory structure expected by Android's
+`build.xml` file and skip the Proguard optimisation step.
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile
