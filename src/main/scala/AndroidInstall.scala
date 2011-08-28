@@ -10,7 +10,7 @@ import java.io.{File => JFile}
 object AndroidInstall {
 
   private def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install "+p.absolutePath) 
+    adbTask(dp.absolutePath, emulator, "install "+p.absolutePath)
   }
 
   private def reinstallTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
@@ -21,7 +21,7 @@ object AndroidInstall {
     adbTask(dp.absolutePath, emulator, "uninstall "+m)
   }
 
-  private def aaptPackageTask: Project.Initialize[Task[Unit]] = 
+  private def aaptPackageTask: Project.Initialize[Task[Unit]] =
   (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath) map {
     (apPath, manPath, rPath, assetPath, jPath, resApkPath) => Process(<x>
       {apPath} package --auto-add-overlay -f
@@ -32,11 +32,11 @@ object AndroidInstall {
         -F {resApkPath}
     </x>) !
   }
- 
-  private def dxTask: Project.Initialize[Task[Unit]] = 
-    (skipProguard, dxJavaOpts, dxPath, classDirectory, 
-     proguardInJars, classesDexPath, classesMinJarPath) map { 
-      (skipProguard, javaOpts, dxPath, classDirectory, 
+
+  private def dxTask: Project.Initialize[Task[Unit]] =
+    (skipProguard, dxJavaOpts, dxPath, classDirectory,
+     proguardInJars, classesDexPath, classesMinJarPath) map {
+      (skipProguard, javaOpts, dxPath, classDirectory,
      proguardInJars, classesDexPath, classesMinJarPath) =>
       val outputs = if (!skipProguard) {
         classesMinJarPath get
@@ -53,17 +53,17 @@ object AndroidInstall {
     }
 
   private def proguardTask: Project.Initialize[Task[Unit]] =
-    (skipProguard, scalaInstance, classDirectory, proguardInJars, streams, 
+    (skipProguard, scalaInstance, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
       (skipProguard, scalaInstance, classDirectory, proguardInJars, streams,
        classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
       skipProguard match {
-        case false => 
-          val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class", 
-                               "TR.class", "TR$.class") 
-          val args = 
+        case false =>
+          val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
+                               "TR.class", "TR$.class")
+          val args =
                 "-injars" :: classDirectory.absolutePath + JFile.pathSeparator +
-                 scalaInstance.libraryJar.absolutePath + 
+                 scalaInstance.libraryJar.absolutePath +
                  "(!META-INF/MANIFEST.MF,!library.properties)" +
                  (if (!proguardInJars.isEmpty)
                  JFile.pathSeparator +
@@ -81,7 +81,7 @@ object AndroidInstall {
                  "-keep public class * extends android.view.View" ::
                  "-keep public class * extends android.app.Application" ::
                  "-keep public class "+manifestPackage+".** { public protected *; }" ::
-                 "-keep public class * implements junit.framework.Test { public void test*(); }" :: 
+                 "-keep public class * implements junit.framework.Test { public void test*(); }" ::
                  proguardOption :: Nil
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String]).parse(config)
@@ -109,12 +109,12 @@ object AndroidInstall {
 
   lazy val defaultAliases = aliasKeys map (k => k <<= (k in Android).identity)
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ 
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++
     aliasKeys.map(t => t <<= t dependsOn packageDebug) ++ Seq (
     uninstallEmulator <<= uninstallTask(emulator = true),
     uninstallDevice <<= uninstallTask(emulator = false),
 
-    makeAssetPath <<= directory(mainAssetsPath), 
+    makeAssetPath <<= directory(mainAssetsPath),
 
     aaptPackage <<= aaptPackageTask,
     aaptPackage <<= aaptPackage dependsOn (makeAssetPath, dx),
@@ -126,9 +126,9 @@ object AndroidInstall {
     proguard <<= proguardTask,
     proguard <<= proguard dependsOn (compile in Compile),
 
-    packageConfig <<= 
+    packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
-       nativeLibrariesPath, classesMinJarPath, resourceDirectory) 
+       nativeLibrariesPath, classesMinJarPath, resourceDirectory)
       (ApkConfig(_, _, _, _, _, _, _)),
     packageDebug <<= packageTask(true),
     packageRelease <<= packageTask(false)
