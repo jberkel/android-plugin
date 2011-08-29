@@ -7,8 +7,8 @@ import scala.xml._
 
 object AndroidManifestGenerator {
   private def generateManifestTask =
-    (manifestPath, manifestTemplatePath, versionCode, version) map {
-    (manifestPath, manifestTemplatePath, versionCode, version) =>
+    (manifestPath, manifestTemplatePath, versionCode, version, streams) map {
+    (manifestPath, manifestTemplatePath, versionCode, version, streams) =>
 
       val namespacePrefix = "http://schemas.android.com/apk/res/android"
       val manifest = XML.loadFile(manifestTemplatePath)
@@ -27,8 +27,8 @@ object AndroidManifestGenerator {
 
       val newManifest = manifest % verName % verCode
 
-      XML.save(manifestTemplatePath.absolutePath, newManifest)
-
+      XML.save(manifestPath.absolutePath, newManifest)
+      streams.log.debug("Created "+manifestPath)
       manifestPath
     }
 
