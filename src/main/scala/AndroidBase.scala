@@ -8,7 +8,7 @@ object AndroidBase {
 
   private def aaptGenerateTask =
     (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath) => 
+    (mPackage, aPath, mPath, resPath, jPath, javaPath) =>
     Process (<x>
       {aPath.absolutePath} package --auto-add-overlay -m
         --custom-package {mPackage}
@@ -32,7 +32,7 @@ object AndroidBase {
         idPath.absolutePath ::
           "-o" + javaPath.absolutePath ::
           "-I" + jSource.absolutePath ::
-          ap.absolutePath :: Nil 
+          ap.absolutePath :: Nil
       }.foldLeft(None.asInstanceOf[Option[ProcessBuilder]]) { (f, s) =>
         f match {
           case None => Some(s)
@@ -68,7 +68,7 @@ object AndroidBase {
     packageApkPath <<= (target, packageApkName) (_ / _),
     skipProguard := false,
 
-    addonsJarPath <<= (manifestPath, manifestSchema, mapsJarPath) { 
+    addonsJarPath <<= (manifestPath, manifestSchema, mapsJarPath) {
       (mPath, man, mapsPath) =>
       for {
         lib <- manifest(mPath) \ "application" \ "uses-library"
@@ -79,7 +79,7 @@ object AndroidBase {
           }
         }
         if p.isDefined
-      } yield p.get 
+      } yield p.get
     },
 
     apiLevel <<= (minSdkVersion, platformName) { (min, pName) =>
@@ -96,10 +96,10 @@ object AndroidBase {
     libraryJarPath <<= (jarPath, addonsJarPath) (_ +++ _ get),
 
     proguardOption := "",
-    proguardExclude <<= 
+    proguardExclude <<=
       (libraryJarPath, classDirectory, resourceDirectory, managedClasspath) map {
         (libPath, classDirectory, resourceDirectory, managedClasspath) =>
-          val temp = libPath +++ classDirectory +++ resourceDirectory 
+          val temp = libPath +++ classDirectory +++ resourceDirectory
           managedClasspath.foldLeft(temp)(_ +++ _.data) get
       },
     proguardInJars <<= (fullClasspath, proguardExclude) map {
@@ -113,7 +113,7 @@ object AndroidBase {
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
-    unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))), 
+    unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
 
     sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
 
