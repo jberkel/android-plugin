@@ -28,7 +28,6 @@ To build the package:
     $ export ANDROID_HOME=/path/to/sdk # or ANDROID_SDK_{HOME,ROOT}
     $ sbt # enter sbt's interactive mode
 
-    > update
     > android:package-debug
 
 To install and start the main activity in the [Android Emulator][]

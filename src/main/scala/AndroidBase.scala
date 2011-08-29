@@ -66,7 +66,7 @@ object AndroidBase {
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
     packageApkPath <<= (target, packageApkName) (_ / _),
-    skipProguard := false,
+    useProguard := true,
 
     addonsJarPath <<= (manifestPath, manifestSchema, mapsJarPath) {
       (mPath, man, mapsPath) =>

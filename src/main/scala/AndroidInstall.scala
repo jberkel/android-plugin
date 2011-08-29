@@ -59,12 +59,12 @@ object AndroidInstall {
     }
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
-    (skipProguard, classDirectory, proguardInJars, streams,
+    (useProguard, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
-      (skipProguard, classDirectory, proguardInJars, streams,
-       classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
-      skipProguard match {
-        case false =>
+    (useProguard, classDirectory, proguardInJars, streams,
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
+      useProguard match {
+        case true =>
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
           val sep = JFile.pathSeparator
@@ -92,7 +92,7 @@ object AndroidInstall {
           streams.log.debug("executing proguard: "+args.mkString("\n"))
           new ProGuard(config).execute
           Some(classesMinJarPath)
-        case true =>
+        case false =>
           streams.log.info("Skipping Proguard")
           None
       }

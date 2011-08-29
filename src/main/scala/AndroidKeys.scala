@@ -67,7 +67,7 @@ object AndroidKeys {
   val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val packageApkPath = SettingKey[File]("package-apk-path")
-  val skipProguard = SettingKey[Boolean]("skip-proguard")
+  val useProguard = SettingKey[Boolean]("use-proguard")
 
   val addonsJarPath = SettingKey[Seq[File]]("addons-jar-path")
 
