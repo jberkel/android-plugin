@@ -9,18 +9,19 @@ object AndroidMarketPublish {
     s.log.success("Ready for publication: \n" + path)
   }
 
-  private def zipAlignTask: Project.Initialize[Task[Unit]] = 
-    (zipAlignPath, packageApkPath, packageAlignedPath) map { (zip, apkPath, pPath) =>
-      Process(<x>
-        {zip} -v 4 {apkPath} {pPath}
-      </x>) !
+  private def zipAlignTask: Project.Initialize[Task[File]] =
+    (zipAlignPath, packageApkPath, packageAlignedPath, streams) map { (zip, apkPath, pPath, s) =>
+      s.log.debug(Process(<x> {zip} -v 4 {apkPath} {pPath} </x>).!!)
+      s.log.info("Aligned "+pPath)
+      pPath
     }
 
-  private def signReleaseTask: Project.Initialize[Task[Unit]] =
-    (keystorePath, keyalias, packageApkPath) map { (ksPath, ka, pPath) =>
-      Process(<x>
-        jarsigner -verbose -keystore {ksPath} -storepass {getPassword} {pPath} {ka}
-      </x>) !
+  private def signReleaseTask: Project.Initialize[Task[File]] =
+    (keystorePath, keyalias, packageApkPath, streams) map { (ksPath, ka, pPath,s ) =>
+      s.log.debug(Process(
+        <x> jarsigner -verbose -keystore {ksPath} -storepass {getPassword} {pPath} {ka} </x>).!!)
+      s.log.info("Signed "+pPath)
+      pPath
     }
 
   private def getPassword = SimpleReader.readLine("\nEnter keystore password: ").get
@@ -29,7 +30,7 @@ object AndroidMarketPublish {
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
-    packageAlignedName <<= (artifact) { _.name + "-market" + ".apk"},
+    packageAlignedName <<= (artifact, version) ((a,v) => String.format("%s-%s-market.apk", a.name, v)),
     packageAlignedPath <<= (target, packageAlignedName) { _ / _ },
 
     // Configuring Tasks

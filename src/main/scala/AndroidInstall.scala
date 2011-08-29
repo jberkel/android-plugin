@@ -21,7 +21,7 @@ object AndroidInstall {
     adbTask(dp.absolutePath, emulator, "uninstall "+m)
   }
 
-  private def aaptPackageTask: Project.Initialize[Task[Unit]] =
+  private def aaptPackageTask: Project.Initialize[Task[File]] =
   (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath) map {
     (apPath, manPath, rPath, assetPath, jPath, resApkPath) => Process(<x>
       {apPath} package --auto-add-overlay -f
@@ -30,43 +30,50 @@ object AndroidInstall {
         -A {assetPath}
         -I {jPath}
         -F {resApkPath}
-    </x>) !
+    </x>).!
+    resApkPath
   }
 
-  private def dxTask: Project.Initialize[Task[Unit]] =
-    (skipProguard, dxJavaOpts, dxPath, classDirectory,
-     proguardInJars, classesDexPath, classesMinJarPath, streams) map {
-      (skipProguard, javaOpts, dxPath, classDirectory,
-     proguardInJars, classesDexPath, classesMinJarPath, streams) =>
-      val outputs = if (!skipProguard) {
-        classesMinJarPath get
-      } else {
-        classDirectory +++ proguardInJars get
+  private def dxTask: Project.Initialize[Task[File]] =
+    (scalaInstance, dxJavaOpts, dxPath, classDirectory,
+     proguardInJars, proguard, classesDexPath, streams) map {
+    (scalaInstance, dxJavaOpts, dxPath, classDirectory,
+     proguardInJars, proguard, classesDexPath, streams) =>
+
+      val inputs = proguard match {
+        case Some(file) => file get
+        case None       => classDirectory +++ proguardInJars --- scalaInstance.libraryJar get
       }
-      val dxCmd = String.format("%s %s --dex --output=%s %s",
-        dxPath, dxMemoryParameter(javaOpts), classesDexPath, outputs.mkString(" "))
-      streams.log.debug(dxCmd)
-      Process(dxCmd) !
+      val uptodate = classesDexPath.exists &&
+        !inputs.exists (_.lastModified > classesDexPath.lastModified)
+
+      if (!uptodate) {
+        val dxCmd = String.format("%s %s --dex --output=%s %s",
+          dxPath, dxMemoryParameter(dxJavaOpts), classesDexPath, inputs.mkString(" "))
+        streams.log.debug(dxCmd)
+        streams.log.info("Dexing "+classesDexPath)
+        streams.log.debug(dxCmd !!)
+      } else streams.log.debug("dex file uptodate, skipping")
+
+      classesDexPath
     }
 
-  private def proguardTask: Project.Initialize[Task[Unit]] =
-    (skipProguard, scalaInstance, classDirectory, proguardInJars, streams,
+  private def proguardTask: Project.Initialize[Task[Option[File]]] =
+    (skipProguard, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
-      (skipProguard, scalaInstance, classDirectory, proguardInJars, streams,
+      (skipProguard, classDirectory, proguardInJars, streams,
        classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
       skipProguard match {
         case false =>
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
-                               "TR.class", "TR$.class")
+                               "TR.class", "TR$.class", "library.properties")
+          val sep = JFile.pathSeparator
           val args =
-                "-injars" :: classDirectory.absolutePath + JFile.pathSeparator +
-                 scalaInstance.libraryJar.absolutePath +
-                 "(!META-INF/MANIFEST.MF,!library.properties)" +
+                "-injars" :: classDirectory.absolutePath + sep +
                  (if (!proguardInJars.isEmpty)
-                 JFile.pathSeparator +
-                 proguardInJars.map(_+manifestr.mkString("(", ",!**/", ")")).mkString(JFile.pathSeparator) else "") ::
+                 proguardInJars.map(_+manifestr.mkString("(", ",!**/", ")")).mkString(sep) else "") ::
                  "-outjars" :: classesMinJarPath.absolutePath ::
-                 "-libraryjars" :: libraryJarPath.mkString(JFile.pathSeparator) ::
+                 "-libraryjars" :: libraryJarPath.mkString(sep) ::
                  "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
                  "-dontnote scala.Enumeration" ::
                  "-dontnote org.xml.sax.EntityResolver" ::
@@ -84,14 +91,18 @@ object AndroidInstall {
           new ConfigurationParser(args.toArray[String]).parse(config)
           streams.log.debug("executing proguard: "+args.mkString("\n"))
           new ProGuard(config).execute
-        case true => streams.log.info("Skipping Proguard")
+          Some(classesMinJarPath)
+        case true =>
+          streams.log.info("Skipping Proguard")
+          None
       }
     }
 
-  private def packageTask(debug: Boolean) = (packageConfig, streams) map { (c, s) =>
+  private def packageTask(debug: Boolean):Project.Initialize[Task[File]] = (packageConfig, streams) map { (c, s) =>
     val builder = new ApkBuilder(c, debug)
     builder.build.fold(s.log.error(_), s.log.info(_))
     s.log.debug(builder.outputStream.toString)
+    c.packageApkPath
   }
 
   lazy val installerTasks = Seq (
@@ -128,6 +139,7 @@ object AndroidInstall {
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
        nativeLibrariesPath, classesMinJarPath, resourceDirectory)
       (ApkConfig(_, _, _, _, _, _, _)),
+
     packageDebug <<= packageTask(true),
     packageRelease <<= packageTask(false)
   ) ++ Seq(packageDebug, packageRelease).map {

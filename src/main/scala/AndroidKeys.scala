@@ -112,15 +112,15 @@ object AndroidKeys {
   val reinstallEmulator = TaskKey[Unit]("reinstall-emulator")
   val reinstallDevice = TaskKey[Unit]("reinstall-device")
 
-  val aaptPackage = TaskKey[Unit]("aapt-package",
+  val aaptPackage = TaskKey[File]("aapt-package",
     "Package resources and assets.")
-  val packageDebug = TaskKey[Unit]("package-debug",
+  val packageDebug = TaskKey[File]("package-debug",
     "Package and sign with a debug key.")
-  val packageRelease = TaskKey[Unit]("package-release", "Package without signing.")
+  val packageRelease = TaskKey[File]("package-release", "Package without signing.")
   val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
 
-  val proguard = TaskKey[Unit]("proguard", "Optimize class files.")
-  val dx = TaskKey[Unit]("dx", "Convert class files to dex files")
+  val proguard = TaskKey[Option[File]]("proguard", "Optimize class files.")
+  val dx = TaskKey[File]("dx", "Convert class files to dex files")
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
 
@@ -137,6 +137,8 @@ object AndroidKeys {
     "Take a screenshot from the emulator")
   val screenshotDevice = TaskKey[File]("screenshot-device",
     "Take a screenshot from the device")
+
+  // hprof tasks are Unit because of async nature
   val hprofEmulator = TaskKey[Unit]("hprof-emulator",
     "Take a dump of the current heap from the emulator")
   val hprofDevice = TaskKey[Unit]("hprof-device",
@@ -145,8 +147,8 @@ object AndroidKeys {
   /** Market Publish tasks */
   val prepareMarket = TaskKey[Unit]("prepare-market",
     "Prepare asset for Market publication.")
-  val zipAlign = TaskKey[Unit]("zip-align", "Run zipalign on signed jar.")
-  val signRelease = TaskKey[Unit]("sign-release",
+  val zipAlign = TaskKey[File]("zip-align", "Run zipalign on signed jar.")
+  val signRelease = TaskKey[File]("sign-release",
     "Sign with key alias using key-alias and keystore path.")
   val cleanAligned = TaskKey[Unit]("clean-aligned", "Remove zipaligned jar")
 

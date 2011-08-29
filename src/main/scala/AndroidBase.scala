@@ -48,7 +48,7 @@ object AndroidBase {
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
 
-    packageApkName <<= (artifact) (_.name + ".apk"),
+    packageApkName <<= (artifact, version) ((a, v) => String.format("%s-%s.apk", a.name, v)),
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
 
     manifestPackage <<= (manifestPath) {
@@ -97,10 +97,10 @@ object AndroidBase {
 
     proguardOption := "",
     proguardExclude <<=
-      (libraryJarPath, classDirectory, resourceDirectory, managedClasspath) map {
-        (libPath, classDirectory, resourceDirectory, managedClasspath) =>
+      (libraryJarPath, classDirectory, resourceDirectory, unmanagedClasspath in Compile) map {
+        (libPath, classDirectory, resourceDirectory, unmanagedClasspath) =>
           val temp = libPath +++ classDirectory +++ resourceDirectory
-          managedClasspath.foldLeft(temp)(_ +++ _.data) get
+          unmanagedClasspath.foldLeft(temp)(_ +++ _.data) get
       },
     proguardInJars <<= (fullClasspath, proguardExclude) map {
       (runClasspath, proguardExclude) =>

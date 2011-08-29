@@ -74,7 +74,7 @@ object AndroidDdm {
 
   def dumpHprof(app: String, path: String, emulator: Boolean)
                (success: (Client, Array[Byte]) => Unit)
-               (failure:  (Client, String) => Unit) {
+               (failure:  (Client, String) => Unit) = {
     withDevice(emulator, path) { device =>
       var client = device.getClient(app)
       var count = 0
@@ -96,7 +96,7 @@ object AndroidDdm {
     }
   }
 
-  private def writeHprof(client: Client, data: Array[Byte]) {
+  private def writeHprof(client: Client, data: Array[Byte]) = {
     val pkg = client.getClientData.getClientDescription
     val pid = client.getClientData.getPid
     val tmp = new File(pkg+".tmp")
@@ -104,9 +104,10 @@ object AndroidDdm {
     fos.write(data)
     fos.close()
     val hprof = "%s-%d.hprof".format(pkg, pid)
-    String.format("hprof-conv %s %s", tmp.getName, hprof).run
+    String.format("hprof-conv %s %s", tmp.getName, hprof).!
     tmp.delete()
     System.err.println("heap dump written to "+hprof)
+    file(hprof)
   }
 
   class Screenshot(val r: RenderedImage) {
