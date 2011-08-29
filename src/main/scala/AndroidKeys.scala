@@ -144,6 +144,11 @@ object AndroidKeys {
   val hprofDevice = TaskKey[Unit]("hprof-device",
     "Take a dump of the current heap from the device")
 
+  val threadsEmulator = InputKey[Unit]("threads-emulator",
+    "Show thread dump from the emulator")
+  val threadsDevice = InputKey[Unit]("threads-device",
+    "Show thread dump from the device")
+
   /** Market Publish tasks */
   val prepareMarket = TaskKey[Unit]("prepare-market",
     "Prepare asset for Market publication.")

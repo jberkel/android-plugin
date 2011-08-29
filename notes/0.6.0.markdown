@@ -10,7 +10,7 @@
   versionCode and versionName properties
   ([Kevin Hester][geeksville])
 
-* Integrated ddmlib to grab screenshots and memory dumps from emulator / device ([Jan Berkel][jberkel])
+* Integrated ddmlib to grab screenshots and memory/thread dumps from emulator / device ([Jan Berkel][jberkel])
 
 * Android library project support ([Paul Butcher][paulbutcher])
 
