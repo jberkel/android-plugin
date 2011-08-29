@@ -140,6 +140,7 @@ and clean up the obj and libs directories during cleanup.
 This depends on an environment variable being set up: either `ANDROID_NDK_HOME` or `ANDROID_NDK_ROOT`.
 
 Place your Android NDK sources in `src\main\jni`. Add the AndroidNdk.settings to your project:
+
 ```scala
   lazy val someProjectUsingNDK = Project(
     id = ...,
