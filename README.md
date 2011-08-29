@@ -132,6 +132,22 @@ object AndroidBuild extends Build {
 This will change the defaults to the directory structure expected by Android's
 `build.xml` file and skip the Proguard optimisation step.
 
+##Building Android NDK projects
+
+There is some basic NDK support in the android-plugin.
+For now, it doesn't do anything else than call ndk-build during compilation
+and clean up the obj and libs directories during cleanup.
+This depends on an environment variable being set up: either `ANDROID_NDK_HOME` or `ANDROID_NDK_ROOT`.
+
+Place your Android NDK sources in `src\main\jni`. Add the AndroidNdk.settings to your project:
+```scala
+  lazy val someProjectUsingNDK = Project(
+    id = ...,
+    ...
+    settings = ... ++ AndroidBase.settings ++ AndroidNdk.settings
+  )
+```
+
 ##Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile
