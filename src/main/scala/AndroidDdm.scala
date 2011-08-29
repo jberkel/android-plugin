@@ -68,7 +68,7 @@ object AndroidDdm {
           image.setRGB(x, y, value)
         index += indexInc
       }
-      new Screenshot(image)
+      Screenshot(image)
     }
   }
 
@@ -110,20 +110,23 @@ object AndroidDdm {
     file(hprof)
   }
 
-  class Screenshot(val r: RenderedImage) {
-    def toFile(format: String, f: File):Boolean = ImageIO.write(r, format, f)
-    def toFile(format: String, s: String):Boolean = toFile(format, new File(s))
+  case class Screenshot(val r: RenderedImage) {
+    def toFile(format: String, f: File, str:TaskStreams):File   = { ImageIO.write(r, format, f); f }
+    def toFile(format: String, s: String, str:TaskStreams):File = {
+      val tstamp = System.currentTimeMillis().toString()
+      val file = new File(String.format("%s-%s.%s", s, tstamp, format))
+      str.log.info("screenshot written to "+file.getName)
+      toFile(format, file, str)
+    }
     def toOutputStream(format: String, o: OutputStream) = ImageIO.write(r, format, o)
   }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
-    screenshotDevice <<= (dbPath) map { p =>
-      screenshot(false, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "device.png")
-      file("device.png")
+    screenshotDevice <<= (dbPath, streams) map { (p,s) =>
+      screenshot(false, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "device", s)
     },
-    screenshotEmulator <<= (dbPath) map { p =>
-      screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator.png")
-      file("emulator.png")
+    screenshotEmulator <<= (dbPath, streams) map { (p,s) =>
+      screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator", s)
     },
     hprofEmulator <<= (manifestPackage, dbPath) map { (m, p) =>
       dumpHprof(m, p.absolutePath, true)(writeHprof) { (client, message) => error(message) }
