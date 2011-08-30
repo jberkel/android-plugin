@@ -30,7 +30,8 @@ object AndroidMarketPublish {
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
-    packageAlignedName <<= (artifact, version) ((a,v) => String.format("%s-%s-market.apk", a.name, v)),
+    packageAlignedName <<= (artifact, version) ((a,v) =>
+                                                String.format("%s-%s-market.apk", a.name, v)),
     packageAlignedPath <<= (target, packageAlignedName) { _ / _ },
 
     // Configuring Tasks
@@ -45,7 +46,6 @@ object AndroidMarketPublish {
     signRelease <<= signReleaseTask,
     signRelease <<= signRelease dependsOn packageRelease
   )) ++ Seq (
-    cleanFiles <+= (packageAlignedPath in Android).identity,
-    prepareMarket <<= (prepareMarket in Android).identity
+    cleanFiles <+= (packageAlignedPath in Android).identity
   )
 }

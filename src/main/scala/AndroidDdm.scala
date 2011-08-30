@@ -213,10 +213,5 @@ object AndroidDdm {
       s.log.info("terminated debug bridge. older versions of the SDK might not be "+
                  "able to call init() again.")
     }
-  )) ++ Seq (
-    screenshotDevice <<= (screenshotDevice in Android).identity,
-    screenshotEmulator <<= (screenshotEmulator in Android).identity,
-    hprofEmulator <<= (hprofEmulator in Android).identity,
-    hprofDevice <<= (hprofDevice in Android).identity
-  )
+  ))
 }

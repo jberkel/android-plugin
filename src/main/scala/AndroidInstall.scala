@@ -10,10 +10,6 @@ import java.io.{File => JFile}
 object AndroidInstall {
 
   private def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install "+p.absolutePath)
-  }
-
-  private def reinstallTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
     adbTask(dp.absolutePath, emulator, "install -r "+p.absolutePath)
   }
 
@@ -107,19 +103,10 @@ object AndroidInstall {
 
   lazy val installerTasks = Seq (
     installEmulator <<= installTask(emulator = true),
-    reinstallEmulator <<= reinstallTask(emulator = true),
-
-    installDevice <<= installTask(emulator = false),
-    reinstallDevice <<= reinstallTask(emulator = false)
+    installDevice <<= installTask(emulator = false)
   )
 
-  lazy val aliasKeys = Seq(installEmulator,reinstallEmulator,
-                               installDevice,reinstallDevice)
-
-  lazy val defaultAliases = aliasKeys map (k => k <<= (k in Android).identity)
-
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++
-    aliasKeys.map(t => t <<= t dependsOn packageDebug) ++ Seq (
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ Seq (
     uninstallEmulator <<= uninstallTask(emulator = true),
     uninstallDevice <<= uninstallTask(emulator = false),
 
@@ -144,5 +131,5 @@ object AndroidInstall {
     packageRelease <<= packageTask(false)
   ) ++ Seq(packageDebug, packageRelease).map {
     t => t <<= t dependsOn (cleanApk, aaptPackage)
-  }) ++ defaultAliases
+  })
 }

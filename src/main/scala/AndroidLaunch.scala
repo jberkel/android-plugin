@@ -30,17 +30,13 @@ object AndroidLaunch {
     launcher.headOption.getOrElse("")
   }
 
-  lazy val aliasKeys = Seq (startDevice, startEmulator)
-
-  lazy val defaultAliases = aliasKeys map (k => k <<= (k in Android).identity)
-
   lazy val settings: Seq[Setting[_]] = 
     AndroidInstall.settings ++ 
     inConfig(Android) (Seq (
       startDevice <<= startTask(false),
       startEmulator <<= startTask(true),
 
-      startDevice <<= startDevice dependsOn reinstallDevice,
-      startEmulator <<= startEmulator dependsOn reinstallEmulator
-    )) ++ defaultAliases
+      startDevice <<= startDevice dependsOn installDevice,
+      startEmulator <<= startEmulator dependsOn installEmulator
+    ))
 }

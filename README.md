@@ -33,15 +33,16 @@ To build the package:
 To install and start the main activity in the [Android Emulator][]
 (must already be running):
 
-    > start-emulator
+    > android:start-emulator
 
 To build a signed package for release into the Marketplace:
 
-    > prepare-market
+    > android:prepare-market
 
 ##Launching the emulator from sbt
 
-A developer can now fire up the Android Emulator from the sbt terminal:
+A developer can now fire up the Android Emulator from the sbt terminal
+(hint: you can get a list of all avds with tab completion)
 
     > android:emulator-start <my_avd>
 
@@ -100,19 +101,19 @@ unpredictable.
 
 In the sbt console run:
 
-    > screenshot-emulator
+    > android:screenshot-emulator
 
 or
 
-    > screenshot-device
+    > android:screenshot-device
 
 The screenshots will be written to `emulator.png` / `device.png` in the project
 root directory.
 
 ## Fetch hprof memory dumps
 
-    > hprof-emulator
-    > hprof-device
+    > android:hprof-emulator
+    > android:hprof-device
 
 ##Building Java Android projects with sbt
 
