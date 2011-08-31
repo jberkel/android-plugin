@@ -125,7 +125,7 @@ object AndroidDdm {
     }
   }
 
-  def dumpHprof(app: String, path: String, emulator: Boolean)
+  def dumpHprof(app: String, path: String, emulator: Boolean, streams: TaskStreams)
                (success: (Client, Array[Byte]) => Unit) {
     withClient(emulator, path, app) { client =>
         ClientData.setHprofDumpHandler(new IHprofDumpHandler() {
@@ -134,6 +134,7 @@ object AndroidDdm {
           override def onEndFailure(client: Client, message:String) = error(message)
         })
         client.dumpHprof()
+        streams.log.info("requested hprof dump")
     }.orElse(error("can not get client "+app+", is it running"))
   }
 
@@ -218,11 +219,11 @@ object AndroidDdm {
     screenshotEmulator <<= (dbPath, streams) map { (p,s) =>
       screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator", s)
     },
-    hprofEmulator <<= (manifestPackage, dbPath) map { (m, p) =>
-      dumpHprof(m, p.absolutePath, true)(writeHprof)
+    hprofEmulator <<= (manifestPackage, dbPath, streams) map { (m,p,s) =>
+      dumpHprof(m, p.absolutePath, true, s)(writeHprof)
     },
-    hprofDevice <<= (manifestPackage, dbPath) map { (m,p) =>
-      dumpHprof(m, p.absolutePath, false)(writeHprof)
+    hprofDevice <<= (manifestPackage, dbPath, streams) map { (m,p,s) =>
+      dumpHprof(m, p.absolutePath, false, s)(writeHprof)
     },
     threadsEmulator <<= InputTask(
         (manifestPackage, dbPath) apply { (m,p) => threadList(m, p.absolutePath, true) })
