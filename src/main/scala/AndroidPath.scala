@@ -6,7 +6,7 @@ import AndroidHelpers._
 
 object AndroidPath {
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) { 
+  lazy val settings: Seq[Setting[_]] = inConfig(Android) {
     AndroidDefaults.settings ++ Seq (
     osDxName <<= (dxName) (_ + osBatchSuffix),
 
@@ -17,7 +17,7 @@ object AndroidPath {
     idlPath <<= (platformToolsPath, aidlName) (_ / _),
     dxPath <<= (platformToolsPath, osDxName) (_ / _),
 
-    sdkPath <<= (envs) { es => 
+    sdkPath <<= (envs) { es =>
       determineAndroidSdkPath(es).getOrElse(error(
         "Android SDK not found. You might need to set %s".format(es.mkString(" or "))
       ))

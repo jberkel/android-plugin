@@ -4,14 +4,14 @@ import java.io.{ByteArrayOutputStream, File, PrintStream}
 
 // Replaces the Installable argument
 case class ApkConfig(
-  androidToolsPath: File, 
+  androidToolsPath: File,
   packageApkPath: File,
   resourcesApkPath: File,
   classesDexPath: File,
   nativeLibrariesPath: File,
   classesMinJarPath: File,
   resourceDirectory: File
-) 
+)
 
 /**
  * Build an APK - replaces the now-deprecated apkbuilder command-line executable.
@@ -45,23 +45,23 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
   } catch {
     case e: Throwable => Left(e.getCause.getMessage)
   }
-  
+
   def getDebugKeystore = {
     val method = klass.getMethod("getDebugKeystore")
     method.invoke(null).asInstanceOf[String]
   }
-  
+
   def setDebugMode(debug: Boolean) {
     val method = klass.getMethod("setDebugMode", classOf[Boolean])
     method.invoke(builder, debug.asInstanceOf[Object])
   }
-  
+
   def addNativeLibraries(nativeFolder: File, abiFilter: String) {
     if (nativeFolder.exists && nativeFolder.isDirectory) {
       val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
       method.invoke(builder, nativeFolder, abiFilter)
     }
-  } 
+  }
 
   /// Copy most non class files from the given standard java jar file
   ///
@@ -72,7 +72,7 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
       def method = klass.getMethod("addResourcesFromJar", classOf[File])
       method.invoke(builder, jarFile)
     }
-  }  
+  }
 
   def addSourceFolder(folder: File) {
     if (folder.exists) {

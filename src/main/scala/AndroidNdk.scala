@@ -6,13 +6,13 @@ import AndroidNdkKeys._
 
 import java.io.File
 
-/** 
- * Support for the Android NDK. 
+/**
+ * Support for the Android NDK.
  *
  * Adding support for compilation of C/C++ sources using the NDK.
- * 
+ *
  * Adapted from work by Daniel Solano Gómez
- * 
+ *
  * @author Daniel Solano Gómez, Martin Kneissl.
  */
 object AndroidNdk {
@@ -50,23 +50,23 @@ object AndroidNdk {
         "You might need to set " + envs.mkString(" or ")))
       }
   ))
-    
 
-  private def ndkBuildTask(targets: String*) = 
+
+  private def ndkBuildTask(targets: String*) =
     (ndkBuildPath, nativeOutputPath) map { (ndkBuildPath, obj) =>
       val exitValue = Process(ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath :: targets.toList) !
-      
+
       if(exitValue != 0) error("ndk-build failed with nonzero exit code (" + exitValue + ")")
 
       ()
     }
-  
+
   lazy val settings: Seq[Setting[_]] = defaultSettings ++ pathSettings ++ inConfig(Android) (Seq (
     ndkBuild <<= ndkBuildTask(),
     ndkClean <<= ndkBuildTask("clean"),
     (compile in Compile) <<= (ndkBuild in Android, compile in Compile) map { (ndkBuild, compile) => ndkBuild ; compile }
   )) ++ Seq (
-    cleanFiles <+= (nativeObjectPath in Android).identity, 
-    clean <<= (clean, ndkClean in Android) map { (clean, ndkClean) => ndkClean ; clean  }  
+    cleanFiles <+= (nativeObjectPath in Android).identity,
+    clean <<= (clean, ndkClean in Android) map { (clean, ndkClean) => ndkClean ; clean  }
   )
 }

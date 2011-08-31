@@ -3,7 +3,7 @@ import sbt._
 import Keys._
 
 /*!# Android NDK Keys
-`AndroidNdkKeys` contains all the `SettingKey`s and `TaskKey`s for 
+`AndroidNdkKeys` contains all the `SettingKey`s and `TaskKey`s for
 Android projects using the NDK.
  */
 object AndroidNdkKeys {
@@ -16,7 +16,7 @@ object AndroidNdkKeys {
   val nativeOutputPath = SettingKey[File]("native-output-path")
   val nativeObjectPath = SettingKey[File]("native-object-path")
   val ndkBuildPath = SettingKey[File]("ndk-build-path", "Path to the 'ndk-build' tool")
-  
+
   val ndkBuild = TaskKey[Unit]("ndk-build", "Compile native C/C++ sources.")
   val ndkClean = TaskKey[Unit]("ndk-clean", "Clean resources built from native C/C++ sources.")
 

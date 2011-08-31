@@ -8,12 +8,12 @@ import complete.DefaultParsers._
 
 object AndroidProject extends Plugin {
 
-  val emulatorStart = InputKey[Unit]("emulator-start", 
+  val emulatorStart = InputKey[Unit]("emulator-start",
     "Launches a user specified avd")
   val emulatorStop = TaskKey[Unit]("emulator-stop",
     "Kills the running emulator.")
   val listDevices = TaskKey[Unit]("list-devices",
-    "List devices from the adb server.") 
+    "List devices from the adb server.")
 
   private def emulatorStartTask = (parsedTask: TaskKey[String]) =>
     (parsedTask, toolsPath) map { (avd, toolsPath) =>
@@ -38,14 +38,14 @@ object AndroidProject extends Plugin {
                  .reduceLeftOption(_ | _).getOrElse(token("none"))
   }
 
-  lazy val androidSettings: Seq[Setting[_]] = 
+  lazy val androidSettings: Seq[Setting[_]] =
     AndroidBase.settings ++
     AndroidLaunch.settings ++
     AndroidDdm.settings
 
   // Android path and defaults can load for every project
   // No aggregation of the emulator runnables
-  override lazy val settings: Seq[Setting[_]] = 
+  override lazy val settings: Seq[Setting[_]] =
     AndroidPath.settings ++ inConfig(Android) (Seq (
       listDevices <<= listDevicesTask,
       emulatorStart <<= InputTask(installedAvds)(emulatorStartTask),
@@ -53,9 +53,9 @@ object AndroidProject extends Plugin {
     )) ++ Seq (
       listDevices <<= (listDevices in Android).identity
     ) ++ Seq (
-      listDevices, 
+      listDevices,
       listDevices in Android,
-      emulatorStart in Android, 
+      emulatorStart in Android,
       emulatorStop in Android
     ).map {
       aggregate in _ := false

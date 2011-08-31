@@ -31,7 +31,7 @@ object TypedResources {
               // otherwise it may be a widget or view
               case Id(id) => {
                 List("android.widget.", "android.view.", "android.webkit.").map(pkg =>
-                  tryLoading(pkg + node.label)).find(_.isDefined).flatMap(clazz => 
+                  tryLoading(pkg + node.label)).find(_.isDefined).flatMap(clazz =>
                     Some(id, clazz.get.getName)
                   )
               }
@@ -82,7 +82,7 @@ object TypedResources {
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     managedScalaPath <<= (baseDirectory) ( _ / "src_managed" / "main" / "scala"),
-    typedResource <<= (manifestPackage, managedScalaPath) { 
+    typedResource <<= (manifestPackage, managedScalaPath) {
       _.split('.').foldLeft(_) ((p, s) => p / s) / "TR.scala"
     },
     layoutResources <<= (mainResPath) (_ / "layout" ** "*.xml" get),
