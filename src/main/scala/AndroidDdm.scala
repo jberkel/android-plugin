@@ -24,14 +24,22 @@ object AndroidDdm {
   val infos = scala.collection.mutable.Map.empty[String, ThreadInfo]
 
   val THREAD_STATUS = Array[String](
-    "zombie", "running", "timed-wait", "monitor",
+    "unknown", "zombie", "running", "timed-wait", "monitor",
     "wait", "init", "start", "native", "vmwait",
     "suspended")
 
   val clientListener = new IClientChangeListener() {
     override def clientChanged(client: Client, mask: Int) {
       mask match {
+        case Client.CHANGE_NAME =>
+          // client connected
         case Client.CHANGE_THREAD_DATA =>
+          // thread status changed (thread died etc)
+          if (client.getClientData.getThreads != null) {
+            val tnames = for (tinfo <- client.getClientData.getThreads)
+              yield { tinfo.getThreadName() }
+            infos.retain((name,_) => tnames.contains(name))
+          }
         case Client.CHANGE_THREAD_STACKTRACE =>
           if (client.getClientData.getThreads != null) {
             for (tinfo <- client.getClientData.getThreads; if
@@ -39,7 +47,7 @@ object AndroidDdm {
                  infos.put(tinfo.getThreadName(), tinfo)
             }
           }
-        case _ =>
+        case _ => //System.out.println("client: "+client+" mask: "+mask)
       }
     }
   }
@@ -84,15 +92,16 @@ object AndroidDdm {
     withDevice(emulator, path) { device =>
       var client = device.getClient(clientPkg)
       var count = 0
-      while (client == null && count < 20) {
+      while (client == null && count < 10) {
         client = device.getClient(clientPkg)
         Thread.sleep(100)
         count += 1
       }
       if (client != null) {
         action(client)
-      } else
-        error("could not get client "+clientPkg+", is it running?")
+      } else {
+        None.asInstanceOf[F]
+      }
     }
   }
 
@@ -117,16 +126,15 @@ object AndroidDdm {
   }
 
   def dumpHprof(app: String, path: String, emulator: Boolean)
-               (success: (Client, Array[Byte]) => Unit)
-               (failure:  (Client, String) => Unit) = {
+               (success: (Client, Array[Byte]) => Unit) {
     withClient(emulator, path, app) { client =>
         ClientData.setHprofDumpHandler(new IHprofDumpHandler() {
           override def onSuccess(path: String, client: Client) = error("not supported")
           override def onSuccess(data: Array[Byte], client: Client) = success(client, data)
-          override def onEndFailure(client: Client, message:String) = failure(client, message)
+          override def onEndFailure(client: Client, message:String) = error(message)
         })
         client.dumpHprof()
-    }
+    }.orElse(error("can not get client "+app+", is it running"))
   }
 
   def fetchThreads(app: String, path: String, emulator: Boolean):Option[Array[ThreadInfo]] = {
@@ -135,10 +143,11 @@ object AndroidDdm {
       client.requestThreadUpdate
       val threads = client.getClientData.getThreads
       if (threads != null)
-        for (t <- threads) {
-          client.requestThreadStackTrace(t.getThreadId)
-        }
+        threads.foreach(t => client.requestThreadStackTrace(t.getThreadId))
       threads
+    }.orElse { // client died
+      infos.clear
+      None
     }
   }
 
@@ -169,22 +178,37 @@ object AndroidDdm {
 
   def printStackTask = (parsed: TaskKey[String]) =>
     (parsed, streams) map { (p, s) =>
-      val info = infos.get(p)
-                       .getOrElse(error("stack trace not found"))
+      def doPrint(tinfo: ThreadInfo, includeStack: Boolean) {
+        def status (ti: ThreadInfo) = {
+          val colorize = (s: String) => s match {
+            case "running" => scala.Console.GREEN+s+scala.Console.RESET
+            case _         => s
+          }
+          val state = THREAD_STATUS(ti.getStatus+1)
+          "state: %s, utime: %d, stime: %d, sampled %.1f secs ago".format(
+                                      colorize(state), ti.getUtime, ti.getStime,
+                                      (System.currentTimeMillis() - ti.getStackCallTime) / 1000f)
+        }
 
-      s.log.info(p+" ("+status(info)+")")
-      s.log.info(info.getStackTrace
-                     .map(_.toString).mkString("\n"))
+        s.log.info(tinfo.getThreadName+" ("+status(tinfo)+")")
+        if (includeStack)
+          s.log.info(tinfo.getStackTrace.map(_.toString).mkString("\n"))
+      }
+      p match {
+        case "all" => infos.toList
+                           .sortWith({case((_,i1),(_,i2)) => i1.getUtime > i2.getUtime })
+                           .foreach({case (_,info) => doPrint(info, false)})
+        case _     => doPrint(infos.get(p).getOrElse(error("thread not found")), true)
+      }
       ()
     }
-
-  def status(ti: ThreadInfo) = THREAD_STATUS(ti.getStatus)
 
   def threadList(app: String, path: String, emu: Boolean) = (s: State) => {
     fetchThreads(app, path, emu)
     Space ~> infos.map({ case (k, v) => token(k) })
-                   .reduceLeftOption(_ | _)
-                   .getOrElse(token("none"))
+                  .reduceLeftOption(_ | _)
+                  .map(_ | token("all"))
+                  .getOrElse(token("<name>"))
   }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
@@ -195,10 +219,10 @@ object AndroidDdm {
       screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator", s)
     },
     hprofEmulator <<= (manifestPackage, dbPath) map { (m, p) =>
-      dumpHprof(m, p.absolutePath, true)(writeHprof) { (client, message) => error(message) }
+      dumpHprof(m, p.absolutePath, true)(writeHprof)
     },
-    hprofDevice <<= (manifestPackage, dbPath) map { (m, p) =>
-      dumpHprof(m, p.absolutePath, false)(writeHprof) { (client, message) => error(message) }
+    hprofDevice <<= (manifestPackage, dbPath) map { (m,p) =>
+      dumpHprof(m, p.absolutePath, false)(writeHprof)
     },
     threadsEmulator <<= InputTask(
         (manifestPackage, dbPath) apply { (m,p) => threadList(m, p.absolutePath, true) })
