@@ -18,7 +18,7 @@ object AndroidPath {
     dxPath <<= (platformToolsPath, osDxName) (_ / _),
 
     sdkPath <<= (envs) { es =>
-      determineAndroidSdkPath(es).getOrElse(error(
+      determineAndroidSdkPath(es).getOrElse(sys.error(
         "Android SDK not found. You might need to set %s".format(es.mkString(" or "))
       ))
     }

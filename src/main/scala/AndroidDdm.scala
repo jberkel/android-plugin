@@ -129,13 +129,13 @@ object AndroidDdm {
                (success: (Client, Array[Byte]) => Unit) {
     withClient(emulator, path, app) { client =>
         ClientData.setHprofDumpHandler(new IHprofDumpHandler() {
-          override def onSuccess(path: String, client: Client) = error("not supported")
+          override def onSuccess(path: String, client: Client) = sys.error("not supported")
           override def onSuccess(data: Array[Byte], client: Client) = success(client, data)
-          override def onEndFailure(client: Client, message:String) = error(message)
+          override def onEndFailure(client: Client, message:String) = sys.error(message)
         })
         client.dumpHprof()
         streams.log.info("requested hprof dump")
-    }.orElse(error("can not get client "+app+", is it running"))
+    }.orElse(sys.error("can not get client "+app+", is it running"))
   }
 
   def fetchThreads(app: String, path: String, emulator: Boolean):Option[Array[ThreadInfo]] = {
@@ -199,7 +199,7 @@ object AndroidDdm {
         case "all" => infos.toList
                            .sortWith({case((_,i1),(_,i2)) => i1.getUtime > i2.getUtime })
                            .foreach({case (_,info) => doPrint(info, false)})
-        case _     => doPrint(infos.get(p).getOrElse(error("thread not found")), true)
+        case _     => doPrint(infos.get(p).getOrElse(sys.error("thread not found")), true)
       }
       ()
     }
@@ -214,10 +214,10 @@ object AndroidDdm {
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     screenshotDevice <<= (dbPath, streams) map { (p,s) =>
-      screenshot(false, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "device", s)
+      screenshot(false, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "device", s)
     },
     screenshotEmulator <<= (dbPath, streams) map { (p,s) =>
-      screenshot(true, false, p.absolutePath).getOrElse(error("could not get screenshot")).toFile("png", "emulator", s)
+      screenshot(true, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "emulator", s)
     },
     hprofEmulator <<= (manifestPackage, dbPath, streams) map { (m,p,s) =>
       dumpHprof(m, p.absolutePath, true, s)(writeHprof)

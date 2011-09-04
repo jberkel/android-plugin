@@ -52,7 +52,7 @@ object AndroidBase {
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
 
     manifestPackage <<= (manifestPath) {
-      manifest(_).attribute("package").getOrElse(error("package not defined")).text
+      manifest(_).attribute("package").getOrElse(sys.error("package not defined")).text
     },
     minSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "minSdkVersion")),
     maxSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "maxSdkVersion")),
@@ -117,17 +117,17 @@ object AndroidBase {
 
     sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
 
-    cleanFiles <+= (managedJavaPath).identity,
-    resourceDirectories <+= (mainAssetsPath).identity
+    cleanFiles <+= (managedJavaPath),
+    resourceDirectories <+= (mainAssetsPath)
   ) ++ Seq (
     // Handle the delegates for android settings
-    classDirectory <<= (classDirectory in Compile).identity,
-    sourceDirectory <<= (sourceDirectory in Compile).identity,
-    sourceDirectories <<= (sourceDirectories in Compile).identity,
-    resourceDirectory <<= (resourceDirectory in Compile).identity,
-    resourceDirectories <<= (resourceDirectories in Compile).identity,
-    javaSource <<= (javaSource in Compile).identity,
-    managedClasspath <<= (managedClasspath in Runtime).identity,
-    fullClasspath <<= (fullClasspath in Runtime).identity
+    classDirectory <<= (classDirectory in Compile),
+    sourceDirectory <<= (sourceDirectory in Compile),
+    sourceDirectories <<= (sourceDirectories in Compile),
+    resourceDirectory <<= (resourceDirectory in Compile),
+    resourceDirectories <<= (resourceDirectories in Compile),
+    javaSource <<= (javaSource in Compile),
+    managedClasspath <<= (managedClasspath in Runtime),
+    fullClasspath <<= (fullClasspath in Runtime)
   ))
 }

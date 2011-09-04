@@ -24,7 +24,7 @@ object AndroidTest {
       testEmulator <<= instrumentationTestAction(true),
       testDevice <<= instrumentationTestAction(false)
     )) ++ Seq (
-      testEmulator <<= (testEmulator in Android).identity,
-      testDevice <<= (testDevice in Android).identity
+      testEmulator <<= (testEmulator in Android),
+      testDevice <<= (testDevice in Android)
     )
 }

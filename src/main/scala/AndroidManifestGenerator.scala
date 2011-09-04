@@ -13,9 +13,9 @@ object AndroidManifestGenerator {
       val namespacePrefix = "http://schemas.android.com/apk/res/android"
       val manifest = XML.loadFile(manifestTemplatePath)
       if (manifest.attribute(namespacePrefix,"versionCode").isDefined)
-        error("android:versionCode should not be defined in template")
+        sys.error("android:versionCode should not be defined in template")
       if (manifest.attribute(namespacePrefix, "versionName").isDefined)
-        error("android:versionName should not be defined in template")
+        sys.error("android:versionName should not be defined in template")
       val applications = manifest \ "application"
       val wasDebuggable =
         applications.exists(_.attribute(namespacePrefix, "debuggable").isDefined)
@@ -43,6 +43,6 @@ object AndroidManifestGenerator {
     generateManifest <<= generateManifest dependsOn makeManagedJavaPath,
     aaptGenerate <<= aaptGenerate dependsOn generateManifest
   )) ++ Seq (
-    cleanFiles <+= (manifestPath in Android).identity
+    cleanFiles <+= (manifestPath in Android)
   )
 }

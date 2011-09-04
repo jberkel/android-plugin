@@ -89,10 +89,10 @@ object TypedResources {
 
     generateTypedResources <<= generateTypedResourcesTask,
 
-    sourceGenerators in Compile <+= generateTypedResources.identity,
+    sourceGenerators in Compile <+= generateTypedResources,
     watchSources in Compile <++= (layoutResources) map (ls => ls)
   )) ++ Seq (
-    cleanFiles <+= (managedScalaPath in Android).identity,
-    generateTypedResources <<= (generateTypedResources in Android).identity
+    cleanFiles <+= (managedScalaPath in Android),
+    generateTypedResources <<= (generateTypedResources in Android)
   )
 }
