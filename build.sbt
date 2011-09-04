@@ -6,6 +6,8 @@ version := "0.6.0-SNAPSHOT"
 
 scalacOptions += "-deprecation"
 
+publishMavenStyle := true
+
 publishTo := Some("Scala Tools Nexus" at
                   "http://nexus.scala-tools.org/content/repositories/releases/")
 
