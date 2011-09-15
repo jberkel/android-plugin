@@ -22,13 +22,14 @@ object AndroidBase {
   }
 
   private def aidlGenerateTask =
-    (sourceDirectories, idlPath, managedJavaPath, javaSource) map {
-    (sDirs, idPath, javaPath, jSource) =>
+    (sourceDirectories, idlPath, managedJavaPath, javaSource, streams) map {
+    (sDirs, idPath, javaPath, jSource, s) =>
     val aidlPaths = sDirs.map(_ ** "*.aidl").reduceLeft(_ +++ _).get
-    val processor = if (aidlPaths.isEmpty)
-      Process(true)
-    else
-      aidlPaths.map { ap =>
+    if (aidlPaths.isEmpty) {
+      s.log.debug("no AIDL files found, skipping")
+      Nil
+    } else {
+      val processor = aidlPaths.map { ap =>
         idPath.absolutePath ::
           "-o" + javaPath.absolutePath ::
           "-I" + jSource.absolutePath ::
@@ -39,10 +40,12 @@ object AndroidBase {
           case Some(first) => Some(first #&& s)
         }
       }.get
-    processor !
+      s.log.debug("generating aidl "+processor)
+      processor !
 
-    val rPath = javaPath ** "R.java"
-    javaPath ** "*.java" --- (rPath) get
+      val rPath = javaPath ** "R.java"
+      javaPath ** "*.java" --- (rPath) get
+    }
   }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
@@ -60,7 +63,7 @@ object AndroidBase {
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _),
-    managedJavaPath <<= (baseDirectory) (_ / "src_managed" / "main" / "java"),
+    managedJavaPath <<= (target) (_ / "src_managed" / "main" / "java"),
 
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
@@ -117,7 +120,6 @@ object AndroidBase {
 
     sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
 
-    cleanFiles <+= (managedJavaPath).identity,
     resourceDirectories <+= (mainAssetsPath).identity
   ) ++ Seq (
     // Handle the delegates for android settings
