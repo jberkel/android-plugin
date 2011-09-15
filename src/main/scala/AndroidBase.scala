@@ -24,7 +24,7 @@ object AndroidBase {
   private def aidlGenerateTask =
     (sourceDirectories, idlPath, managedJavaPath, javaSource) map {
     (sDirs, idPath, javaPath, jSource) =>
-    val aidlPaths = sDirs.map(_ * "*.aidl").reduceLeft(_ +++ _).get
+    val aidlPaths = sDirs.map(_ ** "*.aidl").reduceLeft(_ +++ _).get
     val processor = if (aidlPaths.isEmpty)
       Process(true)
     else
