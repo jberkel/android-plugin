@@ -5,7 +5,8 @@ Requires [sbt][] and the [Android SDK][]
 
 For those who are familiar with the 0.7.x plugin, there is a [migration guide][]
 for a quick reference. The 0.7.x version is no longer maintained - but it is
-still available in the [0.7.x][] branch.
+still available in the [0.7.x][] branch. Support for the upcoming sbt 0.11 is in
+the [sbt_011][] branch.
 
 Using a [giter8][] template is the easiest way to create a new
 project that uses the plugin. If you don't have giter8 installed:
@@ -178,6 +179,7 @@ list.
 [scala-on-android]: http://groups.google.com/group/scala-on-android
 [simple-build-tool]: http://groups.google.com/group/simple-build-tool
 [0.7.x]: https://github.com/jberkel/android-plugin/tree/0.7.x
+[sbt_011]: https://github.com/jberkel/android-plugin/tree/sbt_011
 [migration guide]: https://github.com/jberkel/android-plugin/wiki/migration_guide
 [contributors]: https://github.com/jberkel/android-plugin/wiki/Contributors
 [homebrew]: https://github.com/mxcl/homebrew
