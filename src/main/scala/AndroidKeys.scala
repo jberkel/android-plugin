@@ -147,7 +147,7 @@ object AndroidKeys {
     "Show thread dump from the device")
 
   /** Market Publish tasks */
-  val prepareMarket = TaskKey[Unit]("prepare-market",
+  val prepareMarket = TaskKey[File]("prepare-market",
     "Prepare asset for Market publication.")
   val zipAlign = TaskKey[File]("zip-align", "Run zipalign on signed jar.")
   val signRelease = TaskKey[File]("sign-release",
