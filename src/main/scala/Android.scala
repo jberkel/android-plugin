@@ -14,6 +14,8 @@ object AndroidProject extends Plugin {
     "Kills the running emulator.")
   val listDevices = TaskKey[Unit]("list-devices",
     "List devices from the adb server.")
+  val killAdb = TaskKey[Unit]("kill-server",
+    "Kill the adb server if it is running.")
 
   private def emulatorStartTask = (parsedTask: TaskKey[String]) =>
     (parsedTask, toolsPath) map { (avd, toolsPath) =>
@@ -22,7 +24,11 @@ object AndroidProject extends Plugin {
     }
 
   private def listDevicesTask: Project.Initialize[Task[Unit]] = (dbPath) map {
-    _ +" devices".format(dbPath) !
+    _ +" devices" !
+  }
+
+  private def killAdbTask: Project.Initialize[Task[Unit]] = (dbPath) map {
+    _ +" kill-server" !
   }
 
   private def emulatorStopTask = (dbPath, streams) map { (dbPath, s) =>
@@ -48,6 +54,7 @@ object AndroidProject extends Plugin {
   override lazy val settings: Seq[Setting[_]] =
     AndroidPath.settings ++ inConfig(Android) (Seq (
       listDevices <<= listDevicesTask,
+      killAdb <<= killAdbTask,
       emulatorStart <<= InputTask(installedAvds)(emulatorStartTask),
       emulatorStop <<= emulatorStopTask
     )) ++ Seq (
