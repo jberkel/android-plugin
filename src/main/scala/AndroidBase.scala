@@ -53,12 +53,13 @@ object AndroidBase {
 
     packageApkName <<= (artifact, version) ((a, v) => String.format("%s-%s.apk", a.name, v)),
     manifestPath <<= (sourceDirectory, manifestName) (_ / _),
+    manifestTemplatePath <<= (sourceDirectory, manifestName) (_ / _),
 
-    manifestPackage <<= (manifestPath) {
+    manifestPackage <<= (manifestTemplatePath) {
       manifest(_).attribute("package").getOrElse(error("package not defined")).text
     },
-    minSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "minSdkVersion")),
-    maxSdkVersion <<= (manifestPath, manifestSchema)(usesSdk(_, _, "maxSdkVersion")),
+    minSdkVersion <<= (manifestTemplatePath, manifestSchema)(usesSdk(_, _, "minSdkVersion")),
+    maxSdkVersion <<= (manifestTemplatePath, manifestSchema)(usesSdk(_, _, "maxSdkVersion")),
 
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
@@ -71,7 +72,7 @@ object AndroidBase {
     packageApkPath <<= (target, packageApkName) (_ / _),
     useProguard := true,
 
-    addonsJarPath <<= (manifestPath, manifestSchema, mapsJarPath) {
+    addonsJarPath <<= (manifestTemplatePath, manifestSchema, mapsJarPath) {
       (mPath, man, mapsPath) =>
       for {
         lib <- manifest(mPath) \ "application" \ "uses-library"
