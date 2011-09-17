@@ -30,9 +30,7 @@ object Github {
     githubRepo := "repo"
   ))
 
-  def credentials = {
-      val user = github_user.getOrElse(error("could not get github user - add [user] to %s"
-                                             .format(gitConfig.getAbsolutePath)))
+  private def credentials = {
       val password = github_password.getOrElse(error("could not get password - set "+
                                                githubPassword))
       (user, password)
