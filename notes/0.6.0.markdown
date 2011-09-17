@@ -16,6 +16,8 @@
 
 * Include resources in apk ([Kevin Hester][geeksville])
 
+* Github API integration: upload apks to github/S3 ([Jan Berkel][jberkel])
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
 [jberkel]: https://github.com/jberkel
