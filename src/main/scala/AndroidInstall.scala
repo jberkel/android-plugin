@@ -31,7 +31,7 @@ object AndroidInstall {
                            </x>).!
 
       if (status > 0) {
-        error( "aapt failed; consult output for possible reasons." )
+        sys.error( "aapt failed; consult output for possible reasons." )
       }
 
       resApkPath

@@ -65,7 +65,7 @@ object AndroidBase {
       val status = processes.reduceLeft{ _ #&& _ } !
 
       if (status > 0) {
-        error( "aapt failed; consult output for possible reasons." )
+        sys.error( "aapt failed; consult output for possible reasons." )
       }
 
       for (( path, pkg ) <- aaptAllTargets;
