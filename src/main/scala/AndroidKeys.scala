@@ -93,6 +93,7 @@ object AndroidKeys {
   val manifestTemplatePath = SettingKey[File]("manifest-template-path")
 
   /** Base Tasks */
+  val resDirsWithDeps = TaskKey[Seq[File]]("resource-dirs-with-deps")
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")
   val aidlGenerate = TaskKey[Seq[File]]("aidl-generate",
     "Generate Java classes from .aidl files.")
