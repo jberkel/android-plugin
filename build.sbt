@@ -2,7 +2,7 @@ organization := "org.scala-tools.sbt"
 
 name := "sbt-android-plugin"
 
-version := "0.6.0-SNAPSHOT"
+version := "0.6.1-SNAPSHOT"
 
 scalacOptions += "-deprecation"
 
