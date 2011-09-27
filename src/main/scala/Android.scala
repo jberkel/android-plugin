@@ -57,7 +57,7 @@ object AndroidProject extends Plugin {
       emulatorStart <<= InputTask(installedAvds)(emulatorStartTask),
       emulatorStop <<= emulatorStopTask
     )) ++ Seq (
-      listDevices <<= (listDevices in Android).identity
+      listDevices <<= (listDevices in Android)
     ) ++ Seq (
       listDevices,
       listDevices in Android,

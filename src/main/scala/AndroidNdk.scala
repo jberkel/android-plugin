@@ -46,7 +46,7 @@ object AndroidNdk {
 	    b = new File(p, ndkBuildName)
 	    if b.canExecute
 	  } yield b
-	  paths.headOption getOrElse (error("Android NDK not found.  " +
+	  paths.headOption getOrElse (sys.error("Android NDK not found.  " +
         "You might need to set " + envs.mkString(" or ")))
       }
   ))
@@ -56,7 +56,7 @@ object AndroidNdk {
     (ndkBuildPath, nativeOutputPath) map { (ndkBuildPath, obj) =>
       val exitValue = Process(ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath :: targets.toList) !
 
-      if(exitValue != 0) error("ndk-build failed with nonzero exit code (" + exitValue + ")")
+      if(exitValue != 0) sys.error("ndk-build failed with nonzero exit code (" + exitValue + ")")
 
       ()
     }
@@ -66,7 +66,7 @@ object AndroidNdk {
     ndkClean <<= ndkBuildTask("clean"),
     (compile in Compile) <<= (ndkBuild in Android, compile in Compile) map { (ndkBuild, compile) => ndkBuild ; compile }
   )) ++ Seq (
-    cleanFiles <+= (nativeObjectPath in Android).identity,
+    cleanFiles <+= (nativeObjectPath in Android),
     clean <<= (clean, ndkClean in Android) map { (clean, ndkClean) => ndkClean ; clean  }
   )
 }

@@ -47,6 +47,6 @@ object AndroidMarketPublish {
     signRelease <<= signReleaseTask,
     signRelease <<= signRelease dependsOn packageRelease
   )) ++ Seq (
-    cleanFiles <+= (packageAlignedPath in Android).identity
+    cleanFiles <+= (packageAlignedPath in Android)
   )
 }

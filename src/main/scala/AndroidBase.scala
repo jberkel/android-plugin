@@ -51,7 +51,7 @@ object AndroidBase {
   }
 
   def findPath() = (manifestPath) map { p =>
-      manifest(p.head).attribute("package").getOrElse(error("package not defined")).text
+      manifest(p.head).attribute("package").getOrElse(sys.error("package not defined")).text
   }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
@@ -59,7 +59,6 @@ object AndroidBase {
 
     packageApkName <<= (artifact, version) ((a, v) => String.format("%s-%s.apk", a.name, v)),
     manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
-
 
     manifestPackage <<= TaskData.write(findPath),
 
@@ -106,16 +105,16 @@ object AndroidBase {
 
     sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
 
-    resourceDirectories <+= (mainAssetsPath).identity
+    resourceDirectories <+= (mainAssetsPath)
   ) ++ Seq (
     // Handle the delegates for android settings
-    classDirectory <<= (classDirectory in Compile).identity,
-    sourceDirectory <<= (sourceDirectory in Compile).identity,
-    sourceDirectories <<= (sourceDirectories in Compile).identity,
-    resourceDirectory <<= (resourceDirectory in Compile).identity,
-    resourceDirectories <<= (resourceDirectories in Compile).identity,
-    javaSource <<= (javaSource in Compile).identity,
-    managedClasspath <<= (managedClasspath in Runtime).identity,
-    fullClasspath <<= (fullClasspath in Runtime).identity
+    classDirectory <<= (classDirectory in Compile),
+    sourceDirectory <<= (sourceDirectory in Compile),
+    sourceDirectories <<= (sourceDirectories in Compile),
+    resourceDirectory <<= (resourceDirectory in Compile),
+    resourceDirectories <<= (resourceDirectories in Compile),
+    javaSource <<= (javaSource in Compile),
+    managedClasspath <<= (managedClasspath in Runtime),
+    fullClasspath <<= (fullClasspath in Runtime)
   ))
 }
