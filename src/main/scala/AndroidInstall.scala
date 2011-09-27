@@ -18,15 +18,19 @@ object AndroidInstall {
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
-  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath) map {
-    (apPath, manPath, rPath, assetPath, jPath, resApkPath) => Process(<x>
+  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, streams) map {
+    (apPath, manPath, rPath, assetPath, jPath, resApkPath, s) =>
+
+    val aapt = Process(<x>
       {apPath} package --auto-add-overlay -f
         -M {manPath}
         -S {rPath}
         -A {assetPath}
         -I {jPath}
         -F {resApkPath}
-    </x>).!
+    </x>)
+    s.log.debug("packaging: "+aapt)
+    aapt.!
     resApkPath
   }
 

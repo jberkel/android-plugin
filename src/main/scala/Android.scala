@@ -2,7 +2,6 @@ import sbt._
 import Keys._
 
 import AndroidKeys._
-import AndroidHelpers._
 
 import complete.DefaultParsers._
 

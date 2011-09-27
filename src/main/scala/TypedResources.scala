@@ -82,7 +82,7 @@ object TypedResources {
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     managedScalaPath <<= (target) ( _ / "src_managed" / "main" / "scala"),
-    typedResource <<= (manifestPackage, managedScalaPath) {
+    typedResource <<= (manifestPackage, managedScalaPath) map {
       _.split('.').foldLeft(_) ((p, s) => p / s) / "TR.scala"
     },
     layoutResources <<= (mainResPath) (_ / "layout" ** "*.xml" get),

@@ -25,7 +25,6 @@ object AndroidKeys {
   val dxName = SettingKey[String]("dx-name")
   val manifestName = SettingKey[String]("manifest-name")
   val jarName = SettingKey[String]("jar-name")
-  val mapsJarName = SettingKey[String]("maps-jar-name")
   val assetsDirectoryName = SettingKey[String]("assets-dir-name")
   val resDirectoryName = SettingKey[String]("res-dir-name")
   val classesMinJarName = SettingKey[String]("classes-min-jar-name")
@@ -50,16 +49,15 @@ object AndroidKeys {
 
   /** Base Settings */
   val platformToolsPath = SettingKey[File]("platform-tools-path")
-  val manifestPackage = SettingKey[String]("manifest-package")
-  val minSdkVersion = SettingKey[Option[Int]]("min-sdk-version")
-  val maxSdkVersion = SettingKey[Option[Int]]("max-sdk-version")
-  val apiLevel = SettingKey[Int]("api-level")
+  val manifestPackage = TaskKey[String]("manifest-package")
+  val manifestPackage2 = SettingKey[String]("manifest-package2")
+  val minSdkVersion = TaskKey[Option[Int]]("min-sdk-version")
+  val maxSdkVersion = TaskKey[Option[Int]]("max-sdk-version")
+  val apiLevel = TaskKey[Int]("api-level")
 
-  val manifestPath = SettingKey[File]("manifest-path")
+  val manifestPath = TaskKey[Seq[File]]("manifest-path")
   val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
-  val addonsPath = SettingKey[File]("addons-path")
   val jarPath = SettingKey[File]("jar-path")
-  val mapsJarPath = SettingKey[File]("maps-jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = SettingKey[File]("main-res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
@@ -69,15 +67,13 @@ object AndroidKeys {
   val packageApkPath = SettingKey[File]("package-apk-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
 
-  val addonsJarPath = SettingKey[Seq[File]]("addons-jar-path")
-
   /** Install Settings */
   val packageConfig = SettingKey[ApkConfig]("package-config",
     "Generates a Apk Config")
 
   /** Typed Resource Settings */
   val managedScalaPath = SettingKey[File]("managed-scala-path")
-  val typedResource = SettingKey[File]("typed-resource",
+  val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
   val layoutResources = SettingKey[Seq[File]]("layout-resources")
@@ -161,7 +157,7 @@ object AndroidKeys {
        references to layout resources.""")
 
   /** Manifest Generator tasks*/
-  val generateManifest = TaskKey[File]("generate-manifest",
+  val generateManifest = TaskKey[Seq[File]]("generate-manifest",
     """Generates a customized AndroidManifest.xml with
        current build number and debug settings.""")
 

@@ -12,7 +12,7 @@ object AndroidLaunch {
       adbTask(dp.absolutePath,
               emulator,
               "shell am start -a android.intent.action.MAIN -n "+mPackage+"/"+
-              launcherActivity(schema, amPath, mPackage))
+              launcherActivity(schema, amPath.head, mPackage))
   }
 
   private def launcherActivity(schema: String, amPath: File, mPackage: String) = {

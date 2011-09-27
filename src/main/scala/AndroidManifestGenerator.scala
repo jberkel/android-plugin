@@ -7,8 +7,8 @@ import scala.xml._
 
 object AndroidManifestGenerator {
   private def generateManifestTask =
-    (manifestPath, manifestTemplatePath, versionCode, version, streams) map {
-    (manifestPath, manifestTemplatePath, versionCode, version, streams) =>
+    (resourceManaged in Compile, manifestTemplatePath, versionCode, version, streams) map {
+    (basedir, manifestTemplatePath, versionCode, version, streams) =>
 
       val namespacePrefix = "http://schemas.android.com/apk/res/android"
       val manifest = XML.loadFile(manifestTemplatePath)
@@ -17,8 +17,6 @@ object AndroidManifestGenerator {
       if (manifest.attribute(namespacePrefix, "versionName").isDefined)
         error("android:versionName should not be defined in template")
       val applications = manifest \ "application"
-      val wasDebuggable =
-        applications.exists(_.attribute(namespacePrefix, "debuggable").isDefined)
 
       val verName =
         new PrefixedAttribute("android", "versionName", version, Null)
@@ -27,19 +25,18 @@ object AndroidManifestGenerator {
 
       val newManifest = manifest % verName % verCode
 
-      XML.save(manifestPath.absolutePath, newManifest)
-      streams.log.debug("Created "+manifestPath)
-      manifestPath
+      val out = basedir / "AndroidManifest.xml"
+      basedir.mkdirs()
+
+      XML.save(out.absolutePath, newManifest)
+      streams.log.info("Wrote "+out)
+      Seq(out)
     }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
     manifestTemplateName := "AndroidManifest.xml",
     manifestTemplatePath <<= (sourceDirectory in Compile, manifestTemplateName)(_/_),
-
-    manifestPath <<= (target, manifestName) (_ / "src_managed" / "main" / _),
-
-    generateManifest <<= generateManifestTask,
-    generateManifest <<= generateManifest dependsOn makeManagedJavaPath,
-    aaptGenerate <<= aaptGenerate dependsOn generateManifest
+    manifestPath <<= generateManifestTask,
+    generateManifest <<= generateManifestTask
   ))
 }
