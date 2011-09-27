@@ -50,7 +50,7 @@ object AndroidKeys {
   /** Base Settings */
   val platformToolsPath = SettingKey[File]("platform-tools-path")
   val manifestPackage = TaskKey[String]("manifest-package")
-  val manifestPackage2 = SettingKey[String]("manifest-package2")
+  val manifestPackageName = TaskKey[String]("manifest-package-name")
   val minSdkVersion = TaskKey[Option[Int]]("min-sdk-version")
   val maxSdkVersion = TaskKey[Option[Int]]("max-sdk-version")
   val apiLevel = TaskKey[Int]("api-level")

@@ -207,7 +207,7 @@ object AndroidDdm {
       ()
     }
 
-  def threadList(app: String, path: String, emu: Boolean) = (s: State) => {
+  def threadListParser = (s: State, app: String, path: String, emu: Boolean) => {
     fetchThreads(app, path, emu)
     Space ~> infos.map({ case (k, v) => token(k) })
                     .reduceLeftOption(_ | _)
@@ -227,16 +227,16 @@ object AndroidDdm {
     hprofDevice <<= (manifestPackage, dbPath, streams) map { (m,p,s) =>
       dumpHprof(m, p.absolutePath, false, s)(writeHprof)
     },
-//    threadsEmulator <<= InputTask
-//       (dbPath.identity.zipWith(TaskData(manifestPackage)("")) { (path, pkg)  => threadList(pkg,path.absolutePath, true) })
-//        //(TaskData(manifestPackage)(threadList("a path", true))(""))
-//        (printStackTask)
-//    ,
-//    threadsDevice <<= InputTask
-//        //XXX need pkg
-//        (dbPath (p => threadList("", p.absolutePath, false)))
-//        (printStackTask)
-//    ,
+    threadsEmulator <<= InputTask(
+        (resolvedScoped, dbPath) ( (ctx, path) => (s: State) =>
+        threadListParser(s, loadFromContext(manifestPackageName, ctx, s) getOrElse "", path.absolutePath, true)))
+        (printStackTask),
+
+    threadsDevice <<= InputTask(
+        (resolvedScoped, dbPath) ( (ctx, path) => (s: State) =>
+        threadListParser(s, loadFromContext(manifestPackageName, ctx, s) getOrElse "", path.absolutePath, false)))
+        (printStackTask),
+
     stopBridge <<= (streams) map { (s) =>
       terminateBridge()
       s.log.info("terminated debug bridge. older versions of the SDK might not be "+

@@ -60,7 +60,8 @@ object AndroidBase {
     packageApkName <<= (artifact, version) ((a, v) => String.format("%s-%s.apk", a.name, v)),
     manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
 
-    manifestPackage <<= TaskData.write(findPath),
+    manifestPackage <<= findPath,
+    manifestPackageName <<= findPath storeAs manifestPackageName triggeredBy manifestPath,
 
     minSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "minSdkVersion")),
     maxSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "maxSdkVersion")),
