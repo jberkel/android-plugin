@@ -31,10 +31,10 @@ object Github {
   ))
 
   private def credentials = {
-     val user = github_user.getOrElse(error("could not get github user - add [user] to "+
+     val user = github_user.getOrElse(sys.error("could not get github user - add [user] to "+
                                             gitConfig.getAbsolutePath))
 
-      val password = github_password.getOrElse(error("could not get password - set "+
+      val password = github_password.getOrElse(sys.error("could not get password - set "+
                                                githubPassword))
       (user, password)
   }
