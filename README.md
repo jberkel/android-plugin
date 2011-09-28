@@ -11,7 +11,6 @@ the [sbt_011][] branch.
 Using a [giter8][] template is the easiest way to create a new
 project that uses the plugin. If you don't have giter8 installed:
 
-
     $ curl https://raw.github.com/n8han/conscript/master/setup.sh | sh
     $ ~/bin/cs n8han/giter8
 
@@ -24,7 +23,10 @@ This will prompt you to customize a few values (press enter to accept
 defaults), then create the project structure and all needed files plus
 skeleton tests, specs and activities.
 
-To build the package:
+Since this plugin is currently not released you'll have to first build and
+install it locally, follow the instruction in "Hacking on the plugin" below.
+
+Then, to build the Android package:
 
     $ cd <your app name>
     $ export ANDROID_HOME=/path/to/sdk # or ANDROID_SDK_{HOME,ROOT}
@@ -152,7 +154,7 @@ Place your Android NDK sources in `src\main\jni`. Add the AndroidNdk.settings to
   )
 ```
 
-##Hacking on the plugin
+## Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile
 and install it locally (you need at least sbt 0.10.x to build it):
