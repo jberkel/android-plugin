@@ -17,7 +17,8 @@ project that uses the plugin. If you don't have giter8 installed:
 
 Now create a new project with one of the Android templates:
 
-    $ ~/bin/g8 jberkel/android-app
+    $ ~/bin/g8 jberkel/android-app             # sbt 0.10.x
+    $ ~/bin/g8 jberkel/android-app -b sbt-0_11 # sbt 0.11.x
 
 This will prompt you to customize a few values (press enter to accept
 defaults), then create the project structure and all needed files plus
