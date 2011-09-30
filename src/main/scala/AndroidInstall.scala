@@ -18,17 +18,24 @@ object AndroidInstall {
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
-  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath) map {
-    (apPath, manPath, rPath, assetPath, jPath, resApkPath) => Process(<x>
-      {apPath} package --auto-add-overlay -f
-        -M {manPath}
-        -S {rPath}
-        -A {assetPath}
-        -I {jPath}
-        -F {resApkPath}
-    </x>).!
-    resApkPath
-  }
+  (aaptPath, manifestPath, resDirsWithDeps, mainAssetsPath, jarPath, resourcesApkPath) map {
+    (apPath, manPath, rPaths, assetPath, jPath, resApkPath) => {
+      val resPathArgs = rPaths.map{"-S "+_.absolutePath+" "}.reduceLeft( _+_ )
+      val status = Process(<x>
+                           {apPath} package --auto-add-overlay -f
+                           -M {manPath}
+                           {resPathArgs}
+                           -A {assetPath}
+                           -I {jPath}
+                           -F {resApkPath}
+                           </x>).!
+
+      if (status > 0) {
+        sys.error( "aapt failed; consult output for possible reasons." )
+      }
+
+      resApkPath
+  }}
 
   private def dxTask: Project.Initialize[Task[File]] =
     (scalaInstance, dxJavaOpts, dxPath, classDirectory,

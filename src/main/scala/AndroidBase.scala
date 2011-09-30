@@ -6,20 +6,72 @@ import AndroidHelpers._
 
 object AndroidBase {
 
-  private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath) =>
-    Process (<x>
-      {aPath.absolutePath} package --auto-add-overlay -m
-        --custom-package {mPackage}
-        -M {mPath.absolutePath}
-        -S {resPath.absolutePath}
-        -I {jPath.absolutePath}
-        -J {javaPath.absolutePath}
-    </x>) !
+  private def resDirsWithDepsTask = 
+    (thisProject, mainResPath, Keys.settings) map {
+      ( thisProj, thisProjResPath, settings ) => {
 
-    javaPath ** "R.java" get
-  }
+        // Find dependent projects with resources of their own, and
+        // collect the resource directories.
+
+        def androidSetting[T]( aKey:SettingKey[T], projectRef: ProjectRef )=
+          ((aKey in Android) in (projectRef)) get settings
+
+        val depResPaths: Seq[java.io.File] = 
+          for (dep        <- thisProj.dependencies;
+               depResPath <- androidSetting( mainResPath, dep.project ))
+          yield depResPath
+      
+        depResPaths :+ thisProjResPath
+    }}
+
+  private def aaptGenerateTask =
+    (manifestPackage, aaptPath, manifestPath, resDirsWithDeps, jarPath, managedJavaPath,
+     thisProject, Keys.settings) map {
+    (mPackage, aPath, mPath, resPaths, jPath, javaPath, thisProj, settings) => {
+
+      // Find dependent projects that have settings that look like
+      // they need an R.java.  Presumably, they only need their own
+      // resources, but we give them the whole set, because that's
+      // the only way to make the IDs consistent
+
+      def androidSetting[T]( androidKey:SettingKey[T], projectRef: ProjectRef )=
+        ((androidKey in Android) in (projectRef)) get settings
+
+      val aaptDepTargets = (
+        for (dep             <- thisProj.dependencies;
+             managedJavaPath <- androidSetting( managedJavaPath, dep.project );
+             projPackage     <- androidSetting( manifestPackage, dep.project ))
+          yield ( managedJavaPath, projPackage ))
+            
+      val aaptAllTargets = aaptDepTargets :+ (javaPath, mPackage)
+
+      for (( path, pkg ) <- aaptAllTargets) { 
+        IO.createDirectory( path ) 
+      }
+
+      val resPathArgs = resPaths.map{"-S "+_.absolutePath+" "}.reduceLeft( _+_ )
+
+      val processes =
+        for (( projManagedJavaPath, projPackage ) <- aaptAllTargets)
+        yield Process (<x>
+                       {aPath.absolutePath} package --auto-add-overlay -m
+                       --custom-package {projPackage}
+                       -M {mPath.absolutePath}
+                       {resPathArgs}
+                       -I {jPath.absolutePath}
+                       -J {projManagedJavaPath.absolutePath}
+                       </x>)
+
+      val status = processes.reduceLeft{ _ #&& _ } !
+
+      if (status > 0) {
+        sys.error( "aapt failed; consult output for possible reasons." )
+      }
+
+      for (( path, pkg ) <- aaptAllTargets;
+           file <- ( path ** "R.java" ) get )
+        yield file
+    }}
 
   private def aidlGenerateTask =
     (sourceDirectories, idlPath, managedJavaPath, javaSource, streams) map {
@@ -111,9 +163,9 @@ object AndroidBase {
     },
 
     makeManagedJavaPath <<= directory(managedJavaPath),
+    resDirsWithDeps <<= resDirsWithDepsTask,
 
     aaptGenerate <<= aaptGenerateTask,
-    aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
     unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
