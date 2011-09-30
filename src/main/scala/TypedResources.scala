@@ -20,6 +20,8 @@ object TypedResources {
         }
       }
 
+      val reserved = List("extends", "trait", "type", "val", "var", "with")
+
       val resources = layoutResources.get.flatMap { path =>
         XML.loadFile(path).descendant_or_self flatMap { node =>
           // all nodes
@@ -45,6 +47,8 @@ object TypedResources {
             if (v0 != v) s.log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
           }
           m + (k -> v)
+      }.filterNot {
+        case (id, _) => reserved.contains(id)
       }
 
       IO.write(typedResource,
