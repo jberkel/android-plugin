@@ -66,10 +66,11 @@ object AndroidInstall {
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
           val sep = JFile.pathSeparator
+          val inJars = ("\"" + classDirectory.absolutePath + "\"") +:
+                       proguardInJars.map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
+
           val args = (
-                "-injars" :: classDirectory.absolutePath + sep +
-                 (if (!proguardInJars.isEmpty)
-                 proguardInJars.map(_+manifestr.mkString("(", ",!**/", ")")).mkString(sep) else "") ::
+                 "-injars" :: inJars.mkString(sep) ::
                  "-outjars" :: classesMinJarPath.absolutePath ::
                  "-libraryjars" :: libraryJarPath.mkString(sep) ::
                  Nil) ++
