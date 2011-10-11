@@ -24,7 +24,11 @@ defaults), then create the project structure and all needed files plus
 skeleton tests, specs and activities.
 
 Since this plugin is currently not released you'll have to first build and
-install it locally, follow the instruction in "Hacking on the plugin" below.
+install it locally by performing the following as described in the "Hacking on the plugin" section.
+
+    $ git clone git://github.com/jberkel/android-plugin.git
+    $ cd android-plugin
+    $ sbt publish-local
 
 Then, to build the Android package:
 
