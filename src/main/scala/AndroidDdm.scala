@@ -22,7 +22,7 @@ import sbinary.DefaultProtocol.StringFormat
 
 object AndroidDdm {
   var bridge: Option[AndroidDebugBridge] = None
-    val infos = scala.collection.mutable.Map.empty[String, ThreadInfo]
+  val infos = scala.collection.mutable.Map.empty[String, ThreadInfo]
 
   val THREAD_STATUS = Array[String](
     "unknown", "zombie", "running", "timed-wait", "monitor",
