@@ -6,6 +6,7 @@ import AndroidKeys._
 object PlainJavaProject {
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
     useProguard := false,
+    proguardOptimizations := Seq.empty,
     manifestPath <<= (baseDirectory, manifestName) (_ / _),
     mainResPath <<= (baseDirectory, resDirectoryName) (_ / _),
     javaSource in Compile <<= (baseDirectory) (_ / "src")
