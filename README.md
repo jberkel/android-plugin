@@ -101,6 +101,34 @@ is issued by the plugin when the same ID is used for different types
 of a resources; the type of resources retrieved by that ID will be
 unpredictable.
 
+## ProGuard optimizations
+
+The plugin allows to run ProGuard optimizations on your classes. This
+might improve the performance of your application dramatically, but also
+break it easily. By default, the application is only shrinked by ProGuard,
+but not optimized.
+
+If you want to apply optimizations, you specify ProGuard
+optimization options in your project like this:
+
+```scala
+  lazy val someOptimizedProject = Project(
+    id = ...,
+    ...
+    settings = ... ++ inConfig(Android)(
+        proguardOptimizations := Seq(
+          "-optimizationpasses 8",
+          "-dontpreverify",
+          "-allowaccessmodification",
+          "-optimizations !code/simplification/arithmetic"
+        )
+    )
+  )
+```
+
+Please note that you will receive even more warnings from ProGuard
+and dex when you apply optimizations.
+
 ## Getting screenshots
 
 In the sbt console run:

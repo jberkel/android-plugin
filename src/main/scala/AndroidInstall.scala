@@ -32,9 +32,9 @@ object AndroidInstall {
 
   private def dxTask: Project.Initialize[Task[File]] =
     (scalaInstance, dxJavaOpts, dxPath, classDirectory,
-     proguardInJars, proguard, classesDexPath, streams) map {
+     proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) map {
     (scalaInstance, dxJavaOpts, dxPath, classDirectory,
-     proguardInJars, proguard, classesDexPath, streams) =>
+     proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) =>
 
       val inputs = proguard match {
         case Some(file) => file get
@@ -44,7 +44,8 @@ object AndroidInstall {
         !inputs.exists (_.lastModified > classesDexPath.lastModified)
 
       if (!uptodate) {
-        val dxCmd = String.format("%s %s --dex --output=%s %s",
+        val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
+        val dxCmd = String.format("%s %s --dex " + noLocals + " --output=%s %s",
           dxPath, dxMemoryParameter(dxJavaOpts), classesDexPath, inputs.mkString(" "))
         streams.log.debug(dxCmd)
         streams.log.info("Dexing "+classesDexPath)
@@ -55,22 +56,25 @@ object AndroidInstall {
     }
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
-    (useProguard, classDirectory, proguardInJars, streams,
+    (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
-    (useProguard, classDirectory, proguardInJars, streams,
+    (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
       useProguard match {
         case true =>
+          val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
           val sep = JFile.pathSeparator
-          val args =
+          val args = (
                 "-injars" :: classDirectory.absolutePath + sep +
                  (if (!proguardInJars.isEmpty)
                  proguardInJars.map(_+manifestr.mkString("(", ",!**/", ")")).mkString(sep) else "") ::
                  "-outjars" :: classesMinJarPath.absolutePath ::
                  "-libraryjars" :: libraryJarPath.mkString(sep) ::
-                 "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
+                 Nil) ++
+                 optimizationOptions ++ (
+                 "-dontwarn" :: "-dontobfuscate" ::
                  "-dontnote scala.Enumeration" ::
                  "-dontnote org.xml.sax.EntityResolver" ::
                  "-keep public class * extends android.app.Activity" ::
@@ -82,7 +86,7 @@ object AndroidInstall {
                  "-keep public class * extends android.app.Application" ::
                  "-keep public class "+manifestPackage+".** { public protected *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
-                 proguardOption :: Nil
+                 proguardOption :: Nil )
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String]).parse(config)
           streams.log.debug("executing proguard: "+args.mkString("\n"))
