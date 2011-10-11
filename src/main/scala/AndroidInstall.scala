@@ -71,8 +71,8 @@ object AndroidInstall {
 
           val args = (
                  "-injars" :: inJars.mkString(sep) ::
-                 "-outjars" :: classesMinJarPath.absolutePath ::
-                 "-libraryjars" :: libraryJarPath.mkString(sep) ::
+                 "-outjars" :: "\""+classesMinJarPath.absolutePath+"\"" ::
+                 "-libraryjars" :: libraryJarPath.map("\""+_+"\"").mkString(sep) ::
                  Nil) ++
                  optimizationOptions ++ (
                  "-dontwarn" :: "-dontobfuscate" ::
