@@ -45,9 +45,12 @@ object AndroidInstall {
 
       if (!uptodate) {
         val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
-        val dxCmd = String.format("%s %s --dex " + noLocals + " --output=%s %s",
-          dxPath, dxMemoryParameter(dxJavaOpts), classesDexPath, inputs.mkString(" "))
-        streams.log.debug(dxCmd)
+        val dxCmd = Seq(dxPath.absolutePath,
+                        dxMemoryParameter(dxJavaOpts),
+                        "--dex", noLocals,
+                        "--output="+classesDexPath.absolutePath,
+                        inputs.mkString(" ")).filter(_.length > 0)
+        streams.log.debug(dxCmd.mkString(" "))
         streams.log.info("Dexing "+classesDexPath)
         streams.log.debug(dxCmd !!)
       } else streams.log.debug("dex file uptodate, skipping")
