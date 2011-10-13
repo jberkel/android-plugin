@@ -19,14 +19,15 @@ object AndroidInstall {
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
   (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath) map {
-    (apPath, manPath, rPath, assetPath, jPath, resApkPath) => Process(<x>
-      {apPath} package --auto-add-overlay -f
-        -M {manPath}
-        -S {rPath}
-        -A {assetPath}
-        -I {jPath}
-        -F {resApkPath}
-    </x>).!
+    (apPath, manPath, rPath, assetPath, jPath, resApkPath) =>
+
+    Seq(apPath.absolutePath, "package", "--auto-add-overlay", "-f",
+        "-M", manPath.absolutePath,
+        "-S", rPath.absolutePath,
+        "-A", assetPath.absolutePath,
+        "-I", jPath.absolutePath,
+        "-F", resApkPath.absolutePath) !
+
     resApkPath
   }
 
