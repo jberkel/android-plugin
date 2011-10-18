@@ -100,10 +100,9 @@ object AndroidBase {
 
     proguardOption := "",
     proguardExclude <<=
-      (libraryJarPath, classDirectory, resourceDirectory, unmanagedClasspath in Compile) map {
-        (libPath, classDirectory, resourceDirectory, unmanagedClasspath) =>
-          val temp = libPath +++ classDirectory +++ resourceDirectory
-          unmanagedClasspath.foldLeft(temp)(_ +++ _.data) get
+      (libraryJarPath, classDirectory, resourceDirectory) map {
+        (libPath, classDirectory, resourceDirectory) =>
+          (libPath +++ classDirectory +++ resourceDirectory) get
       },
     proguardInJars <<= (fullClasspath, proguardExclude) map {
       (runClasspath, proguardExclude) =>
