@@ -53,8 +53,8 @@ object TypedResources {
 
       IO.write(typedResource,
     """     |package %s
-            |import android.app.Activity
-            |import android.view.View
+            |import _root_.android.app.Activity
+            |import _root_.android.view.View
             |
             |case class TypedResource[T](id: Int)
             |object TR {
