@@ -19,14 +19,15 @@ object AndroidInstall {
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
   (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath) map {
-    (apPath, manPath, rPath, assetPath, jPath, resApkPath) => Process(<x>
-      {apPath} package --auto-add-overlay -f
-        -M {manPath}
-        -S {rPath}
-        -A {assetPath}
-        -I {jPath}
-        -F {resApkPath}
-    </x>).!
+    (apPath, manPath, rPath, assetPath, jPath, resApkPath) =>
+
+    Seq(apPath.absolutePath, "package", "--auto-add-overlay", "-f",
+        "-M", manPath.absolutePath,
+        "-S", rPath.absolutePath,
+        "-A", assetPath.absolutePath,
+        "-I", jPath.absolutePath,
+        "-F", resApkPath.absolutePath) !
+
     resApkPath
   }
 
@@ -45,9 +46,12 @@ object AndroidInstall {
 
       if (!uptodate) {
         val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
-        val dxCmd = String.format("%s %s --dex " + noLocals + " --output=%s %s",
-          dxPath, dxMemoryParameter(dxJavaOpts), classesDexPath, inputs.mkString(" "))
-        streams.log.debug(dxCmd)
+        val dxCmd = Seq(dxPath.absolutePath,
+                        dxMemoryParameter(dxJavaOpts),
+                        "--dex", noLocals,
+                        "--output="+classesDexPath.absolutePath,
+                        inputs.mkString(" ")).filter(_.length > 0)
+        streams.log.debug(dxCmd.mkString(" "))
         streams.log.info("Dexing "+classesDexPath)
         streams.log.debug(dxCmd !!)
       } else streams.log.debug("dex file uptodate, skipping")
