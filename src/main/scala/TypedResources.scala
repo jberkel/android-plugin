@@ -20,6 +20,8 @@ object TypedResources {
         }
       }
 
+      val reserved = List("extends", "trait", "type", "val", "var", "with")
+
       val resources = layoutResources.get.flatMap { path =>
         XML.loadFile(path).descendant_or_self flatMap { node =>
           // all nodes
@@ -45,30 +47,33 @@ object TypedResources {
             if (v0 != v) s.log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
           }
           m + (k -> v)
+      }.filterNot {
+        case (id, _) => reserved.contains(id)
       }
 
       IO.write(typedResource,
     """     |package %s
-            |import android.app.Activity
-            |import android.view.View
+            |import _root_.android.app.Activity
+            |import _root_.android.view.View
             |
             |case class TypedResource[T](id: Int)
             |object TR {
             |%s
             |}
             |trait TypedViewHolder {
-            |  def view: View
-            |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]
+            |  def findViewById( id: Int ): View
+            |  def findView[T](tr: TypedResource[T]) = findViewById(tr.id).asInstanceOf[T]
             |}
-            |trait TypedView extends View with TypedViewHolder { def view = this }
-            |trait TypedActivityHolder {
-            |  def activity: Activity
-            |  def findView[T](tr: TypedResource[T]) = activity.findViewById(tr.id).asInstanceOf[T]
-            |}
-            |trait TypedActivity extends Activity with TypedActivityHolder { def activity = this }
+            |trait TypedView extends View with TypedViewHolder
+            |trait TypedActivityHolder extends TypedViewHolder
+            |trait TypedActivity extends Activity with TypedActivityHolder
             |object TypedResource {
-            |  implicit def view2typed(v: View) = new TypedViewHolder { def view = v }
-            |  implicit def activity2typed(act: Activity) = new TypedActivityHolder { def activity = act }
+            |  implicit def view2typed(v: View) = new TypedViewHolder { 
+            |    def findViewById( id: Int ) = v.findViewById( id )
+            |  }
+            |  implicit def activity2typed(a: Activity) = new TypedViewHolder { 
+            |    def findViewById( id: Int ) = a.findViewById( id )
+            |  }
             |}
             |""".stripMargin.format(
               manifestPackage, resources map { case (id, classname) =>
@@ -81,7 +86,7 @@ object TypedResources {
     }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
-    managedScalaPath <<= (baseDirectory) ( _ / "src_managed" / "main" / "scala"),
+    managedScalaPath <<= (target) ( _ / "src_managed" / "main" / "scala"),
     typedResource <<= (manifestPackage, managedScalaPath) {
       _.split('.').foldLeft(_) ((p, s) => p / s) / "TR.scala"
     },

@@ -11,19 +11,26 @@ the [sbt_011][] branch.
 Using a [giter8][] template is the easiest way to create a new
 project that uses the plugin. If you don't have giter8 installed:
 
-
     $ curl https://raw.github.com/n8han/conscript/master/setup.sh | sh
     $ ~/bin/cs n8han/giter8
 
 Now create a new project with one of the Android templates:
 
-    $ ~/bin/g8 jberkel/android-app
+    $ ~/bin/g8 jberkel/android-app             # sbt 0.10.x
+    $ ~/bin/g8 jberkel/android-app -b sbt-0_11 # sbt 0.11.x
 
 This will prompt you to customize a few values (press enter to accept
 defaults), then create the project structure and all needed files plus
 skeleton tests, specs and activities.
 
-To build the package:
+Since this plugin is currently not released you'll have to first build and
+install it locally by performing the following as described in the "Hacking on the plugin" section.
+
+    $ git clone git://github.com/jberkel/android-plugin.git
+    $ cd android-plugin
+    $ sbt publish-local
+
+Then, to build the Android package:
 
     $ cd <your app name>
     $ export ANDROID_HOME=/path/to/sdk # or ANDROID_SDK_{HOME,ROOT}
@@ -98,6 +105,34 @@ is issued by the plugin when the same ID is used for different types
 of a resources; the type of resources retrieved by that ID will be
 unpredictable.
 
+## ProGuard optimizations
+
+The plugin allows to run ProGuard optimizations on your classes. This
+might improve the performance of your application dramatically, but also
+break it easily. By default, the application is only shrinked by ProGuard,
+but not optimized.
+
+If you want to apply optimizations, you specify ProGuard
+optimization options in your project like this:
+
+```scala
+  lazy val someOptimizedProject = Project(
+    id = ...,
+    ...
+    settings = ... ++ inConfig(Android)(
+        proguardOptimizations := Seq(
+          "-optimizationpasses 8",
+          "-dontpreverify",
+          "-allowaccessmodification",
+          "-optimizations !code/simplification/arithmetic"
+        )
+    )
+  )
+```
+
+Please note that you will receive even more warnings from ProGuard
+and dex when you apply optimizations.
+
 ## Getting screenshots
 
 In the sbt console run:
@@ -151,7 +186,7 @@ Place your Android NDK sources in `src\main\jni`. Add the AndroidNdk.settings to
   )
 ```
 
-##Hacking on the plugin
+## Hacking on the plugin
 
 If you need make modifications to the plugin itself, you can compile
 and install it locally (you need at least sbt 0.10.x to build it):

@@ -16,8 +16,13 @@
 
 * Include resources in apk ([Kevin Hester][geeksville])
 
+* Github API integration: upload apks to github/S3 ([Jan Berkel][jberkel])
+
+* Upgrade to proguard 4.6 w/ optional optimization ([Martin Kneissl][mkneissl])
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
 [jberkel]: https://github.com/jberkel
 [geeksville]: https://github.com/geeksville
 [philcali]: https://github.com/philcali
+[mkneissl]: https://github.com/mkneissl/
