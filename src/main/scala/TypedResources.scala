@@ -53,7 +53,7 @@ object TypedResources {
 
       IO.write(typedResource,
     """     |package %s
-            |import _root_.android.app.Activity
+            |import _root_.android.app.{Activity, Dialog}
             |import _root_.android.view.View
             |
             |case class TypedResource[T](id: Int)
@@ -67,12 +67,16 @@ object TypedResources {
             |trait TypedView extends View with TypedViewHolder
             |trait TypedActivityHolder extends TypedViewHolder
             |trait TypedActivity extends Activity with TypedActivityHolder
+            |trait TypedDialog extends Dialog with TypedViewHolder
             |object TypedResource {
             |  implicit def view2typed(v: View) = new TypedViewHolder { 
             |    def findViewById( id: Int ) = v.findViewById( id )
             |  }
             |  implicit def activity2typed(a: Activity) = new TypedViewHolder { 
             |    def findViewById( id: Int ) = a.findViewById( id )
+            |  }
+            |  implicit def dialog2typed(d: Dialog) = new TypedViewHolder { 
+            |    def findViewById( id: Int ) = d.findViewById( id )
             |  }
             |}
             |""".stripMargin.format(
