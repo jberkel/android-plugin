@@ -11,14 +11,13 @@ object AndroidBase {
   private def aaptGenerateTask =
     (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
     (mPackage, aPath, mPath, resPath, jPath, javaPath) =>
-    Process (<x>
-      {aPath.absolutePath} package --auto-add-overlay -m
-        --custom-package {mPackage}
-        -M {mPath.head.absolutePath}
-        -S {resPath.absolutePath}
-        -I {jPath.absolutePath}
-        -J {javaPath.absolutePath}
-    </x>) !
+
+    Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
+        "--custom-package", mPackage,
+        "-M", mPath.head.absolutePath,
+        "-S", resPath.absolutePath,
+        "-I", jPath.absolutePath,
+        "-J", javaPath.absolutePath) !
 
     javaPath ** "R.java" get
   }
@@ -76,6 +75,7 @@ object AndroidBase {
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
     packageApkPath <<= (target, packageApkName) (_ / _),
     useProguard := true,
+    proguardOptimizations := Seq.empty,
 
     apiLevel <<= (minSdkVersion, platformName) map { (min, pName) =>
       min.getOrElse(platformName2ApiLevel(pName))
@@ -86,10 +86,9 @@ object AndroidBase {
 
     proguardOption := "",
     proguardExclude <<=
-      (libraryJarPath, classDirectory, resourceDirectory, unmanagedClasspath in Compile) map {
-        (libPath, classDirectory, resourceDirectory, unmanagedClasspath) =>
-          val temp = libPath +++ classDirectory +++ resourceDirectory
-          unmanagedClasspath.foldLeft(temp)(_ +++ _.data) get
+      (libraryJarPath, classDirectory, resourceDirectory) map {
+        (libPath, classDirectory, resourceDirectory) =>
+          (libPath +++ classDirectory +++ resourceDirectory) get
       },
     proguardInJars <<= (fullClasspath, proguardExclude) map {
       (runClasspath, proguardExclude) =>

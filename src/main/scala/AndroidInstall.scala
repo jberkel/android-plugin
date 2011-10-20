@@ -20,37 +20,38 @@ object AndroidInstall {
   private def aaptPackageTask: Project.Initialize[Task[File]] =
   (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, streams) map {
     (apPath, manPath, rPath, assetPath, jPath, resApkPath, s) =>
-
-    val aapt = Process(<x>
-      {apPath} package --auto-add-overlay -f
-        -M {manPath}
-        -S {rPath}
-        -A {assetPath}
-        -I {jPath}
-        -F {resApkPath}
-    </x>)
-    s.log.debug("packaging: "+aapt)
-    aapt.!
+    val aapt = Seq(apPath.absolutePath, "package", "--auto-add-overlay", "-f",
+        "-M", manPath.head.absolutePath,
+        "-S", rPath.absolutePath,
+        "-A", assetPath.absolutePath,
+        "-I", jPath.absolutePath,
+        "-F", resApkPath.absolutePath)
+    s.log.debug("packaging: "+aapt.mkString(" "))
+    aapt.run(false)
     resApkPath
   }
 
   private def dxTask: Project.Initialize[Task[File]] =
     (scalaInstance, dxJavaOpts, dxPath, classDirectory,
-     proguardInJars, proguard, classesDexPath, streams) map {
+     proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) map {
     (scalaInstance, dxJavaOpts, dxPath, classDirectory,
-     proguardInJars, proguard, classesDexPath, streams) =>
+     proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) =>
 
-      val inputs = proguard match {
-        case Some(file) => file get
-        case None       => classDirectory +++ proguardInJars --- scalaInstance.libraryJar get
+      val inputs:PathFinder = proguard match {
+        case Some(file) => file
+        case None       => classDirectory +++ proguardInJars --- scalaInstance.libraryJar
       }
       val uptodate = classesDexPath.exists &&
-        !inputs.exists (_.lastModified > classesDexPath.lastModified)
+        !(inputs +++ (classDirectory ** "*.class") get).exists (_.lastModified > classesDexPath.lastModified)
 
       if (!uptodate) {
-        val dxCmd = String.format("%s %s --dex --output=%s %s",
-          dxPath, dxMemoryParameter(dxJavaOpts), classesDexPath, inputs.mkString(" "))
-        streams.log.debug(dxCmd)
+        val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
+        val dxCmd = (Seq(dxPath.absolutePath,
+                        dxMemoryParameter(dxJavaOpts),
+                        "--dex", noLocals,
+                        "--output="+classesDexPath.absolutePath) ++
+                        inputs.get.map(_.absolutePath)).filter(_.length > 0)
+        streams.log.debug(dxCmd.mkString(" "))
         streams.log.info("Dexing "+classesDexPath)
         streams.log.debug(dxCmd !!)
       } else streams.log.debug("dex file uptodate, skipping")
@@ -59,22 +60,26 @@ object AndroidInstall {
     }
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
-    (useProguard, classDirectory, proguardInJars, streams,
+    (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
-    (useProguard, classDirectory, proguardInJars, streams,
+    (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
       useProguard match {
         case true =>
+          val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
           val sep = JFile.pathSeparator
-          val args =
-                "-injars" :: classDirectory.absolutePath + sep +
-                 (if (!proguardInJars.isEmpty)
-                 proguardInJars.map(_+manifestr.mkString("(", ",!**/", ")")).mkString(sep) else "") ::
-                 "-outjars" :: classesMinJarPath.absolutePath ::
-                 "-libraryjars" :: libraryJarPath.mkString(sep) ::
-                 "-dontwarn" :: "-dontoptimize" :: "-dontobfuscate" ::
+          val inJars = ("\"" + classDirectory.absolutePath + "\"") +:
+                       proguardInJars.map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
+
+          val args = (
+                 "-injars" :: inJars.mkString(sep) ::
+                 "-outjars" :: "\""+classesMinJarPath.absolutePath+"\"" ::
+                 "-libraryjars" :: libraryJarPath.map("\""+_+"\"").mkString(sep) ::
+                 Nil) ++
+                 optimizationOptions ++ (
+                 "-dontwarn" :: "-dontobfuscate" ::
                  "-dontnote scala.Enumeration" ::
                  "-dontnote org.xml.sax.EntityResolver" ::
                  "-keep public class * extends android.app.Activity" ::
@@ -86,7 +91,7 @@ object AndroidInstall {
                  "-keep public class * extends android.app.Application" ::
                  "-keep public class "+manifestPackage+".** { public protected *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
-                 proguardOption :: Nil
+                 proguardOption :: Nil )
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String]).parse(config)
           streams.log.debug("executing proguard: "+args.mkString("\n"))
