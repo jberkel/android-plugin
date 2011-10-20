@@ -37,20 +37,20 @@ object AndroidInstall {
     (scalaInstance, dxJavaOpts, dxPath, classDirectory,
      proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) =>
 
-      val inputs = proguard match {
-        case Some(file) => file get
-        case None       => classDirectory +++ proguardInJars --- scalaInstance.libraryJar get
+      val inputs:PathFinder = proguard match {
+        case Some(file) => file
+        case None       => classDirectory +++ proguardInJars --- scalaInstance.libraryJar
       }
       val uptodate = classesDexPath.exists &&
-        !inputs.exists (_.lastModified > classesDexPath.lastModified)
+        !(inputs +++ (classDirectory ** "*.class") get).exists (_.lastModified > classesDexPath.lastModified)
 
       if (!uptodate) {
         val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
-        val dxCmd = Seq(dxPath.absolutePath,
+        val dxCmd = (Seq(dxPath.absolutePath,
                         dxMemoryParameter(dxJavaOpts),
                         "--dex", noLocals,
-                        "--output="+classesDexPath.absolutePath,
-                        inputs.mkString(" ")).filter(_.length > 0)
+                        "--output="+classesDexPath.absolutePath) ++
+                        inputs.get.map(_.absolutePath)).filter(_.length > 0)
         streams.log.debug(dxCmd.mkString(" "))
         streams.log.info("Dexing "+classesDexPath)
         streams.log.debug(dxCmd !!)
