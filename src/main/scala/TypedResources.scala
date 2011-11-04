@@ -20,6 +20,14 @@ object TypedResources {
         }
       }
 
+      val layouts = layoutResources.get.map{ layout =>
+        val Name = "(.*)\\.[^\\.]+".r
+        layout.getName match {
+          case Name(name) => Some(name)
+          case _ => None
+        }
+      }
+
       val resources = layoutResources.get.flatMap { path =>
         XML.loadFile(path).descendant_or_self flatMap { node =>
           // all nodes
@@ -27,7 +35,7 @@ object TypedResources {
             // with android:id attribute
             _.headOption.map { _.text } flatMap {
               // if it looks like a full classname
-              case Id(id) if node.label.contains('.') => Some(id, node.label)
+              case Id(id) if node.label.contains('.') => println("en"); Some(id, node.label)
               // otherwise it may be a widget or view
               case Id(id) => {
                 List("android.widget.", "android.view.", "android.webkit.").map(pkg =>
@@ -35,7 +43,7 @@ object TypedResources {
                     Some(id, clazz.get.getName)
                   )
               }
-              case _ => None
+              case _ => println("nope"); None
             }
           }
         }
@@ -53,8 +61,13 @@ object TypedResources {
             |import android.view.View
             |
             |case class TypedResource[T](id: Int)
+            |case class TypedLayout(id: Int)
+            |
             |object TR {
             |%s
+            | object layout {
+            | %s
+            | }
             |}
             |trait TypedViewHolder {
             |  def view: View
@@ -69,10 +82,16 @@ object TypedResources {
             |object TypedResource {
             |  implicit def view2typed(v: View) = new TypedViewHolder { def view = v }
             |  implicit def activity2typed(act: Activity) = new TypedActivityHolder { def activity = act }
+            |  implicit def layout2int(l: TypedLayout) = l.id
             |}
             |""".stripMargin.format(
-              manifestPackage, resources map { case (id, classname) =>
+              manifestPackage,
+              resources map { case (id, classname) =>
                 "  val %s = TypedResource[%s](R.id.%s)".format(id, classname, id)
+              } mkString "\n",
+              layouts map {
+                case Some(layoutName) => " val %s = TypedLayout(R.layout.%s)".format(layoutName, layoutName)
+                case None => ""
               } mkString "\n"
             )
         )
