@@ -7,6 +7,7 @@ object AndroidMarketPublish {
 
   private def prepareMarketTask = (packageAlignedPath, streams) map { (path, s) =>
     s.log.success("Ready for publication: \n" + path)
+    path
   }
 
   private def zipAlignTask: Project.Initialize[Task[File]] =

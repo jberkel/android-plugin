@@ -16,6 +16,7 @@ object AndroidKeys {
 
   /** Proguard Settings */
   val proguardOption = SettingKey[String]("proguard-option")
+  val proguardOptimizations = SettingKey[Seq[String]]("proguard-optimizations")
   val libraryJarPath = SettingKey[Seq[File]]("library-path")
 
   /** Default Settings */
@@ -147,7 +148,7 @@ object AndroidKeys {
     "Show thread dump from the device")
 
   /** Market Publish tasks */
-  val prepareMarket = TaskKey[Unit]("prepare-market",
+  val prepareMarket = TaskKey[File]("prepare-market",
     "Prepare asset for Market publication.")
   val zipAlign = TaskKey[File]("zip-align", "Run zipalign on signed jar.")
   val signRelease = TaskKey[File]("sign-release",
@@ -164,9 +165,6 @@ object AndroidKeys {
   val generateManifest = TaskKey[File]("generate-manifest",
     """Generates a customized AndroidManifest.xml with
        current build number and debug settings.""")
-
-  val cleanManifest = TaskKey[Unit]("clean-manifest",
-    "Deletes the generated Android manifest")
 
   /** Test Project Tasks */
   val testEmulator = TaskKey[Unit]("test-emulator", "runs tests in emulator")
