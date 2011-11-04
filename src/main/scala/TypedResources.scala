@@ -20,7 +20,6 @@ object TypedResources {
         }
       }
 
-<<<<<<< HEAD
       val layouts = layoutResources.get.map{ layout =>
         val Name = "(.*)\\.[^\\.]+".r
         layout.getName match {
@@ -28,9 +27,7 @@ object TypedResources {
           case _ => None
         }
       }
-=======
       val reserved = List("extends", "trait", "type", "val", "var", "with")
->>>>>>> e683432d6234a257273f8ff0e6428fd17c04653d
 
       val resources = layoutResources.get.flatMap { path =>
         XML.loadFile(path).descendant_or_self flatMap { node =>
@@ -39,7 +36,7 @@ object TypedResources {
             // with android:id attribute
             _.headOption.map { _.text } flatMap {
               // if it looks like a full classname
-              case Id(id) if node.label.contains('.') => println("en"); Some(id, node.label)
+              case Id(id) if node.label.contains('.') => Some(id, node.label)
               // otherwise it may be a widget or view
               case Id(id) => {
                 List("android.widget.", "android.view.", "android.webkit.").map(pkg =>
@@ -47,7 +44,7 @@ object TypedResources {
                     Some(id, clazz.get.getName)
                   )
               }
-              case _ => println("nope"); None
+              case _ => None
             }
           }
         }
