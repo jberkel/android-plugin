@@ -20,7 +20,17 @@ object TypedResources {
         }
       }
 
+<<<<<<< HEAD
+      val layouts = layoutResources.get.map{ layout =>
+        val Name = "(.*)\\.[^\\.]+".r
+        layout.getName match {
+          case Name(name) => Some(name)
+          case _ => None
+        }
+      }
+=======
       val reserved = List("extends", "trait", "type", "val", "var", "with")
+>>>>>>> e683432d6234a257273f8ff0e6428fd17c04653d
 
       val resources = layoutResources.get.flatMap { path =>
         XML.loadFile(path).descendant_or_self flatMap { node =>
@@ -29,7 +39,7 @@ object TypedResources {
             // with android:id attribute
             _.headOption.map { _.text } flatMap {
               // if it looks like a full classname
-              case Id(id) if node.label.contains('.') => Some(id, node.label)
+              case Id(id) if node.label.contains('.') => println("en"); Some(id, node.label)
               // otherwise it may be a widget or view
               case Id(id) => {
                 List("android.widget.", "android.view.", "android.webkit.").map(pkg =>
@@ -37,7 +47,7 @@ object TypedResources {
                     Some(id, clazz.get.getName)
                   )
               }
-              case _ => None
+              case _ => println("nope"); None
             }
           }
         }
@@ -57,8 +67,13 @@ object TypedResources {
             |import _root_.android.view.View
             |
             |case class TypedResource[T](id: Int)
+            |case class TypedLayout(id: Int)
+            |
             |object TR {
             |%s
+            | object layout {
+            | %s
+            | }
             |}
             |trait TypedViewHolder {
             |  def findViewById( id: Int ): View
@@ -68,6 +83,7 @@ object TypedResources {
             |trait TypedActivityHolder extends TypedViewHolder
             |trait TypedActivity extends Activity with TypedActivityHolder
             |object TypedResource {
+            |  implicit def layout2int(l: TypedLayout) = l.id
             |  implicit def view2typed(v: View) = new TypedViewHolder { 
             |    def findViewById( id: Int ) = v.findViewById( id )
             |  }
@@ -76,8 +92,13 @@ object TypedResources {
             |  }
             |}
             |""".stripMargin.format(
-              manifestPackage, resources map { case (id, classname) =>
+              manifestPackage,
+              resources map { case (id, classname) =>
                 "  val %s = TypedResource[%s](R.id.%s)".format(id, classname, id)
+              } mkString "\n",
+              layouts map {
+                case Some(layoutName) => " val %s = TypedLayout(R.layout.%s)".format(layoutName, layoutName)
+                case None => ""
               } mkString "\n"
             )
         )
