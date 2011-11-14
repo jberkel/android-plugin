@@ -1,12 +1,11 @@
 #Usage
 
-Requires [sbt][] and the [Android SDK][]
+Requires [sbt][] (0.11.1+) and the [Android SDK][]
 (`brew install sbt android-sdk` when using [homebrew][] on OSX).
 
 For those who are familiar with the 0.7.x plugin, there is a [migration guide][]
 for a quick reference. The 0.7.x version is no longer maintained - but it is
-still available in the [0.7.x][] branch. Support for the upcoming sbt 0.11 is in
-the [sbt_011][] branch.
+still available in the [0.7.x][] branch.
 
 Using a [giter8][] template is the easiest way to create a new
 project that uses the plugin. If you don't have giter8 installed:
@@ -16,8 +15,7 @@ project that uses the plugin. If you don't have giter8 installed:
 
 Now create a new project with one of the Android templates:
 
-    $ ~/bin/g8 jberkel/android-app             # sbt 0.10.x
-    $ ~/bin/g8 jberkel/android-app -b sbt-0_11 # sbt 0.11.x
+    $ ~/bin/g8 jberkel/android-app             # sbt 0.11.x
 
 This will prompt you to customize a few values (press enter to accept
 defaults), then create the project structure and all needed files plus
