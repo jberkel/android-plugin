@@ -29,7 +29,7 @@ object AndroidManifestGenerator {
       basedir.mkdirs()
 
       XML.save(out.absolutePath, newManifest)
-      streams.log.info("Wrote "+out)
+      streams.log.debug("Generated "+out)
       Seq(out)
     }
 
