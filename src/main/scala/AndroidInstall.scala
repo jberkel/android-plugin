@@ -27,7 +27,7 @@ object AndroidInstall {
         "-I", jPath.absolutePath,
         "-F", resApkPath.absolutePath)
     s.log.debug("packaging: "+aapt.mkString(" "))
-    aapt.run(false)
+    if (aapt.run(false).exitValue != 0) sys.error("error packaging resources")
     resApkPath
   }
 
