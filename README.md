@@ -71,6 +71,9 @@ Whenever you change build versions, you'll need to run `update` again
 to fetch dependencies. For more information, see the sbt documentation
 on [cross-building][].
 
+Please note that Scala 2.9.1 currently causes some problem when installing some
+apks - see the Scala bug [SI-4620][] and the [SI-4620-discussion][discussion] on
+the mailing list.
 
 ##Android manifest files
 
@@ -220,3 +223,5 @@ list.
 [Android SDK]: http://developer.android.com/sdk/index.html
 [Android emulator]: http://developer.android.com/guide/developing/tools/emulator.html
 [cross-building]: https://github.com/harrah/xsbt/wiki/Cross-Build
+[SI-4620]: https://issues.scala-lang.org/browse/SI-4620
+[SI-4620-discussion]: https://groups.google.com/d/topic/scala-on-android/s33BMJbYK5M/discussion
