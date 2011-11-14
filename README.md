@@ -201,6 +201,9 @@ and install it locally (you need at least sbt 0.10.x to build it):
 There's no official mailing list for the project but most contributors hang
 out in [scala-on-android][] or [simple-build-tool][].
 
+You can also check out a list of
+[projects using sbt-android-plugin][] to see some real-world examples.
+
 ##Credits
 
 This code is based on work by Walter Chang
@@ -225,3 +228,4 @@ list.
 [cross-building]: https://github.com/harrah/xsbt/wiki/Cross-Build
 [SI-4620]: https://issues.scala-lang.org/browse/SI-4620
 [SI-4620-discussion]: https://groups.google.com/d/topic/scala-on-android/s33BMJbYK5M/discussion
+[projects using sbt-android-plugin]: https://github.com/jberkel/android-plugin/wiki/Projects-using-sbt-android-plugin
