@@ -20,6 +20,13 @@ object TypedResources {
         }
       }
 
+      val layouts = layoutResources.get.map{ layout =>
+        val Name = "(.*)\\.[^\\.]+".r
+        layout.getName match {
+          case Name(name) => Some(name)
+          case _ => None
+        }
+      }
       val reserved = List("extends", "trait", "type", "val", "var", "with")
 
       val resources = layoutResources.get.flatMap { path =>
@@ -57,8 +64,13 @@ object TypedResources {
             |import _root_.android.view.View
             |
             |case class TypedResource[T](id: Int)
+            |case class TypedLayout(id: Int)
+            |
             |object TR {
             |%s
+            | object layout {
+            | %s
+            | }
             |}
             |trait TypedViewHolder {
             |  def findViewById( id: Int ): View
@@ -69,6 +81,7 @@ object TypedResources {
             |trait TypedActivity extends Activity with TypedActivityHolder
             |trait TypedDialog extends Dialog with TypedViewHolder
             |object TypedResource {
+            |  implicit def layout2int(l: TypedLayout) = l.id
             |  implicit def view2typed(v: View) = new TypedViewHolder { 
             |    def findViewById( id: Int ) = v.findViewById( id )
             |  }
@@ -80,8 +93,13 @@ object TypedResources {
             |  }
             |}
             |""".stripMargin.format(
-              manifestPackage, resources map { case (id, classname) =>
+              manifestPackage,
+              resources map { case (id, classname) =>
                 "  val %s = TypedResource[%s](R.id.%s)".format(id, classname, id)
+              } mkString "\n",
+              layouts map {
+                case Some(layoutName) => " val %s = TypedLayout(R.layout.%s)".format(layoutName, layoutName)
+                case None => ""
               } mkString "\n"
             )
         )
