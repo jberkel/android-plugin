@@ -10,7 +10,7 @@ matter of minutes.
 
 See the [Getting started][] guide on the wiki for more documentation. In case
 you're not not familiar with sbt make sure to check out its excellent
-[Getting Started Guide][sbt-getting-started] guide first.
+[Getting Started Guide][sbt-getting-started] first.
 
 ## Hacking on the plugin
 
