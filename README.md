@@ -52,7 +52,6 @@ list.
 [migration guide]: https://github.com/jberkel/android-plugin/wiki/migration_guide
 [contributors]: https://github.com/jberkel/android-plugin/wiki/Contributors
 [homebrew]: https://github.com/mxcl/homebrew
-[Android SDK]: http://developer.android.com/sdk/index.html
 [projects using sbt-android-plugin]: https://github.com/jberkel/android-plugin/wiki/Projects-using-sbt-android-plugin
 [Getting started]: https://github.com/jberkel/android-plugin/wiki/getting-started
 [giter8]: https://github.com/n8han/giter8
