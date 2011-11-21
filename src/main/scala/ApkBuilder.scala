@@ -37,7 +37,7 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
   setDebugMode(debug)
 
   def build() = try {
-    addNativeLibraries(project.nativeLibrariesPath, null)
+    addNativeLibraries(project.nativeLibrariesPath)
     addResourcesFromJar(project.classesMinJarPath)
     addSourceFolder(project.resourceDirectory)
     sealApk
@@ -56,10 +56,10 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
     method.invoke(builder, debug.asInstanceOf[Object])
   }
 
-  def addNativeLibraries(nativeFolder: File, abiFilter: String) {
+  def addNativeLibraries(nativeFolder: File) {
     if (nativeFolder.exists && nativeFolder.isDirectory) {
-      val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
-      method.invoke(builder, nativeFolder, abiFilter)
+      val method = klass.getMethod("addNativeLibraries", classOf[File])
+      method.invoke(builder, nativeFolder)
     }
   }
 
