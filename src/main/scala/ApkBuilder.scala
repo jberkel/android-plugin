@@ -37,7 +37,7 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
   setDebugMode(debug)
 
   def build() = try {
-    addNativeLibraries(project.nativeLibrariesPath)
+    addNativeLibraries(project.nativeLibrariesPath, null)
     addResourcesFromJar(project.classesMinJarPath)
     addSourceFolder(project.resourceDirectory)
     sealApk
@@ -56,10 +56,17 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
     method.invoke(builder, debug.asInstanceOf[Object])
   }
 
-  def addNativeLibraries(nativeFolder: File) {
+  def addNativeLibraries(nativeFolder: File, abiFilter: String) {
     if (nativeFolder.exists && nativeFolder.isDirectory) {
-      val method = klass.getMethod("addNativeLibraries", classOf[File])
-      method.invoke(builder, nativeFolder)
+      try {
+        val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
+        method.invoke(builder, nativeFolder, abiFilter)
+      } catch {
+        case e: java.lang.NoSuchMethodException => {
+          val method = klass.getMethod("addNativeLibraries", classOf[File])
+          method.invoke(builder, nativeFolder)
+        }
+      }
     }
   }
 
