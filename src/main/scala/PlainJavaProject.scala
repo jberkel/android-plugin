@@ -10,6 +10,7 @@ object PlainJavaProject {
     manifestPath <<= (baseDirectory, manifestName) map((s,m) => Seq(s / m)),
     proguardOptimizations := Seq.empty,
     mainResPath <<= (baseDirectory, resDirectoryName) (_ / _),
+    mainAssetsPath <<= (baseDirectory, assetsDirectoryName) (_ / _),
     javaSource in Compile <<= (baseDirectory) (_ / "src")
     )
   )
