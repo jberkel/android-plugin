@@ -58,8 +58,15 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
 
   def addNativeLibraries(nativeFolder: File, abiFilter: String) {
     if (nativeFolder.exists && nativeFolder.isDirectory) {
-      val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
-      method.invoke(builder, nativeFolder, abiFilter)
+      try {
+        val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
+        method.invoke(builder, nativeFolder, abiFilter)
+      } catch {
+        case e: java.lang.NoSuchMethodException => {
+          val method = klass.getMethod("addNativeLibraries", classOf[File])
+          method.invoke(builder, nativeFolder)
+        }
+      }
     }
   }
 
