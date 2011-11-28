@@ -81,6 +81,7 @@ object AndroidKeys {
 
   /** Market Publish Settings */
   val keystorePath = SettingKey[File]("key-store-path")
+  val keystorePasswordPath = SettingKey[Option[File]]("key-store-password-path")
   val zipAlignPath = SettingKey[File]("zip-align-path", "Path to zipalign")
   val packageAlignedName = SettingKey[String]("package-aligned-name")
   val packageAlignedPath = SettingKey[File]("package-aligned-path")
