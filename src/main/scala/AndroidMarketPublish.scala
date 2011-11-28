@@ -18,9 +18,10 @@ object AndroidMarketPublish {
     }
 
   private def signReleaseTask: Project.Initialize[Task[File]] =
-    (keystorePath, keyalias, packageApkPath, streams) map { (ksPath, ka, pPath,s ) =>
+    (keystorePath, keystorePasswordPath, keyalias, packageApkPath, streams) map { (ksPath, pwPath, ka, pPath, s) =>
+      val pw = pwPath match { case None => getPassword; case Some(path) => IO.read(path) }
       s.log.debug(Process(
-        <x> jarsigner -verbose -keystore {ksPath} -storepass {getPassword} {pPath} {ka} </x>).!!)
+        <x> jarsigner -verbose -keystore {ksPath} -storepass {pw} {pPath} {ka} </x>).!!)
       s.log.info("Signed "+pPath)
       pPath
     }
@@ -30,6 +31,7 @@ object AndroidMarketPublish {
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
+    keystorePasswordPath := None,
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
     packageAlignedName <<= (artifact, version) ((a,v) =>
                                                 String.format("%s-%s-market.apk", a.name, v)),
