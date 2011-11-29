@@ -12,15 +12,28 @@ object AndroidMarketPublish {
 
   private def zipAlignTask: Project.Initialize[Task[File]] =
     (zipAlignPath, packageApkPath, packageAlignedPath, streams) map { (zip, apkPath, pPath, s) =>
-      s.log.debug(Process(<x> {zip} -v 4 {apkPath} {pPath} </x>).!!)
+      val zipAlign = Seq(
+          zip.absolutePath,
+          "-v", "4",
+          apkPath.absolutePath,
+          pPath.absolutePath)
+      s.log.debug("Aligning "+zipAlign.mkString(" "))
+      if (zipAlign.run(false).exitValue != 0) sys.error("error aligning apk")
       s.log.info("Aligned "+pPath)
       pPath
     }
 
   private def signReleaseTask: Project.Initialize[Task[File]] =
-    (keystorePath, keyalias, packageApkPath, streams) map { (ksPath, ka, pPath,s ) =>
-      s.log.debug(Process(
-        <x> jarsigner -verbose -keystore {ksPath} -storepass {getPassword} {pPath} {ka} </x>).!!)
+    (keystorePath, keyalias, packageApkPath, streams) map { (ksPath, ka, pPath, s ) =>
+      val jarsigner = Seq(
+        "jarsigner",
+        "-verbose",
+        "-keystore", ksPath.absolutePath,
+        "-storepass", getPassword,
+        pPath.absolutePath,
+        ka)
+      s.log.debug("Signing "+jarsigner.mkString(" "))
+      if (jarsigner.run(false).exitValue != 0) sys.error("error signing apk")
       s.log.info("Signed "+pPath)
       pPath
     }
