@@ -18,7 +18,7 @@ object AndroidMarketPublish {
           apkPath.absolutePath,
           pPath.absolutePath)
       s.log.debug("Aligning "+zipAlign.mkString(" "))
-      if (zipAlign.run(false).exitValue != 0) sys.error("error aligning apk")
+      s.log.debug(zipAlign !!)
       s.log.info("Aligned "+pPath)
       pPath
     }
@@ -33,7 +33,7 @@ object AndroidMarketPublish {
         pPath.absolutePath,
         ka)
       s.log.debug("Signing "+jarsigner.mkString(" "))
-      if (jarsigner.run(false).exitValue != 0) sys.error("error signing apk")
+      s.log.debug(jarsigner !!)
       s.log.info("Signed "+pPath)
       pPath
     }
