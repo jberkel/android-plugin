@@ -30,7 +30,7 @@ object AndroidMarketPublish {
         "-verbose",
         "-keystore", ksPath.absolutePath,
         "-storepass", PasswordManager.get(
-              ksPath.absolutePath.replace("/","_"), ka, cache).getOrElse(sys.error("could not get password")),
+              "keystore", ka, cache).getOrElse(sys.error("could not get password")),
         pPath.absolutePath,
         ka)
       s.log.debug("Signing "+jarsigner.mkString(" "))
