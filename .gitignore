@@ -6,3 +6,5 @@ project/build/target/
 project/plugins/src_managed/
 project/plugins/project/
 temp
+.idea
+.idea_modules

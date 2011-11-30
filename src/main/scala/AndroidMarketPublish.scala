@@ -24,12 +24,13 @@ object AndroidMarketPublish {
     }
 
   private def signReleaseTask: Project.Initialize[Task[File]] =
-    (keystorePath, keyalias, packageApkPath, streams) map { (ksPath, ka, pPath, s ) =>
+    (keystorePath, keyalias, packageApkPath, streams, cachePasswords) map { (ksPath, ka, pPath, s, cache) =>
       val jarsigner = Seq(
         "jarsigner",
         "-verbose",
         "-keystore", ksPath.absolutePath,
-        "-storepass", getPassword,
+        "-storepass", PasswordManager.get(
+              ksPath.absolutePath.replace("/","_"), ka, cache).getOrElse(sys.error("could not get password")),
         pPath.absolutePath,
         ka)
       s.log.debug("Signing "+jarsigner.mkString(" "))

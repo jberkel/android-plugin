@@ -105,7 +105,9 @@ object AndroidBase {
 
     sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
 
-    resourceDirectories <+= (mainAssetsPath)
+    resourceDirectories <+= (mainAssetsPath),
+
+    cachePasswords := false
   ) ++ Seq (
     // Handle the delegates for android settings
     classDirectory <<= (classDirectory in Compile),

@@ -1,0 +1,3 @@
+* Added PasswordManager ([Jan Berkel][jberkel])
+
+[jberkel]: https://github.com/jberkel

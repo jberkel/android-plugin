@@ -165,4 +165,12 @@ object AndroidKeys {
   /** Test Project Tasks */
   val testEmulator = TaskKey[Unit]("test-emulator", "runs tests in emulator")
   val testDevice = TaskKey[Unit]("test-device", "runs tests on device")
+
+  /** Github tasks & keys */
+  val uploadGithub = TaskKey[Option[String]]("github-upload", "Upload file to github")
+  val deleteGithub = TaskKey[Unit]("github-delete", "Delete file from github")
+  val githubRepo   = SettingKey[String]("github-repo", "Github repo")
+
+  val cachePasswords = SettingKey[Boolean]("cache-passwords", "Cache passwords")
+  val clearPasswords = TaskKey[Unit]("clear-passwords", "Clear cached passwords")
 }
