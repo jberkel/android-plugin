@@ -66,6 +66,7 @@ object Github {
            case Some(data) =>
               s3_upload(upload, data.asInstanceOf[Map[String,Any]], s) map { (resp) =>
                 s.log.debug("s3: received "+resp)
+                s.log.success("Uploaded to s3/github")
                 (resp \\ "Location").text
               }
            case _ => None
@@ -92,7 +93,7 @@ object Github {
             val delete = Delete(url, user, password)
             delete.getResponseCode() match {
               case 204  =>
-                s.log.info("deleted "+name)
+                s.log.success("deleted "+name)
               case code =>
                 s.log.error("deletion failed (%d): %s"
                             .format(code,
