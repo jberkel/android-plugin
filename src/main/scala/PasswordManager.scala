@@ -89,7 +89,7 @@ object OSXPasswordManager extends PWManager {
       "delete-generic-password",
       "-l", Label
       ).run(new ProcessIO(input => (), output => (), error => ()))
-       .exitValue() == 0) clear();
+       .exitValue() == 0) clear()
   }
 }
 
@@ -137,7 +137,7 @@ object FilePasswordManager extends PWManager {
   def clear() {
     if (pwDir.exists()) {
       for (f <- pwDir.listFiles()) f.delete()
-      pwDir.delete();
+      pwDir.delete()
     }
   }
 
