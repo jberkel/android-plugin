@@ -96,7 +96,7 @@ object Github {
               case code =>
                 s.log.error("deletion failed (%d): %s"
                             .format(code,
-                              if (delete.getErrorStream == null)
+                              if (delete.getErrorStream != null)
                               IO.readStream(delete.getErrorStream) else ""))
             }
           }
