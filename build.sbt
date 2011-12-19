@@ -8,8 +8,11 @@ scalacOptions += "-deprecation"
 
 publishMavenStyle := true
 
-publishTo := Some("Scala Tools Nexus" at
-                  "http://nexus.scala-tools.org/content/repositories/releases/")
+publishTo <<= (version) { version: String =>
+    val nexus = "http://nexus.scala-tools.org/content/repositories/"
+    if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "snapshots/")
+    else                                   Some("releases"  at nexus + "releases/")
+}
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
