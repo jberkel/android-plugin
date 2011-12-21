@@ -48,11 +48,14 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
     addResourcesFromJar(builder, project.classesMinJarPath)
     addSourceFolder(builder, project.resourceDirectory)
     sealApk(builder)
+
     Right("Packaging "+project.packageApkPath)
   } catch {
     case e: Throwable => Left(
-        String.format("Error packaging %s: %s", project.packageApkPath,
-        if (e.getCause != null) e.getCause.getMessage else e.getMessage))
+        String.format("\n%s\nError packaging %s: %s",
+          outputStream.toString,
+          project.packageApkPath,
+          if (e.getCause != null) e.getCause.getMessage else e.getMessage))
   }
 
   def getDebugKeystore = klass.getMethod("getDebugKeystore").invoke(null).asInstanceOf[String]
