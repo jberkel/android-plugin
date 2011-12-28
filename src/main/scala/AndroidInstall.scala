@@ -32,30 +32,46 @@ object AndroidInstall {
   }
 
   private def dxTask: Project.Initialize[Task[File]] =
-    (scalaInstance, dxJavaOpts, dxPath, classDirectory,
+    (scalaInstance, dxOpts, dxPath, classDirectory,
      proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) map {
-    (scalaInstance, dxJavaOpts, dxPath, classDirectory,
+    (scalaInstance, dxOpts, dxPath, classDirectory,
      proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) =>
+      def dexing(inputs: Seq[JFile], output: JFile) {
+        val uptodate = output.exists &&
+          !inputs.exists(_.lastModified > output.lastModified)
 
-      val inputs:PathFinder = proguard match {
-        case Some(file) => file
-        case None       => classDirectory +++ proguardInJars --- scalaInstance.libraryJar
+        if (!uptodate) {
+          val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
+          val dxCmd = (Seq(dxPath.absolutePath,
+                          dxMemoryParameter(dxOpts._1),
+                          "--dex", noLocals,
+                          "--output="+output.getAbsolutePath) ++
+                          inputs.map(_.absolutePath)).filter(_.length > 0)
+          streams.log.debug(dxCmd.mkString(" "))
+          streams.log.info("Dexing "+output.getAbsolutePath)
+          streams.log.debug(dxCmd !!)
+        } else streams.log.debug("dex file " + output.getAbsolutePath + " uptodate, skipping")
       }
-      val uptodate = classesDexPath.exists &&
-        !(inputs +++ (classDirectory ** "*.class") get).exists (_.lastModified > classesDexPath.lastModified)
 
-      if (!uptodate) {
-        val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
-        val dxCmd = (Seq(dxPath.absolutePath,
-                        dxMemoryParameter(dxJavaOpts),
-                        "--dex", noLocals,
-                        "--output="+classesDexPath.absolutePath) ++
-                        inputs.get.map(_.absolutePath)).filter(_.length > 0)
-        streams.log.debug(dxCmd.mkString(" "))
-        streams.log.info("Dexing "+classesDexPath)
-        streams.log.debug(dxCmd !!)
-      } else streams.log.debug("dex file uptodate, skipping")
-
+      proguard match {
+        case Some(file) => dexing(file.get, classesDexPath)
+        case None       => if (dxOpts._2) { // solid/split flag of dxOpt tuple
+                             dexing((classDirectory +++ proguardInJars --- scalaInstance.libraryJar).get, classesDexPath)
+                           } else {
+                             dexing(classDirectory.get, classesDexPath)
+                             (proguardInJars --- scalaInstance.libraryJar).get.foreach(f => {
+                               val predexPath = new JFile(classesDexPath.getParent, "predex")
+                               if (!predexPath.exists)
+                                 predexPath.mkdir
+                               val output = new File(predexPath, f.getName)
+                               val outputPermissionDescriptor = new File(predexPath, f.getName.replaceFirst(".jar$", ".xml"))
+                               dexing(Seq(f), output)
+                               val permission = <permissions><library name={ f.getName.replaceFirst(".jar$", "") } file={ "/data/" + f.getName } /></permissions>
+                               val p = new java.io.PrintWriter(outputPermissionDescriptor)
+                               try { p.println(permission) } finally { p.close() }
+                             })
+                           }
+      }
       classesDexPath
     }
 
