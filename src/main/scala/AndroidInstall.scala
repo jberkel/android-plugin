@@ -37,8 +37,14 @@ object AndroidInstall {
     (scalaInstance, dxOpts, dxPath, classDirectory,
      proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) =>
       def dexing(inputs: Seq[JFile], output: JFile) {
-        val uptodate = output.exists &&
-          !inputs.exists(_.lastModified > output.lastModified)
+        val uptodate = output.exists && inputs.forall(input =>
+          input.isDirectory match {
+            case true =>
+              (input ** "*").get.forall(_.lastModified <= output.lastModified)
+            case false =>
+              input.lastModified <= output.lastModified
+          }
+        )
 
         if (!uptodate) {
           val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
