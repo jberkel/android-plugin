@@ -67,7 +67,7 @@ object AndroidBase {
 
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
-    mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _),
+    mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
     managedJavaPath <<= (managedSourceDirectories in Compile) (_.head / "java"),
 
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
