@@ -112,7 +112,7 @@ object TypedResources {
     typedResource <<= (manifestPackage, managedScalaPath) map {
       _.split('.').foldLeft(_) ((p, s) => p / s) / "TR.scala"
     },
-    layoutResources <<= (mainResPath) (_ / "layout" ** "*.xml" get),
+    layoutResources <<= (mainResPath) map { x=>  (x / "layout" ** "*.xml" get) },
 
     generateTypedResources <<= generateTypedResourcesTask,
 
