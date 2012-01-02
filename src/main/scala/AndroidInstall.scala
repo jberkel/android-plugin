@@ -105,7 +105,7 @@ object AndroidInstall {
 
   private def packageTask(debug: Boolean):Project.Initialize[Task[File]] = (packageConfig, streams) map { (c, s) =>
     val builder = new ApkBuilder(c, debug)
-    builder.build.fold(s.log.error(_), s.log.info(_))
+    builder.build.fold(sys.error(_), s.log.info(_))
     s.log.debug(builder.outputStream.toString)
     c.packageApkPath
   }

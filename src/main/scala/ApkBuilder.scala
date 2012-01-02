@@ -26,40 +26,56 @@ case class ApkConfig(
  * [[http://android.git.kernel.org/?p=platform/sdk.git;a=blob;f=anttasks/src/com/android/ant/ApkBuilderTask.java here]].
  */
 class ApkBuilder(project: ApkConfig, debug: Boolean) {
-  val classLoader = ClasspathUtilities.toLoader(project.androidToolsPath / "lib" / "sdklib.jar")
-  val klass = classLoader.loadClass("com.android.sdklib.build.ApkBuilder")
-  val constructor = klass.getConstructor(
-    classOf[File], classOf[File], classOf[File], classOf[String], classOf[PrintStream])
-  val keyStore = if (debug) getDebugKeystore else null
+  type JApkBuilder = Object
+  // sdklib has not been packaged yet, need to load dynamically
+  val klass = ClasspathUtilities.toLoader(project.androidToolsPath / "lib" / "sdklib.jar")
+                                .loadClass("com.android.sdklib.build.ApkBuilder")
   val outputStream = new ByteArrayOutputStream
-  val builder = constructor.newInstance(
-    project.packageApkPath, project.resourcesApkPath, project.classesDexPath, keyStore, new PrintStream(outputStream))
-  setDebugMode(debug)
 
   def build() = try {
-    addNativeLibraries(project.nativeLibrariesPath, null)
-    addResourcesFromJar(project.classesMinJarPath)
-    addSourceFolder(project.resourceDirectory)
-    sealApk
+    val constructor = klass.getConstructor(
+      classOf[File], classOf[File], classOf[File], classOf[String], classOf[PrintStream])
+    val builder:JApkBuilder = constructor.newInstance(
+        project.packageApkPath,
+        project.resourcesApkPath,
+        project.classesDexPath,
+        if (debug) getDebugKeystore else null,
+        new PrintStream(outputStream)
+    ).asInstanceOf[JApkBuilder]
+
+    setDebugMode(builder, debug)
+    addNativeLibraries(builder, project.nativeLibrariesPath, null)
+    addResourcesFromJar(builder, project.classesMinJarPath)
+    addSourceFolder(builder, project.resourceDirectory)
+    sealApk(builder)
+
     Right("Packaging "+project.packageApkPath)
   } catch {
-    case e: Throwable => Left(e.getCause.getMessage)
+    case e: Throwable => Left(
+        String.format("\n%s\nError packaging %s: %s",
+          outputStream.toString,
+          project.packageApkPath,
+          if (e.getCause != null) e.getCause.getMessage else e.getMessage))
   }
 
-  def getDebugKeystore = {
-    val method = klass.getMethod("getDebugKeystore")
-    method.invoke(null).asInstanceOf[String]
+  def getDebugKeystore = klass.getMethod("getDebugKeystore").invoke(null).asInstanceOf[String]
+
+  def setDebugMode(builder: JApkBuilder, debug: Boolean) {
+    klass.getMethod("setDebugMode", classOf[Boolean])
+         .invoke(builder, debug.asInstanceOf[Object])
   }
 
-  def setDebugMode(debug: Boolean) {
-    val method = klass.getMethod("setDebugMode", classOf[Boolean])
-    method.invoke(builder, debug.asInstanceOf[Object])
-  }
-
-  def addNativeLibraries(nativeFolder: File, abiFilter: String) {
+  def addNativeLibraries(builder: JApkBuilder, nativeFolder: File, abiFilter: String) {
     if (nativeFolder.exists && nativeFolder.isDirectory) {
-      val method = klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
-      method.invoke(builder, nativeFolder, abiFilter)
+      try {
+        klass.getMethod("addNativeLibraries", classOf[File], classOf[String])
+             .invoke(builder, nativeFolder, abiFilter)
+      } catch {
+        case e: java.lang.NoSuchMethodException => {
+          klass.getMethod("addNativeLibraries", classOf[File])
+               .invoke(builder, nativeFolder)
+        }
+      }
     }
   }
 
@@ -67,22 +83,19 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
   ///
   /// (used to let classloader.getResource work for legacy java libs
   /// on android)
-  def addResourcesFromJar(jarFile: File) {
+  def addResourcesFromJar(builder: JApkBuilder, jarFile: File) {
     if (jarFile.exists) {
       def method = klass.getMethod("addResourcesFromJar", classOf[File])
       method.invoke(builder, jarFile)
     }
   }
 
-  def addSourceFolder(folder: File) {
+  def addSourceFolder(builder: JApkBuilder, folder: File) {
     if (folder.exists) {
-      def method = klass.getMethod("addSourceFolder", classOf[File])
-      method.invoke(builder, folder)
+      klass.getMethod("addSourceFolder", classOf[File])
+           .invoke(builder, folder)
     }
   }
 
-  def sealApk() {
-    val method = klass.getMethod("sealApk")
-    method.invoke(builder)
-  }
+  def sealApk(builder: JApkBuilder) { klass.getMethod("sealApk").invoke(builder) }
 }
