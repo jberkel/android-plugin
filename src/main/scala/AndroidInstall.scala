@@ -9,12 +9,12 @@ import java.io.{File => JFile}
 
 object AndroidInstall {
 
-  private def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install -r "+p.absolutePath)
+  private def installTask(emulator: Boolean) = (dbPath, packageApkPath, streams) map { (dp, p, s) =>
+    adbTask(dp.absolutePath, emulator, s, "install", "-r ", p.absolutePath)
   }
 
-  private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage) map { (dp, m) =>
-    adbTask(dp.absolutePath, emulator, "uninstall "+m)
+  private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
+    adbTask(dp.absolutePath, emulator, s, "uninstall", m)
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =

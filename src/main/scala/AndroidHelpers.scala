@@ -1,4 +1,5 @@
 import sbt._
+import Keys._
 
 import AndroidKeys._
 
@@ -36,17 +37,30 @@ object AndroidHelpers {
     case "android-3.0" => 11
   }
 
-  def adbTask(dPath: String, emulator: Boolean, action: => String): Unit =
-    Process (<x>
-      {dPath} {if (emulator) "-e" else "-d"} {action}
-    </x>) !
+  def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) {
+    val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
+    s.log.debug(adb.mkString(" "))
+    val out = new StringBuffer
+    val exit = adb.run(new ProcessIO(input => (),
+                          output => out.append(IO.readStream(output)),
+                          error  => out.append(IO.readStream(error)))
+                      ).exitValue()
+
+    if (exit != 0 ||
+        // adb doesn't bother returning a non-zero exit code on failure
+        out.toString.contains("Failure")) {
+      s.log.error(out.toString)
+      sys.error("error executing adb")
+    } else s.log.info(out.toString)
+  }
 
   def startTask(emulator: Boolean) =
-    (dbPath, manifestSchema, manifestPackage, manifestPath) map {
-      (dp, schema, mPackage, amPath) =>
+    (dbPath, manifestSchema, manifestPackage, manifestPath, streams) map {
+      (dp, schema, mPackage, amPath, s) =>
       adbTask(dp.absolutePath,
-              emulator,
-              "shell am start -a android.intent.action.MAIN -n "+mPackage+"/"+
+              emulator, s,
+              "shell", "am", "start", "-a", "android.intent.action.MAIN",
+              "-n", mPackage+"/"+
               launcherActivity(schema, amPath.head, mPackage))
   }
 

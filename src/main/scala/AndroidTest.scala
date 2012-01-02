@@ -5,11 +5,11 @@ import AndroidKeys._
 import AndroidHelpers._
 
 object AndroidTest {
-  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage) map {
-    (dbPath, manifestPackage) =>
-      val action = "shell am instrument -w "+ manifestPackage +
-                   "/android.test.InstrumentationTestRunner"
-      adbTask(dbPath.absolutePath, emulator, action)
+  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, streams) map {
+    (dbPath, manifestPackage, s) =>
+      val action = Seq("shell", "am", "instrument", "-w",
+                       manifestPackage+"/android.test.InstrumentationTestRunner")
+      adbTask(dbPath.absolutePath, emulator, s, action:_*)
     }
 
   /** AndroidTestProject */
