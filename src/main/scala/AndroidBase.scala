@@ -85,11 +85,10 @@ object AndroidBase {
     libraryJarPath <<= (jarPath (_ get)),
 
     proguardOption := "",
-    proguardExclude <<=
-      (libraryJarPath, classDirectory, resourceDirectory) map {
+    proguardExclude <<= (libraryJarPath, classDirectory, resourceDirectory) map {
         (libPath, classDirectory, resourceDirectory) =>
-          (libPath +++ classDirectory +++ resourceDirectory) get
-      },
+          libPath :+ classDirectory :+ resourceDirectory
+    },
     proguardInJars <<= (fullClasspath, proguardExclude) map {
       (runClasspath, proguardExclude) =>
       runClasspath.map(_.data) --- proguardExclude get

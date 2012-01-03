@@ -69,7 +69,7 @@ object AndroidKeys {
   val useProguard = SettingKey[Boolean]("use-proguard")
 
   /** Install Settings */
-  val packageConfig = SettingKey[ApkConfig]("package-config",
+  val packageConfig = TaskKey[ApkConfig]("package-config",
     "Generates a Apk Config")
 
   /** Typed Resource Settings */
@@ -114,6 +114,7 @@ object AndroidKeys {
   val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
 
   val proguard = TaskKey[Option[File]]("proguard", "Optimize class files.")
+  val dxInputs = TaskKey[Seq[File]]("dx-inputs", "Input for dex command")
   val dx = TaskKey[File]("dx", "Convert class files to dex files")
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
