@@ -60,7 +60,7 @@ object AndroidKeys {
   val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
   val jarPath = SettingKey[File]("jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
-  val mainResPath = SettingKey[File]("main-res-path")
+  val mainResPath = TaskKey[File]("main-res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
   val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
   val classesDexPath = SettingKey[File]("classes-dex-path")
@@ -77,7 +77,9 @@ object AndroidKeys {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
-  val layoutResources = SettingKey[Seq[File]]("layout-resources")
+  val layoutResources = TaskKey[Seq[File]]("layout-resources", 
+      """All files that are in res/layout. They will
+		 be accessable through TR.layouts._""")
 
   /** Market Publish Settings */
   val keystorePath = SettingKey[File]("key-store-path")
