@@ -61,21 +61,36 @@ object AndroidInstall {
 
       proguard match {
         case Some(file) => dexing(file.get, classesDexPath)
-        case None       => if (dxOpts._2) { // solid/split flag of dxOpt tuple
-                             dexing((classDirectory +++ proguardInJars --- scalaInstance.libraryJar).get, classesDexPath)
-                           } else {
-                             dexing(classDirectory.get, classesDexPath)
-                             (proguardInJars --- scalaInstance.libraryJar).get.foreach(f => {
-                               val predexPath = new JFile(classesDexPath.getParent, "predex")
-                               if (!predexPath.exists)
-                                 predexPath.mkdir
-                               val output = new File(predexPath, f.getName)
-                               val outputPermissionDescriptor = new File(predexPath, f.getName.replaceFirst(".jar$", ".xml"))
-                               dexing(Seq(f), output)
-                               val permission = <permissions><library name={ f.getName.replaceFirst(".jar$", "") } file={ "/data/" + f.getName } /></permissions>
-                               val p = new java.io.PrintWriter(outputPermissionDescriptor)
-                               try { p.println(permission) } finally { p.close() }
-                             })
+        case None       => dxOpts._2 match { // solid -> None / split -> Some() flag of dxOpt tuple
+                             case Some(predex) =>
+                               val (dexFiles, predexFiles) = predex match {
+                                 case exceptSeq: Seq[String] if exceptSeq.nonEmpty =>
+                                   val (filtered, orig) = (proguardInJars --- scalaInstance.libraryJar).get.partition(file =>
+                                     exceptSeq.exists(filter => {
+                                       streams.log.debug("apply filter \"" + filter + "\" to \"" + file.getAbsolutePath + "\"")
+                                       file.getAbsolutePath.matches(filter)
+                                     }))
+                                   ((classDirectory --- scalaInstance.libraryJar).get ++ filtered, orig)
+                                 case _ =>
+                                   ((classDirectory --- scalaInstance.libraryJar).get,
+                                     (proguardInJars --- scalaInstance.libraryJar).get)
+                               }
+                               dexFiles.foreach(s => streams.log.debug("pack in dex \"" + s.getName + "\""))
+                               predexFiles.foreach(s => streams.log.debug("pack in predex \"" + s.getName + "\""))
+                               dexing(dexFiles, classesDexPath)
+                               predexFiles.get.foreach(f => {
+                                 val predexPath = new JFile(classesDexPath.getParent, "predex")
+                                 if (!predexPath.exists)
+                                   predexPath.mkdir
+                                 val output = new File(predexPath, f.getName)
+                                 val outputPermissionDescriptor = new File(predexPath, f.getName.replaceFirst(".jar$", ".xml"))
+                                 dexing(Seq(f), output)
+                                 val permission = <permissions><library name={ f.getName.replaceFirst(".jar$", "") } file={ "/data/" + f.getName } /></permissions>
+                                 val p = new java.io.PrintWriter(outputPermissionDescriptor)
+                                 try { p.println(permission) } finally { p.close() }
+                               })
+                             case None =>
+                               dexing((classDirectory +++ proguardInJars --- scalaInstance.libraryJar).get, classesDexPath)
                            }
       }
       classesDexPath

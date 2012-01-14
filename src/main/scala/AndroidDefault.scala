@@ -15,7 +15,7 @@ object AndroidDefaults {
   val DefaultClassesMinJarName = "classes.min.jar"
   val DefaultClassesDexName = "classes.dex"
   val DefaultResourcesApkName = "resources.apk"
-  val DefaultDxOpts = ("-JXmx512m", true)
+  val DefaultDxOpts = ("-JXmx512m", None)
   val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
   val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
 
