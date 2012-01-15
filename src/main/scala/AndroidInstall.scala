@@ -43,6 +43,7 @@ object AndroidInstall {
         val dxCmd = (Seq(dxPath.absolutePath,
                         dxMemoryParameter(dxJavaOpts),
                         "--dex", noLocals,
+                        "--num-threads="+java.lang.Runtime.getRuntime.availableProcessors,
                         "--output="+classesDexPath.absolutePath) ++
                         dxInputs.get.map(_.absolutePath)).filter(_.length > 0)
         streams.log.debug(dxCmd.mkString(" "))
