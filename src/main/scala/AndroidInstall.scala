@@ -105,8 +105,8 @@ object AndroidInstall {
   }
 
   lazy val installerTasks = Seq (
-    installEmulator <<= installTask(emulator = true),
-    installDevice <<= installTask(emulator = false)
+    installEmulator <<= installTask(emulator = true) dependsOn packageDebug,
+    installDevice <<= installTask(emulator = false) dependsOn packageDebug
   )
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ Seq (
