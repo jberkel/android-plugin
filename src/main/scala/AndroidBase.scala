@@ -1,5 +1,7 @@
 import sbt._
 
+import scala.xml._
+
 import Keys._
 import AndroidKeys._
 import AndroidHelpers._
@@ -8,9 +10,49 @@ import sbinary.DefaultProtocol.StringFormat
 
 object AndroidBase {
 
+  private def apklibSourcesTask =
+    (extractApkLibDependencies, streams) map {
+    (projectLibs, s) => {
+      s.log.info("generating source files from apklibs")
+      val xs = for (
+        l <- projectLibs;
+        d <- l.srcDir.toSeq;
+        f <- d ** "*.java" get
+      ) yield f
+      s.log.info("generated " + xs.size + " source files from " + projectLibs.size + " apklibs")
+      xs
+    }
+    }
+
+  private def apklibDependenciesTask =
+    (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
+    (updateReport, srcManaged, javaManaged, resManaged, s) => {
+
+      val deps = updateReport.allFiles
+
+      val apklibs = deps filter { _.ext.matches("""(?i)apklib""") }
+
+      apklibs map  { apklib =>
+        s.log.info("extracting apklib " + apklib.name)
+        val dest = srcManaged / ".." / apklib.base
+        IO.unzip(apklib, dest)
+
+        val manifest = dest / "AndroidManifest.xml"
+        val pkgName = XML.loadFile(manifest).attribute("package").get.head.text
+        LibraryProject(
+          pkgName,
+          manifest,
+          Some(dest / "src") filter { _.exists },
+          Some(dest / "res") filter { _.exists },
+          Some(dest / "assets") filter { _.exists }
+        )
+      }
+    }
+    }
+
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath) =>
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies) map {
+    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs) =>
 
     Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
         "--custom-package", mPackage,
@@ -18,6 +60,20 @@ object AndroidBase {
         "-S", resPath.absolutePath,
         "-I", jPath.absolutePath,
         "-J", javaPath.absolutePath) !
+
+    apklibs.foreach { (lib) =>
+
+      Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
+        "--custom-package", lib.pkgName,
+        "-M", lib.manifest.absolutePath,
+        "-S", resPath.absolutePath,
+        "-I", jPath.absolutePath,
+        "-J", javaPath.absolutePath,
+        "--non-constant-id"
+      ) ++
+      lib.resDir.toSeq.flatMap(d => Seq("-S", d.absolutePath)) ++
+      lib.srcDir.toSeq.flatMap(d => Seq("-I", d.absolutePath)) !
+    }
 
     javaPath ** "R.java" get
   }
@@ -71,6 +127,8 @@ object AndroidBase {
     managedJavaPath <<= (sourceManaged in Compile) (_ / "java"),
     managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
 
+    extractApkLibDependencies <<= apklibDependenciesTask,
+
     managedSourceDirectories in Compile <<= (managedJavaPath, managedScalaPath) (Seq(_, _)),
 
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
@@ -99,13 +157,14 @@ object AndroidBase {
 
     makeManagedJavaPath <<= directory(managedJavaPath),
 
+    apklibSources <<= apklibSourcesTask,
     aaptGenerate <<= aaptGenerateTask,
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
     unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
 
-    sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
+    sourceGenerators in Compile <+= (apklibSources, aaptGenerate, aidlGenerate) map (_ ++ _ ++ _),
 
     resourceDirectories <+= (mainAssetsPath),
 

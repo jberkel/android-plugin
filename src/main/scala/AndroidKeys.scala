@@ -67,6 +67,7 @@ object AndroidKeys {
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val packageApkPath = SettingKey[File]("package-apk-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
+  val projectLibraryDependencies = SettingKey[Seq[ModuleID]]("project-library-dependencies", "Declares managed apklib dependencies.")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
@@ -92,6 +93,11 @@ object AndroidKeys {
   val manifestTemplatePath = SettingKey[File]("manifest-template-path")
 
   /** Base Tasks */
+  case class LibraryProject(pkgName: String, manifest: File, srcDir: Option[File], resDir: Option[File], assetsDir: Option[File])
+
+  val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
+
+  val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")
   val aidlGenerate = TaskKey[Seq[File]]("aidl-generate",
     "Generate Java classes from .aidl files.")
