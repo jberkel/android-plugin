@@ -51,28 +51,40 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs) =>
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams) map {
+    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s) =>
+
+    val libraryResPathArgs = for (
+      lib <- apklibs;
+      d <- lib.resDir.toSeq;
+      arg <- Seq("-S", d.absolutePath)
+    ) yield arg
+
+    val libraryAssetPathArgs = for (
+      lib <- apklibs;
+      d <- lib.assetsDir.toSeq;
+      arg <- Seq("-A", d.absolutePath)
+    ) yield arg
 
     Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
-        "--custom-package", mPackage,
+      "--custom-package", mPackage,
+      "-M", mPath.head.absolutePath,
+      "-S", resPath.absolutePath,
+      "-I", jPath.absolutePath,
+      "-J", javaPath.absolutePath) ++
+      libraryResPathArgs ++
+      libraryAssetPathArgs !
+
+    apklibs.foreach { (lib) =>
+      Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
+        "--custom-package", lib.pkgName,
         "-M", mPath.head.absolutePath,
         "-S", resPath.absolutePath,
         "-I", jPath.absolutePath,
-        "-J", javaPath.absolutePath) !
-
-    apklibs.foreach { (lib) =>
-
-      Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
-        "--custom-package", lib.pkgName,
-        "-M", lib.manifest.absolutePath,
-        "-S", resPath.absolutePath,
-        "-I", jPath.absolutePath,
         "-J", javaPath.absolutePath,
-        "--non-constant-id"
-      ) ++
-      lib.resDir.toSeq.flatMap(d => Seq("-S", d.absolutePath)) ++
-      lib.srcDir.toSeq.flatMap(d => Seq("-I", d.absolutePath)) !
+        "--non-constant-id") ++
+      libraryResPathArgs ++
+      libraryAssetPathArgs !
     }
 
     javaPath ** "R.java" get
