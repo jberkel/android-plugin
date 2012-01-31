@@ -13,15 +13,18 @@ object AndroidBase {
   private def apklibSourcesTask =
     (extractApkLibDependencies, streams) map {
     (projectLibs, s) => {
-      s.log.info("generating source files from apklibs")
-      val xs = for (
-        l <- projectLibs;
-        f <- l.sources
-      ) yield f
-      s.log.info("generated " + xs.size + " source files from " + projectLibs.size + " apklibs")
-      xs
+      if (!projectLibs.isEmpty) {
+        s.log.debug("generating source files from apklibs")
+        val xs = for (
+          l <- projectLibs;
+          f <- l.sources
+        ) yield f
+
+        s.log.info("generated " + xs.size + " source files from " + projectLibs.size + " apklibs")
+        xs
+      } else Seq.empty
     }
-    }
+  }
 
   private def apklibDependenciesTask =
     (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
