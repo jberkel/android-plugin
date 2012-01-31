@@ -93,7 +93,7 @@ object AndroidKeys {
   val manifestTemplatePath = SettingKey[File]("manifest-template-path")
 
   /** Base Tasks */
-  case class LibraryProject(pkgName: String, manifest: File, srcDir: Option[File], resDir: Option[File], assetsDir: Option[File])
+  case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
 
   val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
 

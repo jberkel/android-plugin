@@ -16,8 +16,7 @@ object AndroidBase {
       s.log.info("generating source files from apklibs")
       val xs = for (
         l <- projectLibs;
-        d <- l.srcDir.toSeq;
-        f <- d ** "*.java" get
+        f <- l.sources
       ) yield f
       s.log.info("generated " + xs.size + " source files from " + projectLibs.size + " apklibs")
       xs
@@ -33,14 +32,25 @@ object AndroidBase {
       apklibs map  { apklib =>
         s.log.info("extracting apklib " + apklib.name)
         val dest = srcManaged / ".." / apklib.base
-        IO.unzip(apklib, dest)
+
+        val unzipped = IO.unzip(apklib, dest)
+        def moveContents(fromDir: File, toDir: File) = {
+          toDir.mkdirs()
+          val pairs = for (
+            file <- unzipped;
+            rel <- IO.relativize(fromDir, file)
+          ) yield (file, toDir / rel)
+          IO.move(pairs)
+          pairs map { case (_,t) => t }
+        }
+        val sources = moveContents(dest / "src", javaManaged)
 
         val manifest = dest / "AndroidManifest.xml"
         val pkgName = XML.loadFile(manifest).attribute("package").get.head.text
         LibraryProject(
           pkgName,
           manifest,
-          Some(dest / "src") filter { _.exists },
+          sources,
           Some(dest / "res") filter { _.exists },
           Some(dest / "assets") filter { _.exists }
         )
