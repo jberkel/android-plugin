@@ -67,7 +67,6 @@ object AndroidKeys {
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val packageApkPath = SettingKey[File]("package-apk-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
-  val projectLibraryDependencies = SettingKey[Seq[ModuleID]]("project-library-dependencies", "Declares managed apklib dependencies.")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
