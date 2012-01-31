@@ -18,14 +18,22 @@ object AndroidInstall {
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
-  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, streams) map {
-    (apPath, manPath, rPath, assetPath, jPath, resApkPath, s) =>
+  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, extractApkLibDependencies, streams) map {
+    (apPath, manPath, rPath, assetPath, jPath, resApkPath, apklibs, s) =>
+
+    val libraryResPathArgs = for (
+      lib <- apklibs;
+      d <- lib.resDir.toSeq;
+      arg <- Seq("-S", d.absolutePath)
+    ) yield arg
+
     val aapt = Seq(apPath.absolutePath, "package", "--auto-add-overlay", "-f",
         "-M", manPath.head.absolutePath,
         "-S", rPath.absolutePath,
         "-A", assetPath.absolutePath,
         "-I", jPath.absolutePath,
-        "-F", resApkPath.absolutePath)
+        "-F", resApkPath.absolutePath) ++
+        libraryResPathArgs
     s.log.debug("packaging: "+aapt.mkString(" "))
     if (aapt.run(false).exitValue != 0) sys.error("error packaging resources")
     resApkPath
