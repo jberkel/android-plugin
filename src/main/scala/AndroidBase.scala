@@ -28,9 +28,7 @@ object AndroidBase {
     (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
     (updateReport, srcManaged, javaManaged, resManaged, s) => {
 
-      val deps = updateReport.allFiles
-
-      val apklibs = deps filter { _.ext.matches("""(?i)apklib""") }
+      val apklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
 
       apklibs map  { apklib =>
         s.log.info("extracting apklib " + apklib.name)
