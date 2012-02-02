@@ -171,9 +171,14 @@ object AndroidBase {
         (libPath, classDirectory, resourceDirectory) =>
           libPath :+ classDirectory :+ resourceDirectory
     },
-    proguardInJars <<= (fullClasspath, proguardExclude) map {
-      (runClasspath, proguardExclude) =>
-      runClasspath.map(_.data) --- proguardExclude get
+    proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules) map {
+      (fullClasspath, proguardExclude, preinstalledModules) =>
+       fullClasspath.filterNot( cp =>
+         cp.get(moduleID.key).map( module => preinstalledModules.exists( m =>
+               m.organization == module.organization &&
+               m.name == module.name)
+         ).getOrElse(false)
+       ).map(_.data) --- proguardExclude get
     },
 
     makeManagedJavaPath <<= directory(managedJavaPath),

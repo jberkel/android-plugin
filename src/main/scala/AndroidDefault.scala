@@ -33,6 +33,14 @@ object AndroidDefaults {
     resourcesApkName := DefaultResourcesApkName,
     dxJavaOpts := DefaultDxJavaOpts,
     manifestSchema := DefaultManifestSchema,
-    envs := DefaultEnvs
+    envs := DefaultEnvs,
+    // a list of modules which are already included in Android
+    preinstalledModules := Seq[ModuleID](
+      ModuleID("org.apache.httpcomponents", "httpcore", null),
+      ModuleID("org.apache.httpcomponents", "httpclient", null),
+      ModuleID("org.json", "json" , null),
+      ModuleID("commons-logging", "commons-logging", null),
+      ModuleID("commons-codec", "commons-codec", null)
+    )
   )
 }

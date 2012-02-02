@@ -35,6 +35,7 @@ object AndroidKeys {
   val dxJavaOpts = SettingKey[String]("dx-java-opts")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
+  val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
 
   /** Determined Settings */
   val packageApkName = TaskKey[String]("package-apk-name")
