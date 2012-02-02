@@ -24,15 +24,15 @@ object AndroidDefaults {
     adbName := DefaultAadbName,
     aidlName := DefaultAaidlName,
     dxName := DefaultDxName,
-    manifestName := DefaultAndroidManifestName, 
-    jarName := DefaultAndroidJarName, 
+    manifestName := DefaultAndroidManifestName,
+    jarName := DefaultAndroidJarName,
     assetsDirectoryName := DefaultAssetsDirectoryName,
     resDirectoryName := DefaultResDirectoryName,
     classesMinJarName := DefaultClassesMinJarName,
     classesDexName := DefaultClassesDexName,
     resourcesApkName := DefaultResourcesApkName,
     dxJavaOpts := DefaultDxJavaOpts,
-    manifestSchema := DefaultManifestSchema, 
-    envs := DefaultEnvs 
+    manifestSchema := DefaultManifestSchema,
+    envs := DefaultEnvs
   )
 }
