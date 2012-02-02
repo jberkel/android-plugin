@@ -135,7 +135,8 @@ object AndroidBase {
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
 
-    packageApkName <<= (artifact, version) ((a, v) => String.format("%s-%s.apk", a.name, v)),
+    packageApkName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apk", a.name, v)),
+    packageApkPath <<= (target, packageApkName) map (_ / _),
     manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
 
     manifestPackage <<= findPath,
@@ -143,7 +144,9 @@ object AndroidBase {
 
     minSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "minSdkVersion")),
     maxSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "maxSdkVersion")),
-
+    versionName <<= (manifestPath, manifestSchema, version) map ((p, schema, version) =>
+        manifest(p.head).attribute(schema, "versionName").map(_.text).getOrElse(version)
+    ),
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
@@ -157,13 +160,8 @@ object AndroidBase {
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
-    packageApkPath <<= (target, packageApkName) (_ / _),
     useProguard := true,
     proguardOptimizations := Seq.empty,
-
-    apiLevel <<= (minSdkVersion, platformName) map { (min, pName) =>
-      min.getOrElse(platformName2ApiLevel(pName))
-    },
 
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),

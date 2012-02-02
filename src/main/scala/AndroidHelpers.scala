@@ -24,19 +24,6 @@ object AndroidHelpers {
   def usesSdk(mpath: File, schema: String, key: String) =
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
-  def platformName2ApiLevel(pName: String) = pName match {
-    case "android-1.0" => 1
-    case "android-1.1" => 2
-    case "android-1.5" => 3
-    case "android-1.6" => 4
-    case "android-2.0" => 5
-    case "android-2.1" => 7
-    case "android-2.2" => 8
-    case "android-2.3" => 9
-    case "android-2.3.3" => 10
-    case "android-3.0" => 11
-  }
-
   def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) {
     val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
     s.log.debug(adb.mkString(" "))

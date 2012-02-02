@@ -13,6 +13,7 @@ object AndroidKeys {
   val platformName = SettingKey[String]("platform-name", "Targetted android platform")
   val keyalias = SettingKey[String]("key-alias")
   val versionCode = SettingKey[Int]("version-code")
+  val versionName = TaskKey[String]("version-name")
 
   /** Proguard Settings */
   val proguardOption = SettingKey[String]("proguard-option")
@@ -36,7 +37,7 @@ object AndroidKeys {
   val envs = SettingKey[Seq[String]]("envs")
 
   /** Determined Settings */
-  val packageApkName = SettingKey[String]("package-apk-name")
+  val packageApkName = TaskKey[String]("package-apk-name")
   val osDxName = SettingKey[String]("os-dx-name")
 
   /** Path Settings */
@@ -54,7 +55,6 @@ object AndroidKeys {
   val manifestPackageName = TaskKey[String]("manifest-package-name")
   val minSdkVersion = TaskKey[Option[Int]]("min-sdk-version")
   val maxSdkVersion = TaskKey[Option[Int]]("max-sdk-version")
-  val apiLevel = TaskKey[Int]("api-level")
 
   val manifestPath = TaskKey[Seq[File]]("manifest-path")
   val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
@@ -65,7 +65,7 @@ object AndroidKeys {
   val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
   val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
-  val packageApkPath = SettingKey[File]("package-apk-path")
+  val packageApkPath = TaskKey[File]("package-apk-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
 
   /** Install Settings */
@@ -84,8 +84,8 @@ object AndroidKeys {
   /** Market Publish Settings */
   val keystorePath = SettingKey[File]("key-store-path")
   val zipAlignPath = SettingKey[File]("zip-align-path", "Path to zipalign")
-  val packageAlignedName = SettingKey[String]("package-aligned-name")
-  val packageAlignedPath = SettingKey[File]("package-aligned-path")
+  val packageAlignedName = TaskKey[String]("package-aligned-name")
+  val packageAlignedPath = TaskKey[File]("package-aligned-path")
 
   /** Manifest Generator */
   val manifestTemplateName = SettingKey[String]("manifest-template-name")
