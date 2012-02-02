@@ -24,13 +24,16 @@ object AndroidNdk {
   val DefaultObjDirectoryName = "obj"
   /** The list of environment variables to check for the NDK. */
   val DefaultEnvs = List("ANDROID_NDK_HOME", "ANDROID_NDK_ROOT")
-
+  /** The make environment variable name for the javah generated header directory. */
+  val DefaultJavahOutputEnv = "SBT_MANAGED_JNI_INCLUDE"
 
   lazy val defaultSettings: Seq[Setting[_]] = inConfig(Android) (Seq (
     ndkBuildName := DefaultNdkBuildName,
     jniDirectoryName := DefaultJniDirectoryName,
     objDirectoryName := DefaultObjDirectoryName,
-    ndkEnvs := DefaultEnvs
+    ndkEnvs := DefaultEnvs,
+    javahName := "javah",
+    javahOutputEnv := DefaultJavahOutputEnv
     ))
 
   // ndk-related paths
@@ -48,13 +51,48 @@ object AndroidNdk {
 	  } yield b
 	  paths.headOption getOrElse (sys.error("Android NDK not found.  " +
         "You might need to set " + envs.mkString(" or ")))
-      }
+      },
+
+    javahPath <<= (javaHome, javahName) apply { (home, name) =>
+      home map ( h => (h / "bin" / name).absolutePath ) getOrElse name
+    },
+
+    javahOutputDirectory <<= (sourceManaged)(_ / "main" / DefaultJniDirectoryName )
+
   ))
 
+  private def javahTask(
+    javahPath: String,
+    classpath: Seq[File],
+    classes: Seq[String],
+    outputDirectory: File,
+    streams: TaskStreams) {
+
+    val log = streams.log
+    if (classes.isEmpty) {
+      log.debug("No JNI classes, skipping javah")
+    } else {
+      val classpathArgument = classpath.map(_.getAbsolutePath()).mkString(File.pathSeparator)
+      val javahCommandLine = Seq(
+        javahPath,
+        "-classpath", classpathArgument,
+        "-d", outputDirectory.absolutePath) ++ classes
+      log.debug("Running javah: " + (javahCommandLine mkString " "))
+      val p = Process(javahCommandLine)
+      val exitCode = p ! log
+
+      if (exitCode != 0) {
+        sys.error("javah exited with " + exitCode)
+      }
+    }
+  }
 
   private def ndkBuildTask(targets: String*) =
-    (ndkBuildPath, nativeOutputPath) map { (ndkBuildPath, obj) =>
-      val exitValue = Process(ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath :: targets.toList) !
+    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, nativeOutputPath) map {
+    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, obj) =>
+      val exitValue = Process(ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath ::
+          (javahOutputEnv + "=" + javahOutputDirectory.absolutePath) ::
+          targets.toList) !
 
       if(exitValue != 0) sys.error("ndk-build failed with nonzero exit code (" + exitValue + ")")
 
@@ -62,11 +100,34 @@ object AndroidNdk {
     }
 
   lazy val settings: Seq[Setting[_]] = defaultSettings ++ pathSettings ++ inConfig(Android) (Seq (
+    javah <<= (
+        (compile in Compile),
+        javahPath,
+        (classDirectory in Compile), (internalDependencyClasspath in Compile), (externalDependencyClasspath in Compile),
+        jniClasses,
+        javahOutputDirectory,
+        streams) map ((
+            _, // we only depend on a side effect (built classes) of compile
+            javahPath,
+            classDirectory, internalDependencyClasspath, externalDependencyClasspath,
+            jniClasses,
+            javahOutputDirectory,
+            streams) =>
+        javahTask(
+          javahPath,
+          Seq(classDirectory) ++ internalDependencyClasspath.files ++ externalDependencyClasspath.files,
+          jniClasses,
+          javahOutputDirectory,
+          streams)
+    	),
     ndkBuild <<= ndkBuildTask(),
+    ndkBuild <<= ndkBuild.dependsOn(javah),
     ndkClean <<= ndkBuildTask("clean"),
-    (compile in Compile) <<= (ndkBuild in Android, compile in Compile) map { (ndkBuild, compile) => ndkBuild ; compile }
+    jniClasses := Seq.empty,
+    (products in Compile) <<= (products in Compile).dependsOn(ndkBuild),
+    javahClean <<= (javahOutputDirectory) map IO.delete
   )) ++ Seq (
     cleanFiles <+= (nativeObjectPath in Android),
-    clean <<= (clean, ndkClean in Android) map { (clean, ndkClean) => ndkClean ; clean  }
+    clean <<= clean.dependsOn(ndkClean in Android, javahClean in Android)
   )
 }
