@@ -33,7 +33,8 @@ object AndroidNdk {
     objDirectoryName := DefaultObjDirectoryName,
     ndkEnvs := DefaultEnvs,
     javahName := "javah",
-    javahOutputEnv := DefaultJavahOutputEnv
+    javahOutputEnv := DefaultJavahOutputEnv,
+    javahOutputFile := None
     ))
 
   // ndk-related paths
@@ -61,25 +62,52 @@ object AndroidNdk {
 
   ))
 
+  private def split(file: File) = {
+    val parentsBottomToTop = Iterator.iterate(file)(_.getParentFile).takeWhile(_ != null).map(_.getName).toSeq
+    parentsBottomToTop.reverse
+  }
+
+  private def compose(parent: File, child: File): File = {
+    if (child.isAbsolute) {
+      child
+    } else {
+      split(child).foldLeft(parent)(new File(_,_))
+    }
+  }
+
   private def javahTask(
     javahPath: String,
     classpath: Seq[File],
     classes: Seq[String],
     outputDirectory: File,
+    outputFile: Option[File],
     streams: TaskStreams) {
 
     val log = streams.log
     if (classes.isEmpty) {
       log.debug("No JNI classes, skipping javah")
     } else {
+      outputDirectory.mkdirs()
       val classpathArgument = classpath.map(_.getAbsolutePath()).mkString(File.pathSeparator)
+      val outputArguments = outputFile match {
+        case Some(file) =>
+          val outputFile = compose(outputDirectory, file)
+          // Neither javah nor RichFile.relativeTo will work unless the directories exist.
+          Option(outputFile.getParentFile) foreach (_.mkdirs())
+          if (! (outputFile relativeTo outputDirectory).isDefined) {
+            log.warn("javah output file [" + outputFile + "] is not within javah output directory [" +
+                outputDirectory + "], continuing anyway")
+          }
+
+          Seq("-o", outputFile.absolutePath)
+        case None => Seq("-d", outputDirectory.absolutePath)
+      }
       val javahCommandLine = Seq(
         javahPath,
-        "-classpath", classpathArgument,
-        "-d", outputDirectory.absolutePath) ++ classes
+        "-classpath", classpathArgument) ++
+        outputArguments ++ classes
       log.debug("Running javah: " + (javahCommandLine mkString " "))
-      val p = Process(javahCommandLine)
-      val exitCode = p ! log
+      val exitCode = Process(javahCommandLine) ! log
 
       if (exitCode != 0) {
         sys.error("javah exited with " + exitCode)
@@ -105,19 +133,20 @@ object AndroidNdk {
         javahPath,
         (classDirectory in Compile), (internalDependencyClasspath in Compile), (externalDependencyClasspath in Compile),
         jniClasses,
-        javahOutputDirectory,
+        javahOutputDirectory, javahOutputFile,
         streams) map ((
             _, // we only depend on a side effect (built classes) of compile
             javahPath,
             classDirectory, internalDependencyClasspath, externalDependencyClasspath,
             jniClasses,
             javahOutputDirectory,
+            javahOutputFile,
             streams) =>
         javahTask(
           javahPath,
           Seq(classDirectory) ++ internalDependencyClasspath.files ++ externalDependencyClasspath.files,
           jniClasses,
-          javahOutputDirectory,
+          javahOutputDirectory, javahOutputFile,
           streams)
     	),
     ndkBuild <<= ndkBuildTask(),

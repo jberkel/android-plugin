@@ -27,6 +27,8 @@ object AndroidNdkKeys {
 
   val javahOutputDirectory = SettingKey[File]("javah-output-directory",
       "The directory where JNI headers are written to.")
+  val javahOutputFile = SettingKey[Option[File]]("javah-output-file",
+      "filename for the generated C header, relative to javah-output-directory")
   val javahOutputEnv = SettingKey[String]("javah-output-env",
       "Name of the make environment variable to bind to the javah-output-directory")
 
