@@ -20,6 +20,15 @@ object TypedResources {
         }
       }
 
+      val layouts = layoutResources.get.map{ layout =>
+        val Name = "(.*)\\.[^\\.]+".r
+        layout.getName match {
+          case Name(name) => Some(name)
+          case _ => None
+        }
+      }
+      val reserved = List("extends", "trait", "type", "val", "var", "with")
+
       val resources = layoutResources.get.flatMap { path =>
         XML.loadFile(path).descendant_or_self flatMap { node =>
           // all nodes
@@ -45,34 +54,52 @@ object TypedResources {
             if (v0 != v) s.log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
           }
           m + (k -> v)
+      }.filterNot {
+        case (id, _) => reserved.contains(id)
       }
 
       IO.write(typedResource,
     """     |package %s
-            |import android.app.Activity
-            |import android.view.View
+            |import _root_.android.app.{Activity, Dialog}
+            |import _root_.android.view.View
             |
             |case class TypedResource[T](id: Int)
+            |case class TypedLayout(id: Int)
+            |
             |object TR {
             |%s
+            | object layout {
+            | %s
+            | }
             |}
             |trait TypedViewHolder {
-            |  def view: View
-            |  def findView[T](tr: TypedResource[T]) = view.findViewById(tr.id).asInstanceOf[T]
+            |  def findViewById( id: Int ): View
+            |  def findView[T](tr: TypedResource[T]) = findViewById(tr.id).asInstanceOf[T]
             |}
-            |trait TypedView extends View with TypedViewHolder { def view = this }
-            |trait TypedActivityHolder {
-            |  def activity: Activity
-            |  def findView[T](tr: TypedResource[T]) = activity.findViewById(tr.id).asInstanceOf[T]
-            |}
-            |trait TypedActivity extends Activity with TypedActivityHolder { def activity = this }
+            |trait TypedView extends View with TypedViewHolder
+            |trait TypedActivityHolder extends TypedViewHolder
+            |trait TypedActivity extends Activity with TypedActivityHolder
+            |trait TypedDialog extends Dialog with TypedViewHolder
             |object TypedResource {
-            |  implicit def view2typed(v: View) = new TypedViewHolder { def view = v }
-            |  implicit def activity2typed(act: Activity) = new TypedActivityHolder { def activity = act }
+            |  implicit def layout2int(l: TypedLayout) = l.id
+            |  implicit def view2typed(v: View) = new TypedViewHolder { 
+            |    def findViewById( id: Int ) = v.findViewById( id )
+            |  }
+            |  implicit def activity2typed(a: Activity) = new TypedViewHolder { 
+            |    def findViewById( id: Int ) = a.findViewById( id )
+            |  }
+            |  implicit def dialog2typed(d: Dialog) = new TypedViewHolder { 
+            |    def findViewById( id: Int ) = d.findViewById( id )
+            |  }
             |}
             |""".stripMargin.format(
-              manifestPackage, resources map { case (id, classname) =>
+              manifestPackage,
+              resources map { case (id, classname) =>
                 "  val %s = TypedResource[%s](R.id.%s)".format(id, classname, id)
+              } mkString "\n",
+              layouts map {
+                case Some(layoutName) => " val %s = TypedLayout(R.layout.%s)".format(layoutName, layoutName)
+                case None => ""
               } mkString "\n"
             )
         )
@@ -81,17 +108,16 @@ object TypedResources {
     }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
-    managedScalaPath <<= (target) ( _ / "src_managed" / "main" / "scala"),
-    typedResource <<= (manifestPackage, managedScalaPath) {
+    typedResource <<= (manifestPackage, managedScalaPath) map {
       _.split('.').foldLeft(_) ((p, s) => p / s) / "TR.scala"
     },
-    layoutResources <<= (mainResPath) (_ / "layout" ** "*.xml" get),
+    layoutResources <<= (mainResPath) map { x=>  (x / "layout" ** "*.xml" get) },
 
     generateTypedResources <<= generateTypedResourcesTask,
 
-    sourceGenerators in Compile <+= generateTypedResources.identity,
+    sourceGenerators in Compile <+= generateTypedResources,
     watchSources in Compile <++= (layoutResources) map (ls => ls)
   )) ++ Seq (
-    generateTypedResources <<= (generateTypedResources in Android).identity
+    generateTypedResources <<= (generateTypedResources in Android)
   )
 }

@@ -1,22 +1,102 @@
 import sbt._
 
+import scala.xml._
+
 import Keys._
 import AndroidKeys._
 import AndroidHelpers._
 
+import sbinary.DefaultProtocol.StringFormat
+
 object AndroidBase {
 
+  private def apklibSourcesTask =
+    (extractApkLibDependencies, streams) map {
+    (projectLibs, s) => {
+      if (!projectLibs.isEmpty) {
+        s.log.debug("generating source files from apklibs")
+        val xs = for (
+          l <- projectLibs;
+          f <- l.sources
+        ) yield f
+
+        s.log.info("generated " + xs.size + " source files from " + projectLibs.size + " apklibs")
+        xs
+      } else Seq.empty
+    }
+  }
+
+  private def apklibDependenciesTask =
+    (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
+    (updateReport, srcManaged, javaManaged, resManaged, s) => {
+
+      val apklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+
+      apklibs map  { apklib =>
+        s.log.info("extracting apklib " + apklib.name)
+        val dest = srcManaged / ".." / apklib.base
+
+        val unzipped = IO.unzip(apklib, dest)
+        def moveContents(fromDir: File, toDir: File) = {
+          toDir.mkdirs()
+          val pairs = for (
+            file <- unzipped;
+            rel <- IO.relativize(fromDir, file)
+          ) yield (file, toDir / rel)
+          IO.move(pairs)
+          pairs map { case (_,t) => t }
+        }
+        val sources = moveContents(dest / "src", javaManaged)
+
+        val manifest = dest / "AndroidManifest.xml"
+        val pkgName = XML.loadFile(manifest).attribute("package").get.head.text
+        LibraryProject(
+          pkgName,
+          manifest,
+          sources,
+          Some(dest / "res") filter { _.exists },
+          Some(dest / "assets") filter { _.exists }
+        )
+      }
+    }
+    }
+
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath) =>
-    Process (<x>
-      {aPath.absolutePath} package --auto-add-overlay -m
-        --custom-package {mPackage}
-        -M {mPath.absolutePath}
-        -S {resPath.absolutePath}
-        -I {jPath.absolutePath}
-        -J {javaPath.absolutePath}
-    </x>) !
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams) map {
+    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s) =>
+
+    val libraryResPathArgs = for (
+      lib <- apklibs;
+      d <- lib.resDir.toSeq;
+      arg <- Seq("-S", d.absolutePath)
+    ) yield arg
+
+    val libraryAssetPathArgs = for (
+      lib <- apklibs;
+      d <- lib.assetsDir.toSeq;
+      arg <- Seq("-A", d.absolutePath)
+    ) yield arg
+
+    Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
+      "--custom-package", mPackage,
+      "-M", mPath.head.absolutePath,
+      "-S", resPath.absolutePath,
+      "-I", jPath.absolutePath,
+      "-J", javaPath.absolutePath) ++
+      libraryResPathArgs ++
+      libraryAssetPathArgs !
+
+    apklibs.foreach { (lib) =>
+      Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
+        "--custom-package", lib.pkgName,
+        "-M", mPath.head.absolutePath,
+        "-S", resPath.absolutePath,
+        "-I", jPath.absolutePath,
+        "-J", javaPath.absolutePath,
+        "--non-constant-id") ++
+      libraryResPathArgs ++
+      libraryAssetPathArgs !
+    }
 
     javaPath ** "R.java" get
   }
@@ -48,89 +128,82 @@ object AndroidBase {
     }
   }
 
+  def findPath() = (manifestPath) map { p =>
+      manifest(p.head).attribute("package").getOrElse(sys.error("package not defined")).text
+  }
+
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
 
-    packageApkName <<= (artifact, version) ((a, v) => String.format("%s-%s.apk", a.name, v)),
-    manifestPath <<= (sourceDirectory, manifestName) (_ / _),
-    manifestTemplatePath <<= (sourceDirectory, manifestName) (_ / _),
+    packageApkName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apk", a.name, v)),
+    packageApkPath <<= (target, packageApkName) map (_ / _),
+    manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
 
-    manifestPackage <<= (manifestTemplatePath) {
-      manifest(_).attribute("package").getOrElse(error("package not defined")).text
-    },
-    minSdkVersion <<= (manifestTemplatePath, manifestSchema)(usesSdk(_, _, "minSdkVersion")),
-    maxSdkVersion <<= (manifestTemplatePath, manifestSchema)(usesSdk(_, _, "maxSdkVersion")),
+    manifestPackage <<= findPath,
+    manifestPackageName <<= findPath storeAs manifestPackageName triggeredBy manifestPath,
 
+    minSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "minSdkVersion")),
+    maxSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "maxSdkVersion")),
+    versionName <<= (manifestPath, manifestSchema, version) map ((p, schema, version) =>
+        manifest(p.head).attribute(schema, "versionName").map(_.text).getOrElse(version)
+    ),
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
-    mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _),
-    managedJavaPath <<= (target) (_ / "src_managed" / "main" / "java"),
+    mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
+    managedJavaPath <<= (sourceManaged in Compile) (_ / "java"),
+    managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
+
+    extractApkLibDependencies <<= apklibDependenciesTask,
+
+    managedSourceDirectories in Compile <<= (managedJavaPath, managedScalaPath) (Seq(_, _)),
 
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
-    packageApkPath <<= (target, packageApkName) (_ / _),
     useProguard := true,
-
-    addonsJarPath <<= (manifestTemplatePath, manifestSchema, mapsJarPath) {
-      (mPath, man, mapsPath) =>
-      for {
-        lib <- manifest(mPath) \ "application" \ "uses-library"
-        p = lib.attribute(man, "name").flatMap {
-          _.text match {
-            case "com.google.android.maps" => Some(mapsPath)
-            case _ => None
-          }
-        }
-        if p.isDefined
-      } yield p.get
-    },
-
-    apiLevel <<= (minSdkVersion, platformName) { (min, pName) =>
-      min.getOrElse(platformName2ApiLevel(pName))
-    },
+    proguardOptimizations := Seq.empty,
 
     jarPath <<= (platformPath, jarName) (_ / _),
-    mapsJarPath <<= (addonsPath) (_ / AndroidDefaults.DefaultMapsJarName),
-
-    addonsPath <<= (sdkPath, apiLevel) { (sPath, api) =>
-      sPath / "add-ons" / ("addon_google_apis_google_inc_" + api) / "libs"
-    },
-
-    libraryJarPath <<= (jarPath, addonsJarPath) (_ +++ _ get),
+    libraryJarPath <<= (jarPath (_ get)),
 
     proguardOption := "",
-    proguardExclude <<=
-      (libraryJarPath, classDirectory, resourceDirectory, unmanagedClasspath in Compile) map {
-        (libPath, classDirectory, resourceDirectory, unmanagedClasspath) =>
-          val temp = libPath +++ classDirectory +++ resourceDirectory
-          unmanagedClasspath.foldLeft(temp)(_ +++ _.data) get
-      },
-    proguardInJars <<= (fullClasspath, proguardExclude) map {
-      (runClasspath, proguardExclude) =>
-      runClasspath.map(_.data) --- proguardExclude get
+    proguardExclude <<= (libraryJarPath, classDirectory, resourceDirectory) map {
+        (libPath, classDirectory, resourceDirectory) =>
+          libPath :+ classDirectory :+ resourceDirectory
+    },
+    proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules) map {
+      (fullClasspath, proguardExclude, preinstalledModules) =>
+       fullClasspath.filterNot( cp =>
+         cp.get(moduleID.key).map( module => preinstalledModules.exists( m =>
+               m.organization == module.organization &&
+               m.name == module.name)
+         ).getOrElse(false)
+       ).map(_.data) --- proguardExclude get
     },
 
     makeManagedJavaPath <<= directory(managedJavaPath),
 
+    apklibSources <<= apklibSourcesTask,
     aaptGenerate <<= aaptGenerateTask,
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
     unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
 
-    sourceGenerators in Compile <+= (aaptGenerate, aidlGenerate) map (_ ++ _),
+    sourceGenerators in Compile <+= (apklibSources, aaptGenerate, aidlGenerate) map (_ ++ _ ++ _),
 
-    resourceDirectories <+= (mainAssetsPath).identity
+    resourceDirectories <+= (mainAssetsPath),
+
+    cachePasswords := false
   ) ++ Seq (
     // Handle the delegates for android settings
-    classDirectory <<= (classDirectory in Compile).identity,
-    sourceDirectory <<= (sourceDirectory in Compile).identity,
-    sourceDirectories <<= (sourceDirectories in Compile).identity,
-    resourceDirectory <<= (resourceDirectory in Compile).identity,
-    resourceDirectories <<= (resourceDirectories in Compile).identity,
-    javaSource <<= (javaSource in Compile).identity,
-    managedClasspath <<= (managedClasspath in Runtime).identity,
-    fullClasspath <<= (fullClasspath in Runtime).identity
+    classDirectory <<= (classDirectory in Compile),
+    sourceDirectory <<= (sourceDirectory in Compile),
+    sourceDirectories <<= (sourceDirectories in Compile),
+    resourceDirectory <<= (resourceDirectory in Compile),
+    resourceDirectories <<= (resourceDirectories in Compile),
+    javaSource <<= (javaSource in Compile),
+    managedClasspath <<= (managedClasspath in Runtime),
+    fullClasspath <<= (fullClasspath in Runtime)
   ))
 }

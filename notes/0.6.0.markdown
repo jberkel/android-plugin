@@ -1,4 +1,4 @@
-* Plugin ported to sbt 0.10.x ([Philip Cali][philcali])
+* Plugin ported to sbt 0.10.x/0.11.x ([Philip Cali][philcali])
 
 * Update path to Google's Android add-ons ([nuriaion][nuriaion])
 
@@ -18,8 +18,11 @@
 
 * Github API integration: upload apks to github/S3 ([Jan Berkel][jberkel])
 
+* Upgrade to proguard 4.6 w/ optional optimization ([Martin Kneissl][mkneissl])
+
 [nuriaion]: https://github.com/Nuriaion
 [paulbutcher]: https://github.com/paulbutcher/
 [jberkel]: https://github.com/jberkel
 [geeksville]: https://github.com/geeksville
 [philcali]: https://github.com/philcali
+[mkneissl]: https://github.com/mkneissl/
