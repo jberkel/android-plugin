@@ -13,7 +13,9 @@ object AndroidTest {
     }
 
   /** AndroidTestProject */
-  lazy val androidSettings = settings
+  lazy val androidSettings = settings ++ inConfig(Android)(
+    proguardInJars := Seq.empty
+  )
 
   lazy val settings: Seq[Setting[_]] =
     AndroidBase.settings ++
