@@ -1,3 +1,7 @@
 * Added PasswordManager ([Jan Berkel][jberkel])
 
+* Android Library support ([Logan Johnson][loganj] / [Matthew Willis][appamatto])
+
 [jberkel]: https://github.com/jberkel
+[loganj]: https://github.com/loganj
+[appamatto]: https://github.com/appamatto

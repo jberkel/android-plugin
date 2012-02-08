@@ -13,8 +13,13 @@ object AndroidTest {
     }
 
   /** AndroidTestProject */
-  lazy val androidSettings = settings ++ Seq (
-    proguardInJars in Android := Nil
+  lazy val androidSettings = settings ++
+    inConfig(Android)( Seq(
+      proguardInJars <<= (scalaInstance) map {
+        (scalaInstance) =>
+         Seq(scalaInstance.libraryJar)
+      }
+    )
   )
 
   lazy val settings: Seq[Setting[_]] =
