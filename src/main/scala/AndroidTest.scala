@@ -23,7 +23,8 @@ object AndroidTest {
     inConfig(Android) (Seq (
       testEmulator <<= instrumentationTestAction(true),
       testDevice <<= instrumentationTestAction(false),
-      skipApkLibDependencies := true
+      skipApkLibDependencies := true,
+      useProguard := false
     )) ++ Seq (
       testEmulator <<= (testEmulator in Android),
       testDevice <<= (testDevice in Android)
