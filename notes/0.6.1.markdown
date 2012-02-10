@@ -1,7 +1,12 @@
 * Added PasswordManager ([Jan Berkel][jberkel])
 
-* Android Library support ([Logan Johnson][loganj] / [Matthew Willis][appamatto])
+* Android Library support ([PR-112][], [Logan Johnson][loganj] / [Matthew Willis][appamatto])
+
+* Generate JNI C header files ([PR-115][], [Martin Kneissl][mkneissl])
 
 [jberkel]: https://github.com/jberkel
 [loganj]: https://github.com/loganj
 [appamatto]: https://github.com/appamatto
+[mkneissl]: https://github.com/mkneissl
+[PR-112]: https://github.com/jberkel/android-plugin/pull/112
+[PR-115]: https://github.com/jberkel/android-plugin/pull/115
