@@ -18,6 +18,7 @@ object AndroidDefaults {
   val DefaultDxJavaOpts = "-JXmx512m"
   val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
   val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
+  val DefaultInstrumentationRunner = "android.test.InstrumentationTestRunner"
 
   lazy val settings: Seq[Setting[_]] = Seq (
     aaptName := DefaultAaaptName,
@@ -34,6 +35,8 @@ object AndroidDefaults {
     dxJavaOpts := DefaultDxJavaOpts,
     manifestSchema := DefaultManifestSchema,
     envs := DefaultEnvs,
+    instrumentationRunner := DefaultInstrumentationRunner,
+
     // a list of modules which are already included in Android
     preinstalledModules := Seq[ModuleID](
       ModuleID("org.apache.httpcomponents", "httpcore", null),
