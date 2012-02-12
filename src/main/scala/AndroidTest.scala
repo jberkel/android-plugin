@@ -6,7 +6,9 @@ import AndroidHelpers._
 
 object AndroidTest {
 
-  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, instrumentationRunner , streams) map {
+  val DefaultInstrumentationRunner = "android.test.InstrumentationTestRunner"
+
+  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, instrumentationRunner, streams) map {
     (dbPath, manifestPackage, inst, s) =>
       val action = Seq("shell", "am", "instrument", "-w",
         manifestPackage + "/" + inst)
@@ -29,6 +31,7 @@ object AndroidTest {
     AndroidBase.settings ++
       AndroidInstall.settings ++
       inConfig(Android)(Seq(
+        instrumentationRunner := DefaultInstrumentationRunner,
         testEmulator <<= instrumentationTestAction(true),
         testDevice <<= instrumentationTestAction(false)
       )) ++ Seq(
