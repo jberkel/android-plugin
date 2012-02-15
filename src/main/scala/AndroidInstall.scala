@@ -86,6 +86,7 @@ object AndroidInstall {
                  "-dontnote org.xml.sax.EntityResolver" ::
                  "-keep public class * extends android.app.Activity" ::
                  "-keep public class * extends android.app.Service" ::
+                 "-keep public class * extends android.app.backup.BackupAgent" ::
                  "-keep public class * extends android.appwidget.AppWidgetProvider" ::
                  "-keep public class * extends android.content.BroadcastReceiver" ::
                  "-keep public class * extends android.content.ContentProvider" ::
