@@ -102,8 +102,8 @@ object AndroidBase {
   }
 
   private def aidlGenerateTask =
-    (sourceDirectories, idlPath, managedJavaPath, javaSource, streams) map {
-    (sDirs, idPath, javaPath, jSource, s) =>
+    (sourceDirectories, idlPath, platformPath, managedJavaPath, javaSource, streams) map {
+    (sDirs, idPath, platformPath, javaPath, jSource, s) =>
     val aidlPaths = sDirs.map(_ ** "*.aidl").reduceLeft(_ +++ _).get
     if (aidlPaths.isEmpty) {
       s.log.debug("no AIDL files found, skipping")
@@ -111,6 +111,7 @@ object AndroidBase {
     } else {
       val processor = aidlPaths.map { ap =>
         idPath.absolutePath ::
+          "-p" + (platformPath / "framework.aidl").absolutePath ::
           "-o" + javaPath.absolutePath ::
           "-I" + jSource.absolutePath ::
           ap.absolutePath :: Nil
