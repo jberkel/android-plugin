@@ -13,13 +13,8 @@ object AndroidTest {
     }
 
   /** AndroidTestProject */
-  lazy val androidSettings = settings ++
-    inConfig(Android)( Seq(
-      proguardInJars <<= (scalaInstance) map {
-        (scalaInstance) =>
-         Seq(scalaInstance.libraryJar)
-      }
-    )
+  lazy val androidSettings = settings ++ inConfig(Android)(
+    proguardInJars := Seq.empty
   )
 
   lazy val settings: Seq[Setting[_]] =
@@ -27,7 +22,9 @@ object AndroidTest {
     AndroidInstall.settings ++
     inConfig(Android) (Seq (
       testEmulator <<= instrumentationTestAction(true),
-      testDevice <<= instrumentationTestAction(false)
+      testDevice <<= instrumentationTestAction(false),
+      skipApkLibDependencies := true,
+      useProguard := false
     )) ++ Seq (
       testEmulator <<= (testEmulator in Android),
       testDevice <<= (testDevice in Android)

@@ -96,6 +96,7 @@ object AndroidKeys {
   case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
 
   val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
+  val skipApkLibDependencies = SettingKey[Boolean]("skip-apklib-dependencies")
 
   val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")

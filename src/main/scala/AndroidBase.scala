@@ -11,9 +11,9 @@ import sbinary.DefaultProtocol.StringFormat
 object AndroidBase {
 
   private def apklibSourcesTask =
-    (extractApkLibDependencies, streams) map {
-    (projectLibs, s) => {
-      if (!projectLibs.isEmpty) {
+    (extractApkLibDependencies, streams, skipApkLibDependencies) map {
+    (projectLibs, s, skip) => {
+      if (!skip && !projectLibs.isEmpty) {
         s.log.debug("generating source files from apklibs")
         val xs = for (
           l <- projectLibs;
@@ -27,10 +27,14 @@ object AndroidBase {
   }
 
   private def apklibDependenciesTask =
-    (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
-    (updateReport, srcManaged, javaManaged, resManaged, s) => {
+    (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams, skipApkLibDependencies) map {
+    (updateReport, srcManaged, javaManaged, resManaged, s, skip) => {
 
-      val apklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val apklibs: Seq[File] = if (skip) {
+        Seq.empty
+      } else {
+        updateReport.matching(artifactFilter(`type` = "apklib"))
+      }
 
       apklibs map  { apklib =>
         s.log.info("extracting apklib " + apklib.name)
@@ -195,7 +199,8 @@ object AndroidBase {
 
     resourceDirectories <+= (mainAssetsPath),
 
-    cachePasswords := false
+    cachePasswords := false,
+    skipApkLibDependencies := false
   ) ++ Seq (
     // Handle the delegates for android settings
     classDirectory <<= (classDirectory in Compile),
