@@ -206,11 +206,15 @@ object AndroidBase {
     },
     proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules) map {
       (fullClasspath, proguardExclude, preinstalledModules) =>
+       // remove preinstalled jars
        fullClasspath.filterNot( cp =>
          cp.get(moduleID.key).map( module => preinstalledModules.exists( m =>
                m.organization == module.organization &&
                m.name == module.name)
          ).getOrElse(false)
+       // only include jar files
+       ).filter( cp =>
+          cp.get(artifact.key).map(artifact => artifact.`type` == "jar").getOrElse(true)
        ).map(_.data) --- proguardExclude get
     },
 
