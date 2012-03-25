@@ -142,12 +142,12 @@ object AndroidInstall {
 
     packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
-       nativeLibrariesPath, dxInputs, resourceDirectory) map
-      (ApkConfig(_, _, _, _, _, _, _)),
+       nativeLibrariesPath, managedNativePath, dxInputs, resourceDirectory) map
+      (ApkConfig(_, _, _, _, _, _, _, _)),
 
     packageDebug <<= packageTask(true),
     packageRelease <<= packageTask(false)
   ) ++ Seq(packageDebug, packageRelease).map {
-    t => t <<= t dependsOn (cleanApk, aaptPackage)
+    t => t <<= t dependsOn (cleanApk, aaptPackage, copyNativeLibraries)
   })
 }
