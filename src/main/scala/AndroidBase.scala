@@ -9,6 +9,37 @@ import AndroidHelpers._
 import sbinary.DefaultProtocol.StringFormat
 
 object AndroidBase {
+  def getNativeTarget(parent: File, name: String, abi: String) = {
+    val extension = "-" + abi + ".so"
+    if (name endsWith extension) {
+      val target = new File(abi) / name.replace(extension, ".so")
+      Some(parent / target.toString)
+    } else None
+  }
+
+  def copyNativeLibrariesTask =
+    (streams, managedNativePath, dependencyClasspath in Compile) map {
+    (s, natives, deps) => {
+      val sos = (deps.map(_.data)).filter(_.name endsWith ".so")
+      var copied = Seq.empty[File]
+      for (so <- sos)
+        getNativeTarget(natives, so.name, "armeabi") orElse getNativeTarget(natives, so.name, "armeabi-v7a") map {
+          target =>
+            target.getParentFile.mkdirs
+            IO.copyFile(so, target)
+            copied +:= target
+            s.log.debug("copied native:   " + target.toString)
+        }
+      /* clean up stale native libraries */
+      for (path <- IO.listFiles(natives / "armeabi") ++ IO.listFiles(natives / "armeabi-v7a")) {
+        s.log.debug("checking native: " + path.toString)
+        if (path.name.endsWith(".so") && !copied.contains(path)) {
+          IO.delete(path)
+          s.log.debug("deleted native:  " + path.toString)
+        }
+      }
+    }
+  }
 
   private def apklibSourcesTask =
     (extractApkLibDependencies, streams) map {
@@ -153,6 +184,7 @@ object AndroidBase {
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
     managedJavaPath <<= (sourceManaged in Compile) (_ / "java"),
     managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
+    managedNativePath <<= (sourceManaged in Compile) (_ / "native_libs"),
 
     extractApkLibDependencies <<= apklibDependenciesTask,
 
@@ -183,6 +215,9 @@ object AndroidBase {
     },
 
     makeManagedJavaPath <<= directory(managedJavaPath),
+
+    copyNativeLibraries <<= copyNativeLibrariesTask,
+    classpathTypes in Compile := Set("jar", "so"),
 
     apklibSources <<= apklibSourcesTask,
     aaptGenerate <<= aaptGenerateTask,
