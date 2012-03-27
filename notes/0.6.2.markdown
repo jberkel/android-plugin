@@ -1,6 +1,6 @@
 * fixed aapt-generate reports success even when aapt fails ([GH-125][], [Jan Berkel][jberkel])
 
-* fix native libraryDepencies renaming ([PR-124[], [Matthew Willis][appamatto])
+* fix native libraryDepencies renaming ([PR-124][], [Matthew Willis][appamatto])
 
 * Added android:test-only-(device|emulator) ([Jan Berkel][jberkel])
 
