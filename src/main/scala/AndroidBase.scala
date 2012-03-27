@@ -108,27 +108,20 @@ object AndroidBase {
       arg <- Seq("-A", d.absolutePath)
     ) yield arg
 
-    Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
-      "--custom-package", mPackage,
-      "-M", mPath.head.absolutePath,
-      "-S", resPath.absolutePath,
-      "-I", jPath.absolutePath,
-      "-J", javaPath.absolutePath) ++
-      libraryResPathArgs ++
-      libraryAssetPathArgs !
-
-    apklibs.foreach { (lib) =>
-      Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
-        "--custom-package", lib.pkgName,
+    def runAapt(`package`: String, args: String*) {
+      val aapt = Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
+        "--custom-package", `package`,
         "-M", mPath.head.absolutePath,
         "-S", resPath.absolutePath,
         "-I", jPath.absolutePath,
-        "-J", javaPath.absolutePath,
-        "--non-constant-id") ++
-      libraryResPathArgs ++
-      libraryAssetPathArgs !
+        "-J", javaPath.absolutePath) ++
+        args ++
+        libraryResPathArgs ++
+        libraryAssetPathArgs
+      if (aapt.run(false).exitValue != 0) sys.error("error generating resources")
     }
-
+    runAapt(mPackage)
+    apklibs.foreach(lib => runAapt(lib.pkgName, "--non-constant-id"))
     javaPath ** "R.java" get
   }
 
