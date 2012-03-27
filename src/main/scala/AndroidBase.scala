@@ -12,7 +12,8 @@ object AndroidBase {
   def getNativeTarget(parent: File, name: String, abi: String) = {
     val extension = "-" + abi + ".so"
     if (name endsWith extension) {
-      val target = new File(abi) / name.replace(extension, ".so")
+      val stripped = name.substring(0, name indexOf '-') + ".so"
+      val target = new File(abi) / stripped
       Some(parent / target.toString)
     } else None
   }
