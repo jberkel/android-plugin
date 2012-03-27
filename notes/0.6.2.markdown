@@ -1,1 +1,10 @@
-* Empty
+* fixed aapt-generate reports success even when aapt fails ([GH-125][], [Jan Berkel][jberkel])
+
+* fix native libraryDepencies renaming ([PR-124[], [Matthew Willis][appamatto])
+
+* Added android:test-only-(device|emulator) ([Jan Berkel][jberkel])
+
+[jberkel]: https://github.com/jberkel
+[appamatto]: https://github.com/appamatto
+[PR-124]: https://github.com/jberkel/android-plugin/pull/124
+[GH-125]: https://github.com/jberkel/android-plugin/issues/125

@@ -174,8 +174,10 @@ object AndroidKeys {
        current build number and debug settings.""")
 
   /** Test Project Tasks */
-  val testEmulator = TaskKey[Unit]("test-emulator", "runs tests in emulator")
-  val testDevice = TaskKey[Unit]("test-device", "runs tests on device")
+  val testEmulator     = TaskKey[Unit]("test-emulator", "runs tests in emulator")
+  val testDevice       = TaskKey[Unit]("test-device",   "runs tests on device")
+  val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
+  val testOnlyDevice   = InputKey[Unit]("test-only-device",   "run a single test on device")
 
   /** Github tasks & keys */
   val uploadGithub = TaskKey[Option[String]]("github-upload", "Upload file to github")
