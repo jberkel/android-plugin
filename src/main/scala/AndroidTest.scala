@@ -24,7 +24,7 @@ object AndroidTest {
   def testParser(s: State, tests:Seq[String]): Parser[String] =
     Space ~> tests.map(t => token(t))
                   .reduceLeftOption(_ | _)
-                  .getOrElse(token("testclass"))
+                  .getOrElse(token(NotSpace))
 
   /** AndroidTestProject */
   lazy val androidSettings = settings ++
