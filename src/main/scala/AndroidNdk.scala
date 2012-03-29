@@ -120,8 +120,8 @@ object AndroidNdk {
     (ndkBuildPath, javahOutputEnv, javahOutputDirectory, obj, s) =>
       val ndkBuild = ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath ::
           (javahOutputEnv + "=" + javahOutputDirectory.absolutePath) :: targets.toList
-      s.log.debug(ndkBuild.mkString(" "))
-      val exitValue = ndkBuild.run(false)
+      s.log.debug("Running ndk-build: " + ndkBuild.mkString(" "))
+      val exitValue = ndkBuild.run(false).exitValue
       if(exitValue != 0) sys.error("ndk-build failed with nonzero exit code (" + exitValue + ")")
       ()
     }
