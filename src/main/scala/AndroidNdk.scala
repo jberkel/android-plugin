@@ -116,14 +116,13 @@ object AndroidNdk {
   }
 
   private def ndkBuildTask(targets: String*) =
-    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, nativeOutputPath) map {
-    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, obj) =>
-      val exitValue = Process(ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath ::
-          (javahOutputEnv + "=" + javahOutputDirectory.absolutePath) ::
-          targets.toList) !
-
+    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, nativeOutputPath, streams) map {
+    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, obj, s) =>
+      val ndkBuild = ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath ::
+          (javahOutputEnv + "=" + javahOutputDirectory.absolutePath) :: targets.toList
+      s.log.debug("Running ndk-build: " + ndkBuild.mkString(" "))
+      val exitValue = ndkBuild.run(false).exitValue
       if(exitValue != 0) sys.error("ndk-build failed with nonzero exit code (" + exitValue + ")")
-
       ()
     }
 

@@ -9,6 +9,38 @@ import AndroidHelpers._
 import sbinary.DefaultProtocol.StringFormat
 
 object AndroidBase {
+  def getNativeTarget(parent: File, name: String, abi: String) = {
+    val extension = "-" + abi + ".so"
+    if (name endsWith extension) {
+      val stripped = name.substring(0, name indexOf '-') + ".so"
+      val target = new File(abi) / stripped
+      Some(parent / target.toString)
+    } else None
+  }
+
+  def copyNativeLibrariesTask =
+    (streams, managedNativePath, dependencyClasspath in Compile) map {
+    (s, natives, deps) => {
+      val sos = (deps.map(_.data)).filter(_.name endsWith ".so")
+      var copied = Seq.empty[File]
+      for (so <- sos)
+        getNativeTarget(natives, so.name, "armeabi") orElse getNativeTarget(natives, so.name, "armeabi-v7a") map {
+          target =>
+            target.getParentFile.mkdirs
+            IO.copyFile(so, target)
+            copied +:= target
+            s.log.debug("copied native:   " + target.toString)
+        }
+      /* clean up stale native libraries */
+      for (path <- IO.listFiles(natives / "armeabi") ++ IO.listFiles(natives / "armeabi-v7a")) {
+        s.log.debug("checking native: " + path.toString)
+        if (path.name.endsWith(".so") && !copied.contains(path)) {
+          IO.delete(path)
+          s.log.debug("deleted native:  " + path.toString)
+        }
+      }
+    }
+  }
 
   private def apklibSourcesTask =
     (extractApkLibDependencies, streams) map {
@@ -77,33 +109,26 @@ object AndroidBase {
       arg <- Seq("-A", d.absolutePath)
     ) yield arg
 
-    Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
-      "--custom-package", mPackage,
-      "-M", mPath.head.absolutePath,
-      "-S", resPath.absolutePath,
-      "-I", jPath.absolutePath,
-      "-J", javaPath.absolutePath) ++
-      libraryResPathArgs ++
-      libraryAssetPathArgs !
-
-    apklibs.foreach { (lib) =>
-      Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
-        "--custom-package", lib.pkgName,
+    def runAapt(`package`: String, args: String*) {
+      val aapt = Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
+        "--custom-package", `package`,
         "-M", mPath.head.absolutePath,
         "-S", resPath.absolutePath,
         "-I", jPath.absolutePath,
-        "-J", javaPath.absolutePath,
-        "--non-constant-id") ++
-      libraryResPathArgs ++
-      libraryAssetPathArgs !
+        "-J", javaPath.absolutePath) ++
+        args ++
+        libraryResPathArgs ++
+        libraryAssetPathArgs
+      if (aapt.run(false).exitValue != 0) sys.error("error generating resources")
     }
-
+    runAapt(mPackage)
+    apklibs.foreach(lib => runAapt(lib.pkgName, "--non-constant-id"))
     javaPath ** "R.java" get
   }
 
   private def aidlGenerateTask =
-    (sourceDirectories, idlPath, managedJavaPath, javaSource, streams) map {
-    (sDirs, idPath, javaPath, jSource, s) =>
+    (sourceDirectories, idlPath, platformPath, managedJavaPath, javaSource, streams) map {
+    (sDirs, idPath, platformPath, javaPath, jSource, s) =>
     val aidlPaths = sDirs.map(_ ** "*.aidl").reduceLeft(_ +++ _).get
     if (aidlPaths.isEmpty) {
       s.log.debug("no AIDL files found, skipping")
@@ -111,6 +136,7 @@ object AndroidBase {
     } else {
       val processor = aidlPaths.map { ap =>
         idPath.absolutePath ::
+          "-p" + (platformPath / "framework.aidl").absolutePath ::
           "-o" + javaPath.absolutePath ::
           "-I" + jSource.absolutePath ::
           ap.absolutePath :: Nil
@@ -152,6 +178,7 @@ object AndroidBase {
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
     managedJavaPath <<= (sourceManaged in Compile) (_ / "java"),
     managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
+    managedNativePath <<= (sourceManaged in Compile) (_ / "native_libs"),
 
     extractApkLibDependencies <<= apklibDependenciesTask,
 
@@ -173,15 +200,22 @@ object AndroidBase {
     },
     proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules) map {
       (fullClasspath, proguardExclude, preinstalledModules) =>
+       // remove preinstalled jars
        fullClasspath.filterNot( cp =>
          cp.get(moduleID.key).map( module => preinstalledModules.exists( m =>
                m.organization == module.organization &&
                m.name == module.name)
          ).getOrElse(false)
+       // only include jar files
+       ).filter( cp =>
+          cp.get(artifact.key).map(artifact => artifact.`type` == "jar").getOrElse(true)
        ).map(_.data) --- proguardExclude get
     },
 
     makeManagedJavaPath <<= directory(managedJavaPath),
+
+    copyNativeLibraries <<= copyNativeLibrariesTask,
+    classpathTypes in Compile := Set("jar", "so"),
 
     apklibSources <<= apklibSourcesTask,
     aaptGenerate <<= aaptGenerateTask,

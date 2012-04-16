@@ -1,0 +1,13 @@
+* fixed aapt-generate reports success even when aapt fails ([GH-125][], [Jan Berkel][jberkel])
+
+* Support for .so artifacts in libraryDependencies ([PR-123][], [Matthew Willis][appamatto])
+
+* fix native libraryDepencies renaming ([PR-124][], [Matthew Willis][appamatto])
+
+* Added android:test-only-(device|emulator) ([Jan Berkel][jberkel])
+
+[jberkel]: https://github.com/jberkel
+[appamatto]: https://github.com/appamatto
+[PR-123]: https://github.com/jberkel/android-plugin/pull/123
+[PR-124]: https://github.com/jberkel/android-plugin/pull/124
+[GH-125]: https://github.com/jberkel/android-plugin/issues/125

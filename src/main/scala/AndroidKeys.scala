@@ -63,6 +63,7 @@ object AndroidKeys {
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = TaskKey[File]("main-res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
+  val managedNativePath = SettingKey[File]("managed-native-path")
   val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
   val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
@@ -96,6 +97,7 @@ object AndroidKeys {
   case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
 
   val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
+  val copyNativeLibraries = TaskKey[Unit]("copy-native-libraries", "Copy native libraries added to libraryDependencies")
 
   val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")
@@ -172,8 +174,10 @@ object AndroidKeys {
        current build number and debug settings.""")
 
   /** Test Project Tasks */
-  val testEmulator = TaskKey[Unit]("test-emulator", "runs tests in emulator")
-  val testDevice = TaskKey[Unit]("test-device", "runs tests on device")
+  val testEmulator     = TaskKey[Unit]("test-emulator", "runs tests in emulator")
+  val testDevice       = TaskKey[Unit]("test-device",   "runs tests on device")
+  val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
+  val testOnlyDevice   = InputKey[Unit]("test-only-device",   "run a single test on device")
   val instrumentationRunner = SettingKey[String] ("instrumentation-runner", "instrumentation test runner e.g. android.test.InstrumentationTestRunner")
 
   /** Github tasks & keys */
