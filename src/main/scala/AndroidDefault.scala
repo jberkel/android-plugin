@@ -34,6 +34,7 @@ object AndroidDefaults {
     dxJavaOpts := DefaultDxJavaOpts,
     manifestSchema := DefaultManifestSchema,
     envs := DefaultEnvs,
+
     // a list of modules which are already included in Android
     preinstalledModules := Seq[ModuleID](
       ModuleID("org.apache.httpcomponents", "httpcore", null),

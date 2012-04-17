@@ -10,18 +10,21 @@ import Cache.seqFormat
 import com.android.ddmlib.testrunner.{InstrumentationResultParser,ITestRunListener}
 
 object AndroidTest {
-  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, streams) map {
-    (dbPath, manifestPackage, s) =>
+
+  val DefaultInstrumentationRunner = "android.test.InstrumentationTestRunner"
+
+  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, instrumentationRunner, streams) map {
+    (dbPath, manifestPackage, inst, s) =>
       val action = Seq("shell", "am", "instrument", "-r", "-w",
-                       manifestPackage+"/android.test.InstrumentationTestRunner")
+                       manifestPackage+"/" + inst)
       val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
       if (exit == 0) parseTests(out, manifestPackage, s.log)
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
       ()
     }
 
-  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, streams) map {  (test, dbPath, manifestPackage, s) =>
-      val action = Seq("shell", "am", "instrument", "-r", "-w", "-e", "class", test, manifestPackage+"/android.test.InstrumentationTestRunner")
+  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, instrumentationRunner, streams) map {  (test, dbPath, manifestPackage, inst, s) =>
+      val action = Seq("shell", "am", "instrument", "-r", "-w", "-e", "class", test, manifestPackage+"/" + inst)
       val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
       if (exit == 0) parseTests(out, manifestPackage, s.log)
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
@@ -58,6 +61,7 @@ object AndroidTest {
     AndroidBase.settings ++
     AndroidInstall.settings ++
     inConfig(Android) (Seq (
+      instrumentationRunner := DefaultInstrumentationRunner,
       testEmulator <<= instrumentationTestAction(true),
       testDevice   <<= instrumentationTestAction(false),
       testOnlyEmulator <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>

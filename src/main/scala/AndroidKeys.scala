@@ -178,6 +178,7 @@ object AndroidKeys {
   val testDevice       = TaskKey[Unit]("test-device",   "runs tests on device")
   val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
   val testOnlyDevice   = InputKey[Unit]("test-only-device",   "run a single test on device")
+  val instrumentationRunner = SettingKey[String] ("instrumentation-runner", "instrumentation test runner e.g. android.test.InstrumentationTestRunner")
 
   /** Github tasks & keys */
   val uploadGithub = TaskKey[Option[String]]("github-upload", "Upload file to github")

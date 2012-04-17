@@ -92,6 +92,8 @@ object AndroidInstall {
                  "-keep public class * extends android.content.ContentProvider" ::
                  "-keep public class * extends android.view.View" ::
                  "-keep public class * extends android.app.Application" ::
+                 "-keep public class * extends android.app.Instrumentation" ::
+                 "-keep public class * extends android.test.InstrumentationTestRunner" ::
                  "-keep public class "+manifestPackage+".** { public protected *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
                  proguardOption :: Nil )
