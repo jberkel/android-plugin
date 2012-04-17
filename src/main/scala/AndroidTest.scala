@@ -19,8 +19,9 @@ object AndroidTest {
       adbTask(dbPath.absolutePath, emulator, s, action: _*)
   }
 
-  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, streams) map {  (test, dbPath, manifestPackage, s) =>
-      val action = Seq("shell", "am", "instrument", "-w", "-e", "class", test, manifestPackage+"/android.test.InstrumentationTestRunner")
+  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, instrumentationRunner, streams) map {
+    (test, dbPath, manifestPackage, inst, s) =>
+      val action = Seq("shell", "am", "instrument", "-w", "-e", "class", test, manifestPackage+"/" + inst)
       adbTask(dbPath.absolutePath, emulator, s, action:_*)
   }
 
