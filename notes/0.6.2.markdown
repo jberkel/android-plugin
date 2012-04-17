@@ -6,6 +6,8 @@
 
 * Added android:test-only-(device|emulator) ([Jan Berkel][jberkel])
 
+* Parse output from Android instrumentation tests ([Jan Berkel][jberkel])
+
 [jberkel]: https://github.com/jberkel
 [appamatto]: https://github.com/appamatto
 [PR-123]: https://github.com/jberkel/android-plugin/pull/123

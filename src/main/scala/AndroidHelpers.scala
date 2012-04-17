@@ -25,6 +25,16 @@ object AndroidHelpers {
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
   def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) {
+    val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
+    if (exit != 0 ||
+        // adb doesn't bother returning a non-zero exit code on failure
+        out.toString.contains("Failure")) {
+      s.log.error(out.toString)
+      sys.error("error executing adb")
+    } else s.log.info(out.toString)
+  }
+
+  def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
     val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
     s.log.debug(adb.mkString(" "))
     val out = new StringBuffer
@@ -32,13 +42,7 @@ object AndroidHelpers {
                           output => out.append(IO.readStream(output)),
                           error  => out.append(IO.readStream(error)))
                       ).exitValue()
-
-    if (exit != 0 ||
-        // adb doesn't bother returning a non-zero exit code on failure
-        out.toString.contains("Failure")) {
-      s.log.error(out.toString)
-      sys.error("error executing adb")
-    } else s.log.info(out.toString)
+    (exit, out.toString)
   }
 
   def startTask(emulator: Boolean) =
