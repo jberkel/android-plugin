@@ -198,8 +198,8 @@ object AndroidBase {
         (libPath, classDirectory, resourceDirectory) =>
           libPath :+ classDirectory :+ resourceDirectory
     },
-    proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules) map {
-      (fullClasspath, proguardExclude, preinstalledModules) =>
+    proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules, classpathTypes in Compile) map {
+      (fullClasspath, proguardExclude, preinstalledModules, classpathTypes) =>
        // remove preinstalled jars
        fullClasspath.filterNot( cp =>
          cp.get(moduleID.key).map( module => preinstalledModules.exists( m =>
@@ -208,14 +208,14 @@ object AndroidBase {
          ).getOrElse(false)
        // only include jar files
        ).filter( cp =>
-          cp.get(artifact.key).map(artifact => artifact.`type` == "jar").getOrElse(true)
+          cp.get(artifact.key).map(artifact => (classpathTypes - "so").contains(artifact.`type`)).getOrElse(true)
        ).map(_.data) --- proguardExclude get
     },
 
     makeManagedJavaPath <<= directory(managedJavaPath),
 
     copyNativeLibraries <<= copyNativeLibrariesTask,
-    classpathTypes in Compile := Set("jar", "so"),
+    classpathTypes in Compile := Set("jar", "bundle", "so"),
 
     apklibSources <<= apklibSourcesTask,
     aaptGenerate <<= aaptGenerateTask,
