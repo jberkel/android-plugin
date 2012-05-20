@@ -94,6 +94,15 @@ object AndroidInstall {
                  "-keep public class * extends android.app.Application" ::
                  "-keep public class "+manifestPackage+".** { public protected *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
+                 """
+                  -keepclassmembers class * implements java.io.Serializable {
+                    private static final java.io.ObjectStreamField[] serialPersistentFields;
+                    private void writeObject(java.io.ObjectOutputStream);
+                    private void readObject(java.io.ObjectInputStream);
+                    java.lang.Object writeReplace();
+                    java.lang.Object readResolve();
+                   }
+                   """ ::
                  proguardOption :: Nil )
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String]).parse(config)
