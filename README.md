@@ -45,6 +45,8 @@ This code is based on work by Walter Chang
 A lot of people have contributed to the plugin; see [contributors][] for a full
 list.
 
+[![Build Status](https://secure.travis-ci.org/jberkel/android-plugin.png?branch=master)](http://travis-ci.org/jberkel/android-plugin)
+
 [sbt]: https://github.com/harrah/xsbt/wiki
 [scala-on-android]: http://groups.google.com/group/scala-on-android
 [simple-build-tool]: http://groups.google.com/group/simple-build-tool
