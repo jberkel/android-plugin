@@ -24,15 +24,23 @@ object AndroidDefaults {
     adbName := DefaultAadbName,
     aidlName := DefaultAaidlName,
     dxName := DefaultDxName,
-    manifestName := DefaultAndroidManifestName, 
-    jarName := DefaultAndroidJarName, 
+    manifestName := DefaultAndroidManifestName,
+    jarName := DefaultAndroidJarName,
     assetsDirectoryName := DefaultAssetsDirectoryName,
     resDirectoryName := DefaultResDirectoryName,
     classesMinJarName := DefaultClassesMinJarName,
     classesDexName := DefaultClassesDexName,
     resourcesApkName := DefaultResourcesApkName,
     dxOpts := DefaultDxOpts,
-    manifestSchema := DefaultManifestSchema, 
-    envs := DefaultEnvs 
+    manifestSchema := DefaultManifestSchema,
+    envs := DefaultEnvs,
+    // a list of modules which are already included in Android
+    preinstalledModules := Seq[ModuleID](
+      ModuleID("org.apache.httpcomponents", "httpcore", null),
+      ModuleID("org.apache.httpcomponents", "httpclient", null),
+      ModuleID("org.json", "json" , null),
+      ModuleID("commons-logging", "commons-logging", null),
+      ModuleID("commons-codec", "commons-codec", null)
+    )
   )
 }

@@ -13,6 +13,7 @@ object AndroidKeys {
   val platformName = SettingKey[String]("platform-name", "Targetted android platform")
   val keyalias = SettingKey[String]("key-alias")
   val versionCode = SettingKey[Int]("version-code")
+  val versionName = TaskKey[String]("version-name")
 
   /** Proguard Settings */
   val proguardOption = SettingKey[String]("proguard-option")
@@ -34,9 +35,10 @@ object AndroidKeys {
   val dxOpts = SettingKey[Tuple2[String, Option[Seq[String]]]]("dx-opts")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
+  val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
 
   /** Determined Settings */
-  val packageApkName = SettingKey[String]("package-apk-name")
+  val packageApkName = TaskKey[String]("package-apk-name")
   val osDxName = SettingKey[String]("os-dx-name")
 
   /** Path Settings */
@@ -54,22 +56,22 @@ object AndroidKeys {
   val manifestPackageName = TaskKey[String]("manifest-package-name")
   val minSdkVersion = TaskKey[Option[Int]]("min-sdk-version")
   val maxSdkVersion = TaskKey[Option[Int]]("max-sdk-version")
-  val apiLevel = TaskKey[Int]("api-level")
 
   val manifestPath = TaskKey[Seq[File]]("manifest-path")
   val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
   val jarPath = SettingKey[File]("jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
-  val mainResPath = SettingKey[File]("main-res-path")
+  val mainResPath = TaskKey[File]("main-res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
+  val managedNativePath = SettingKey[File]("managed-native-path")
   val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
   val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
-  val packageApkPath = SettingKey[File]("package-apk-path")
+  val packageApkPath = TaskKey[File]("package-apk-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
 
   /** Install Settings */
-  val packageConfig = SettingKey[ApkConfig]("package-config",
+  val packageConfig = TaskKey[ApkConfig]("package-config",
     "Generates a Apk Config")
 
   /** Typed Resource Settings */
@@ -77,19 +79,27 @@ object AndroidKeys {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
-  val layoutResources = SettingKey[Seq[File]]("layout-resources")
+  val layoutResources = TaskKey[Seq[File]]("layout-resources", 
+      """All files that are in res/layout. They will
+		 be accessable through TR.layouts._""")
 
   /** Market Publish Settings */
   val keystorePath = SettingKey[File]("key-store-path")
   val zipAlignPath = SettingKey[File]("zip-align-path", "Path to zipalign")
-  val packageAlignedName = SettingKey[String]("package-aligned-name")
-  val packageAlignedPath = SettingKey[File]("package-aligned-path")
+  val packageAlignedName = TaskKey[String]("package-aligned-name")
+  val packageAlignedPath = TaskKey[File]("package-aligned-path")
 
   /** Manifest Generator */
   val manifestTemplateName = SettingKey[String]("manifest-template-name")
   val manifestTemplatePath = SettingKey[File]("manifest-template-path")
 
   /** Base Tasks */
+  case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
+
+  val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
+  val copyNativeLibraries = TaskKey[Unit]("copy-native-libraries", "Copy native libraries added to libraryDependencies")
+
+  val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")
   val aidlGenerate = TaskKey[Seq[File]]("aidl-generate",
     "Generate Java classes from .aidl files.")
@@ -114,6 +124,7 @@ object AndroidKeys {
   val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
 
   val proguard = TaskKey[Option[File]]("proguard", "Optimize class files.")
+  val dxInputs = TaskKey[Seq[File]]("dx-inputs", "Input for dex command")
   val dx = TaskKey[File]("dx", "Convert class files to dex files")
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
@@ -163,8 +174,10 @@ object AndroidKeys {
        current build number and debug settings.""")
 
   /** Test Project Tasks */
-  val testEmulator = TaskKey[Unit]("test-emulator", "runs tests in emulator")
-  val testDevice = TaskKey[Unit]("test-device", "runs tests on device")
+  val testEmulator     = TaskKey[Unit]("test-emulator", "runs tests in emulator")
+  val testDevice       = TaskKey[Unit]("test-device",   "runs tests on device")
+  val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
+  val testOnlyDevice   = InputKey[Unit]("test-only-device",   "run a single test on device")
 
   /** Github tasks & keys */
   val uploadGithub = TaskKey[Option[String]]("github-upload", "Upload file to github")

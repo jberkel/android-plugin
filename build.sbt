@@ -1,17 +1,20 @@
 name := "sbt-android-plugin"
 
-organization := "org.scala-tools.sbt"
+organization := "org.scala-sbt"
 
-version := "0.6.1-SNAPSHOT"
+version := "0.6.2-SNAPSHOT"
 
-scalacOptions += "-deprecation"
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
 
-publishMavenStyle := true
+publishMavenStyle := false
 
 publishTo <<= (version) { version: String =>
-    val nexus = "http://nexus.scala-tools.org/content/repositories/"
-    if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "snapshots/")
-    else                                   Some("releases"  at nexus + "releases/")
+    val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
+    val (name, url) = if (version.contains("-"))
+                        ("sbt-plugin-snapshots", scalasbt+"sbt-plugin-snapshots")
+                      else
+                        ("sbt-plugin-releases", scalasbt+"sbt-plugin-releases")
+    Some(Resolver.url(name, new URL(url))(Resolver.ivyStylePatterns))
 }
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
@@ -22,3 +25,5 @@ libraryDependencies ++= Seq(
 )
 
 sbtPlugin := true
+
+commands += Status.stampVersion

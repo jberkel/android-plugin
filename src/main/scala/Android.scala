@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 
 import AndroidKeys._
+import AndroidHelpers.isWindows
 
 import complete.DefaultParsers._
 
@@ -37,8 +38,10 @@ object AndroidProject extends Plugin {
     ()
   }
 
-  val installedAvds = (s: State) => {
-    val avds = (Path.userHome / ".android" / "avd" * "*.ini").get
+  def installedAvds(sdkHome: File) = (s: State) => {
+    val avds = ((Path.userHome / ".android" / "avd" * "*.ini") +++
+      (if (isWindows) (sdkHome / ".android" / "avd" * "*.ini")
+       else PathFinder.empty)).get
     Space ~> avds.map(f => token(f.base))
                  .reduceLeftOption(_ | _).getOrElse(token("none"))
   }
@@ -54,7 +57,7 @@ object AndroidProject extends Plugin {
     AndroidPath.settings ++ inConfig(Android) (Seq (
       listDevices <<= listDevicesTask,
       killAdb <<= killAdbTask,
-      emulatorStart <<= InputTask(installedAvds)(emulatorStartTask),
+      emulatorStart <<= InputTask((sdkPath)(installedAvds(_)))(emulatorStartTask),
       emulatorStop <<= emulatorStopTask
     )) ++ Seq (
       listDevices <<= (listDevices in Android)

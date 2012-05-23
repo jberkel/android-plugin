@@ -1,4 +1,5 @@
 import sbt._
+import Keys._
 
 import AndroidKeys._
 
@@ -20,33 +21,37 @@ object AndroidHelpers {
     if (isWindows) "" else javaOpts
   }
 
-  def usesSdk(mpath: File, schema: String, key: String) = 
+  def usesSdk(mpath: File, schema: String, key: String) =
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
-  def platformName2ApiLevel(pName: String) = pName match {
-    case "android-1.0" => 1
-    case "android-1.1" => 2
-    case "android-1.5" => 3
-    case "android-1.6" => 4
-    case "android-2.0" => 5
-    case "android-2.1" => 7
-    case "android-2.2" => 8
-    case "android-2.3" => 9
-    case "android-2.3.3" => 10
-    case "android-3.0" => 11
+  def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) {
+    val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
+    if (exit != 0 ||
+        // adb doesn't bother returning a non-zero exit code on failure
+        out.toString.contains("Failure")) {
+      s.log.error(out.toString)
+      sys.error("error executing adb")
+    } else s.log.info(out.toString)
   }
 
-  def adbTask(dPath: String, emulator: Boolean, action: => String): Unit = 
-    Process (<x>
-      {dPath} {if (emulator) "-e" else "-d"} {action}
-    </x>) !
+  def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
+    val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
+    s.log.debug(adb.mkString(" "))
+    val out = new StringBuffer
+    val exit = adb.run(new ProcessIO(input => (),
+                          output => out.append(IO.readStream(output)),
+                          error  => out.append(IO.readStream(error)))
+                      ).exitValue()
+    (exit, out.toString)
+  }
 
-  def startTask(emulator: Boolean) = 
-    (dbPath, manifestSchema, manifestPackage, manifestPath) map { 
-      (dp, schema, mPackage, amPath) =>
-      adbTask(dp.absolutePath, 
-              emulator, 
-              "shell am start -a android.intent.action.MAIN -n "+mPackage+"/"+
+  def startTask(emulator: Boolean) =
+    (dbPath, manifestSchema, manifestPackage, manifestPath, streams) map {
+      (dp, schema, mPackage, amPath, s) =>
+      adbTask(dp.absolutePath,
+              emulator, s,
+              "shell", "am", "start", "-a", "android.intent.action.MAIN",
+              "-n", mPackage+"/"+
               launcherActivity(schema, amPath.head, mPackage))
   }
 
@@ -54,7 +59,7 @@ object AndroidHelpers {
     val launcher = for (
          activity <- (manifest(amPath) \\ "activity");
          action <- (activity \\ "action");
-         val name = action.attribute(schema, "name").getOrElse(sys.error{ 
+         val name = action.attribute(schema, "name").getOrElse(sys.error{
             "action name not defined"
           }).text;
          if name == "android.intent.action.MAIN"

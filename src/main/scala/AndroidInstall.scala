@@ -9,33 +9,40 @@ import java.io.{File => JFile}
 
 object AndroidInstall {
 
-  private def installTask(emulator: Boolean) = (dbPath, packageApkPath) map { (dp, p) =>
-    adbTask(dp.absolutePath, emulator, "install -r "+p.absolutePath)
+  private def installTask(emulator: Boolean) = (dbPath, packageApkPath, streams) map { (dp, p, s) =>
+    adbTask(dp.absolutePath, emulator, s, "install", "-r ", p.absolutePath)
   }
 
-  private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage) map { (dp, m) =>
-    adbTask(dp.absolutePath, emulator, "uninstall "+m)
+  private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
+    adbTask(dp.absolutePath, emulator, s, "uninstall", m)
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
-  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, streams) map {
-    (apPath, manPath, rPath, assetPath, jPath, resApkPath, s) =>
+  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, extractApkLibDependencies, streams) map {
+    (apPath, manPath, rPath, assetPath, jPath, resApkPath, apklibs, s) =>
+
+    val libraryResPathArgs = for (
+      lib <- apklibs;
+      d <- lib.resDir.toSeq;
+      arg <- Seq("-S", d.absolutePath)
+    ) yield arg
+
     val aapt = Seq(apPath.absolutePath, "package", "--auto-add-overlay", "-f",
         "-M", manPath.head.absolutePath,
         "-S", rPath.absolutePath,
         "-A", assetPath.absolutePath,
         "-I", jPath.absolutePath,
-        "-F", resApkPath.absolutePath)
+        "-F", resApkPath.absolutePath) ++
+        libraryResPathArgs
     s.log.debug("packaging: "+aapt.mkString(" "))
     if (aapt.run(false).exitValue != 0) sys.error("error packaging resources")
     resApkPath
   }
 
   private def dxTask: Project.Initialize[Task[File]] =
-    (scalaInstance, dxOpts, dxPath, classDirectory,
-     proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) map {
-    (scalaInstance, dxOpts, dxPath, classDirectory,
-     proguardInJars, proguard, proguardOptimizations, classesDexPath, streams) =>
+    (dxPath, dxInputs, dxOpts, proguardOptimizations, classDirectory, classesDexPath, scalaInstance, streams) map {
+    (dxPath, dxInputs, dxOpts, proguardOptimizations, classDirectory, classesDexPath, scalaInstance, streams) =>
+
       def dexing(inputs: Seq[JFile], output: JFile) {
         val uptodate = output.exists && inputs.forall(input =>
           input.isDirectory match {
@@ -51,6 +58,7 @@ object AndroidInstall {
           val dxCmd = (Seq(dxPath.absolutePath,
                           dxMemoryParameter(dxOpts._1),
                           "--dex", noLocals,
+                          "--num-threads="+java.lang.Runtime.getRuntime.availableProcessors,
                           "--output="+output.getAbsolutePath) ++
                           inputs.map(_.absolutePath)).filter(_.length > 0)
           streams.log.debug(dxCmd.mkString(" "))
@@ -59,40 +67,44 @@ object AndroidInstall {
         } else streams.log.debug("dex file " + output.getAbsolutePath + " uptodate, skipping")
       }
 
-      proguard match {
-        case Some(file) => dexing(file.get, classesDexPath)
-        case None       => dxOpts._2 match { // solid -> None / split -> Some() flag of dxOpt tuple
-                             case Some(predex) =>
-                               val (dexFiles, predexFiles) = predex match {
-                                 case exceptSeq: Seq[String] if exceptSeq.nonEmpty =>
-                                   val (filtered, orig) = (proguardInJars --- scalaInstance.libraryJar).get.partition(file =>
-                                     exceptSeq.exists(filter => {
-                                       streams.log.debug("apply filter \"" + filter + "\" to \"" + file.getAbsolutePath + "\"")
-                                       file.getAbsolutePath.matches(filter)
-                                     }))
-                                   ((classDirectory --- scalaInstance.libraryJar).get ++ filtered, orig)
-                                 case _ =>
-                                   ((classDirectory --- scalaInstance.libraryJar).get,
-                                     (proguardInJars --- scalaInstance.libraryJar).get)
-                               }
-                               dexFiles.foreach(s => streams.log.debug("pack in dex \"" + s.getName + "\""))
-                               predexFiles.foreach(s => streams.log.debug("pack in predex \"" + s.getName + "\""))
-                               dexing(dexFiles, classesDexPath)
-                               predexFiles.get.foreach(f => {
-                                 val predexPath = new JFile(classesDexPath.getParent, "predex")
-                                 if (!predexPath.exists)
-                                   predexPath.mkdir
-                                 val output = new File(predexPath, f.getName)
-                                 val outputPermissionDescriptor = new File(predexPath, f.getName.replaceFirst(".jar$", ".xml"))
-                                 dexing(Seq(f), output)
-                                 val permission = <permissions><library name={ f.getName.replaceFirst(".jar$", "") } file={ "/data/" + f.getName } /></permissions>
-                                 val p = new java.io.PrintWriter(outputPermissionDescriptor)
-                                 try { p.println(permission) } finally { p.close() }
-                               })
-                             case None =>
-                               dexing((classDirectory +++ proguardInJars --- scalaInstance.libraryJar).get, classesDexPath)
-                           }
+      // Option[Seq[String]]
+      // - None standard dexing for prodaction stage
+      // - Some(Seq(predex_library_regexp)) predex only changed libraries for development stage
+      dxOpts._2 match {
+        case None =>
+          dexing(dxInputs.get, classesDexPath)
+        case Some(predex) =>
+          val (dexFiles, predexFiles) = predex match {
+            case exceptSeq: Seq[_] if exceptSeq.nonEmpty =>
+              val (filtered, orig) = dxInputs.get.partition(file =>
+              exceptSeq.exists(filter => {
+                streams.log.debug("apply filter \"" + filter + "\" to \"" + file.getAbsolutePath + "\"")
+                file.getAbsolutePath.matches(filter)
+              }))
+              // dex only classes directory ++ filtered, predex all other
+              ((classDirectory --- scalaInstance.libraryJar).get ++ filtered, orig)
+            case _ =>
+              // dex only classes directory, predex all other
+              ((classDirectory --- scalaInstance.libraryJar).get, (dxInputs --- classDirectory).get)
+          }
+          dexFiles.foreach(s => streams.log.debug("pack in dex \"" + s.getName + "\""))
+          predexFiles.foreach(s => streams.log.debug("pack in predex \"" + s.getName + "\""))
+          // dex
+          dexing(dexFiles, classesDexPath)
+          // predex
+          predexFiles.get.foreach(f => {
+            val predexPath = new JFile(classesDexPath.getParent, "predex")
+            if (!predexPath.exists)
+              predexPath.mkdir
+            val output = new File(predexPath, f.getName)
+            val outputPermissionDescriptor = new File(predexPath, f.getName.replaceFirst(".jar$", ".xml"))
+            dexing(Seq(f), output)
+            val permission = <permissions><library name={ f.getName.replaceFirst(".jar$", "") } file={ "/data/" + f.getName } /></permissions>
+            val p = new java.io.PrintWriter(outputPermissionDescriptor)
+            try { p.println(permission) } finally { p.close() }
+          })
       }
+
       classesDexPath
     }
 
@@ -101,8 +113,7 @@ object AndroidInstall {
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
     (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
-      useProguard match {
-        case true =>
+      if (useProguard) {
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
@@ -121,6 +132,7 @@ object AndroidInstall {
                  "-dontnote org.xml.sax.EntityResolver" ::
                  "-keep public class * extends android.app.Activity" ::
                  "-keep public class * extends android.app.Service" ::
+                 "-keep public class * extends android.app.backup.BackupAgent" ::
                  "-keep public class * extends android.appwidget.AppWidgetProvider" ::
                  "-keep public class * extends android.content.BroadcastReceiver" ::
                  "-keep public class * extends android.content.ContentProvider" ::
@@ -128,13 +140,22 @@ object AndroidInstall {
                  "-keep public class * extends android.app.Application" ::
                  "-keep public class "+manifestPackage+".** { public protected *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
+                 """
+                  -keepclassmembers class * implements java.io.Serializable {
+                    private static final java.io.ObjectStreamField[] serialPersistentFields;
+                    private void writeObject(java.io.ObjectOutputStream);
+                    private void readObject(java.io.ObjectInputStream);
+                    java.lang.Object writeReplace();
+                    java.lang.Object readResolve();
+                   }
+                   """ ::
                  proguardOption :: Nil )
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String]).parse(config)
           streams.log.debug("executing proguard: "+args.mkString("\n"))
           new ProGuard(config).execute
           Some(classesMinJarPath)
-        case false =>
+      } else {
           streams.log.info("Skipping Proguard")
           None
       }
@@ -148,8 +169,8 @@ object AndroidInstall {
   }
 
   lazy val installerTasks = Seq (
-    installEmulator <<= installTask(emulator = true),
-    installDevice <<= installTask(emulator = false)
+    installEmulator <<= installTask(emulator = true) dependsOn packageDebug,
+    installDevice <<= installTask(emulator = false) dependsOn packageDebug
   )
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ Seq (
@@ -161,7 +182,13 @@ object AndroidInstall {
     aaptPackage <<= aaptPackageTask,
     aaptPackage <<= aaptPackage dependsOn (makeAssetPath, dx),
     dx <<= dxTask,
-    dx <<= dx dependsOn proguard,
+    dxInputs <<= (proguard, proguardInJars, scalaInstance, classDirectory) map {
+      (proguard, proguardInJars, scalaInstance, classDirectory) =>
+      proguard match {
+         case Some(file) => Seq(file)
+         case None => (classDirectory +++ proguardInJars --- scalaInstance.libraryJar) get
+      }
+    },
 
     cleanApk <<= (packageApkPath) map (IO.delete(_)),
 
@@ -170,12 +197,12 @@ object AndroidInstall {
 
     packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
-       nativeLibrariesPath, classesMinJarPath, resourceDirectory)
-      (ApkConfig(_, _, _, _, _, _, _)),
+       nativeLibrariesPath, managedNativePath, dxInputs, resourceDirectory) map
+      (ApkConfig(_, _, _, _, _, _, _, _)),
 
     packageDebug <<= packageTask(true),
     packageRelease <<= packageTask(false)
   ) ++ Seq(packageDebug, packageRelease).map {
-    t => t <<= t dependsOn (cleanApk, aaptPackage)
+    t => t <<= t dependsOn (cleanApk, aaptPackage, copyNativeLibraries)
   })
 }

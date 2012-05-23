@@ -5,12 +5,7 @@ import AndroidKeys._
 
 object AndroidMarketPublish {
 
-  private def prepareMarketTask = (packageAlignedPath, streams) map { (path, s) =>
-    s.log.success("Ready for publication: \n" + path)
-    path
-  }
-
-  private def zipAlignTask: Project.Initialize[Task[File]] =
+  def zipAlignTask: Project.Initialize[Task[File]] =
     (zipAlignPath, packageApkPath, packageAlignedPath, streams) map { (zip, apkPath, pPath, s) =>
       val zipAlign = Seq(
           zip.absolutePath,
@@ -23,7 +18,7 @@ object AndroidMarketPublish {
       pPath
     }
 
-  private def signReleaseTask: Project.Initialize[Task[File]] =
+   def signReleaseTask: Project.Initialize[Task[File]] =
     (keystorePath, keyalias, packageApkPath, streams, cachePasswords) map { (ksPath, ka, pPath, s, cache) =>
       val jarsigner = Seq(
         "jarsigner",
@@ -39,15 +34,18 @@ object AndroidMarketPublish {
       pPath
     }
 
-  private def getPassword = SimpleReader.readLine("\nEnter keystore password: ").get
+  private def prepareMarketTask = (packageAlignedPath, streams) map { (path, s) =>
+    s.log.success("Ready for publication: \n" + path)
+    path
+  }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
-    packageAlignedName <<= (artifact, version) ((a,v) =>
+    packageAlignedName <<= (artifact, versionName) map ((a,v) =>
                                                 String.format("%s-%s-market.apk", a.name, v)),
-    packageAlignedPath <<= (target, packageAlignedName) { _ / _ },
+    packageAlignedPath <<= (target, packageAlignedName) map ( _ / _ ),
 
     // Configuring Tasks
     cleanAligned <<= (packageAlignedPath) map (IO.delete(_)),
@@ -60,7 +58,5 @@ object AndroidMarketPublish {
 
     signRelease <<= signReleaseTask,
     signRelease <<= signRelease dependsOn packageRelease
-  )) ++ Seq (
-    cleanFiles <+= (packageAlignedPath in Android)
-  )
+  ))
 }

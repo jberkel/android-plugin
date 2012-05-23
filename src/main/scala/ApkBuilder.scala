@@ -9,7 +9,8 @@ case class ApkConfig(
   resourcesApkPath: File,
   classesDexPath: File,
   nativeLibrariesPath: File,
-  classesMinJarPath: File,
+  managedNativePath: File,
+  dexInputs: Seq[File],
   resourceDirectory: File
 )
 
@@ -32,7 +33,7 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
                                 .loadClass("com.android.sdklib.build.ApkBuilder")
   val outputStream = new ByteArrayOutputStream
 
-  def build() = try {
+  def build():Either[String, String] = try {
     val constructor = klass.getConstructor(
       classOf[File], classOf[File], classOf[File], classOf[String], classOf[PrintStream])
     val builder:JApkBuilder = constructor.newInstance(
@@ -45,7 +46,9 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
 
     setDebugMode(builder, debug)
     addNativeLibraries(builder, project.nativeLibrariesPath, null)
-    addResourcesFromJar(builder, project.classesMinJarPath)
+    addNativeLibraries(builder, project.managedNativePath, null)
+    for (file <- project.dexInputs; if file.isFile)
+      addResourcesFromJar(builder, file)
     addSourceFolder(builder, project.resourceDirectory)
     sealApk(builder)
 
@@ -84,7 +87,7 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
   /// (used to let classloader.getResource work for legacy java libs
   /// on android)
   def addResourcesFromJar(builder: JApkBuilder, jarFile: File) {
-    if (jarFile.exists) {
+    if (jarFile.isFile) {
       def method = klass.getMethod("addResourcesFromJar", classOf[File])
       method.invoke(builder, jarFile)
     }
