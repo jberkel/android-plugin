@@ -4,7 +4,7 @@ organization := "org.scala-sbt"
 
 version := "0.6.2-SNAPSHOT"
 
-scalacOptions += "-deprecation"
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
 
 publishMavenStyle := false
 
