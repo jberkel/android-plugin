@@ -8,8 +8,12 @@
 
 * Parse output from Android instrumentation tests ([Jan Berkel][jberkel])
 
+* Add ability to predex external libraries ([PR-107][], [ezh][ezh])
+
 [jberkel]: https://github.com/jberkel
 [appamatto]: https://github.com/appamatto
+[ezh]: https://github.com/ezh
 [PR-123]: https://github.com/jberkel/android-plugin/pull/123
 [PR-124]: https://github.com/jberkel/android-plugin/pull/124
 [GH-125]: https://github.com/jberkel/android-plugin/issues/125
+[PR-107]: https://github.com/jberkel/android-plugin/pull/107
