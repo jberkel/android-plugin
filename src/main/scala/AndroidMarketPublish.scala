@@ -29,7 +29,13 @@ object AndroidMarketPublish {
         pPath.absolutePath,
         ka)
       s.log.debug("Signing "+jarsigner.mkString(" "))
-      s.log.debug(jarsigner !!)
+      val out = new StringBuffer
+      val exit = jarsigner.run(new ProcessIO(input => (),
+                            output => out.append(IO.readStream(output)),
+                            error  => out.append(IO.readStream(error)))
+                        ).exitValue()
+      if (exit != 0) sys.error("Error signing: "+out)
+      s.log.debug(out.toString)
       s.log.info("Signed "+pPath)
       pPath
     }
