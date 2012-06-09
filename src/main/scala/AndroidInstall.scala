@@ -110,9 +110,9 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
+     classesMinJarPath, libraryJarPath, proguardOption) map {
     (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
+     classesMinJarPath, libraryJarPath, proguardOption) =>
       if (useProguard) {
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
@@ -125,31 +125,8 @@ object AndroidInstall {
                  "-injars" :: inJars.mkString(sep) ::
                  "-outjars" :: "\""+classesMinJarPath.absolutePath+"\"" ::
                  "-libraryjars" :: libraryJarPath.map("\""+_+"\"").mkString(sep) ::
-                 Nil) ++
-                 optimizationOptions ++ (
-                 "-dontwarn" :: "-dontobfuscate" ::
-                 "-dontnote scala.Enumeration" ::
-                 "-dontnote org.xml.sax.EntityResolver" ::
-                 "-keep public class * extends android.app.Activity" ::
-                 "-keep public class * extends android.app.Service" ::
-                 "-keep public class * extends android.app.backup.BackupAgent" ::
-                 "-keep public class * extends android.appwidget.AppWidgetProvider" ::
-                 "-keep public class * extends android.content.BroadcastReceiver" ::
-                 "-keep public class * extends android.content.ContentProvider" ::
-                 "-keep public class * extends android.view.View" ::
-                 "-keep public class * extends android.app.Application" ::
-                 "-keep public class "+manifestPackage+".** { public protected *; }" ::
-                 "-keep public class * implements junit.framework.Test { public void test*(); }" ::
-                 """
-                  -keepclassmembers class * implements java.io.Serializable {
-                    private static final java.io.ObjectStreamField[] serialPersistentFields;
-                    private void writeObject(java.io.ObjectOutputStream);
-                    private void readObject(java.io.ObjectInputStream);
-                    java.lang.Object writeReplace();
-                    java.lang.Object readResolve();
-                   }
-                   """ ::
-                 proguardOption :: Nil )
+                 Nil) ++ optimizationOptions ++ proguardOption
+          streams.log.debug("executing proguard: " + (for (i <- 0 until args.size) yield {"arg" + (i + 1) + ": " + args(i)}).mkString("\n"))
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String]).parse(config)
           streams.log.debug("executing proguard: "+args.mkString("\n"))

@@ -193,7 +193,31 @@ object AndroidBase {
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),
 
-    proguardOption := "",
+    proguardOption <<= (manifestPackage) map {
+      (manifestPackage) =>
+                ("-dontwarn" :: "-dontobfuscate" ::
+                 "-dontnote scala.Enumeration" ::
+                 "-dontnote org.xml.sax.EntityResolver" ::
+                 "-keep public class * extends android.app.Activity" ::
+                 "-keep public class * extends android.app.Service" ::
+                 "-keep public class * extends android.app.backup.BackupAgent" ::
+                 "-keep public class * extends android.appwidget.AppWidgetProvider" ::
+                 "-keep public class * extends android.content.BroadcastReceiver" ::
+                 "-keep public class * extends android.content.ContentProvider" ::
+                 "-keep public class * extends android.view.View" ::
+                 "-keep public class * extends android.app.Application" ::
+                 "-keep public class "+manifestPackage+".** { public protected *; }" ::
+                 "-keep public class * implements junit.framework.Test { public void test*(); }" ::
+                 """
+                  -keepclassmembers class * implements java.io.Serializable {
+                    private static final java.io.ObjectStreamField[] serialPersistentFields;
+                    private void writeObject(java.io.ObjectOutputStream);
+                    private void readObject(java.io.ObjectInputStream);
+                    java.lang.Object writeReplace();
+                    java.lang.Object readResolve();
+                   }
+                   """ :: Nil)
+    },
     proguardExclude <<= (libraryJarPath, classDirectory, resourceDirectory) map {
         (libPath, classDirectory, resourceDirectory) =>
           libPath :+ classDirectory :+ resourceDirectory
