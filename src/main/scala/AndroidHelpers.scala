@@ -1,3 +1,4 @@
+import java.io.InputStream
 import sbt._
 import Keys._
 
@@ -25,7 +26,8 @@ object AndroidHelpers {
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
   def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) {
-    val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
+    val out = new StringBuffer
+    val exit = adbTaskWithOutput(dPath, emulator, s, action:_*) { i => out.append(IO.readStream(i)) }
     if (exit != 0 ||
         // adb doesn't bother returning a non-zero exit code on failure
         out.toString.contains("Failure")) {
@@ -34,15 +36,14 @@ object AndroidHelpers {
     } else s.log.info(out.toString)
   }
 
-  def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
+  def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) (parser:InputStream => Unit) = {
     val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
     s.log.debug(adb.mkString(" "))
     val out = new StringBuffer
-    val exit = adb.run(new ProcessIO(input => (),
-                          output => out.append(IO.readStream(output)),
+    adb.run(new ProcessIO(input => (),
+                          output => parser(output),
                           error  => out.append(IO.readStream(error)))
                       ).exitValue()
-    (exit, out.toString)
   }
 
   def startTask(emulator: Boolean) =

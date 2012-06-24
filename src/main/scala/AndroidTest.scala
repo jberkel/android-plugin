@@ -1,3 +1,4 @@
+import java.io.InputStream
 import sbt._
 import Keys._
 
@@ -10,20 +11,27 @@ import Cache.seqFormat
 import com.android.ddmlib.testrunner.{InstrumentationResultParser,ITestRunListener}
 
 object AndroidTest {
-  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, streams) map {
-    (dbPath, manifestPackage, s) =>
-      val action = Seq("shell", "am", "instrument", "-r", "-w",
-                       manifestPackage+"/android.test.InstrumentationTestRunner")
-      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
-      if (exit == 0) parseTests(out, manifestPackage, s.log)
+
+  type TestParser = (InputStream => Unit)
+
+  val DefaultInstrumentationRunner = "android.test.InstrumentationTestRunner"
+
+  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, instrumentationRunner, testOutputParser, streams) map {
+    (dbPath, manifestPackage, inst, parser, s) =>
+      val action = Seq("shell", "am", "instrument", "-r", "-w", manifestPackage+"/" + inst)
+      val out  = new StringBuffer
+      val exit = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*) {i => parser.map(_.apply(i)).getOrElse(out.append(IO.readStream(i))) }
+      if (exit == 0) parseTests(out.toString, manifestPackage, s.log)
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
       ()
     }
 
-  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, streams) map {  (test, dbPath, manifestPackage, s) =>
-      val action = Seq("shell", "am", "instrument", "-r", "-w", "-e", "class", test, manifestPackage+"/android.test.InstrumentationTestRunner")
-      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
-      if (exit == 0) parseTests(out, manifestPackage, s.log)
+  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, instrumentationRunner, testOutputParser,streams) map {
+    (test, dbPath, manifestPackage, inst,parser,  s) =>
+      val action = Seq("shell", "am", "instrument", "-r", "-w", "-e", "class", test, manifestPackage+"/" + inst)
+      val out  = new StringBuffer
+      val exit = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*) {i => parser.map(_.apply(i)).getOrElse(out.append(IO.readStream(i))) }
+      if (exit == 0) parseTests(out.toString, manifestPackage, s.log)
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
       ()
   }
@@ -58,6 +66,8 @@ object AndroidTest {
     AndroidBase.settings ++
     AndroidInstall.settings ++
     inConfig(Android) (Seq (
+      instrumentationRunner := DefaultInstrumentationRunner,
+      testOutputParser := None,
       testEmulator <<= instrumentationTestAction(true),
       testDevice   <<= instrumentationTestAction(false),
       testOnlyEmulator <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
