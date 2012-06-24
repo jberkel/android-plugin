@@ -174,6 +174,7 @@ object AndroidKeys {
        current build number and debug settings.""")
 
   /** Test Project Tasks */
+  val testRunner       = TaskKey[String]("test-runner", "get the current test runner")
   val testEmulator     = TaskKey[Unit]("test-emulator", "runs tests in emulator")
   val testDevice       = TaskKey[Unit]("test-device",   "runs tests on device")
   val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
