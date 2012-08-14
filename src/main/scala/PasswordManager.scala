@@ -53,7 +53,9 @@ object OSXPasswordManager extends PWManager {
       "-a", account,
       "-s", service, "-g").run(new ProcessIO(input => (),
       output => (),
-      error => buffer.append(IO.readStream(error)))).exitValue() match {
+      error => buffer.append(IO.readStream(error)),
+      inheritedInput => false)
+      ).exitValue() match {
         case 0 =>
           (for (line <- buffer.toString.split("\r\n");
                 if (line.startsWith("password: ")))
@@ -88,7 +90,7 @@ object OSXPasswordManager extends PWManager {
     if (Seq("security",
       "delete-generic-password",
       "-l", Label
-      ).run(new ProcessIO(input => (), output => (), error => ()))
+      ).run(new ProcessIO(input => (), output => (), error => (), inheritedInput => false))
        .exitValue() == 0) clear()
   }
 }

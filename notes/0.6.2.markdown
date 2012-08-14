@@ -10,6 +10,8 @@
 
 * Add ability to predex external libraries ([PR-107][], [ezh][ezh])
 
+* Added support for sbt 0.12.x
+
 [jberkel]: https://github.com/jberkel
 [appamatto]: https://github.com/appamatto
 [ezh]: https://github.com/ezh

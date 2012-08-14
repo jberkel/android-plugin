@@ -40,7 +40,8 @@ object AndroidHelpers {
     val out = new StringBuffer
     val exit = adb.run(new ProcessIO(input => (),
                           output => out.append(IO.readStream(output)),
-                          error  => out.append(IO.readStream(error)))
+                          error  => out.append(IO.readStream(error)),
+                          inheritedInput => false)
                       ).exitValue()
     (exit, out.toString)
   }
