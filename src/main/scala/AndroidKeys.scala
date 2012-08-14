@@ -16,7 +16,7 @@ object AndroidKeys {
   val versionName = TaskKey[String]("version-name")
 
   /** Proguard Settings */
-  val proguardOption = SettingKey[String]("proguard-option")
+  val proguardOption = TaskKey[Seq[String]]("proguard-option")
   val proguardOptimizations = SettingKey[Seq[String]]("proguard-optimizations")
   val libraryJarPath = SettingKey[Seq[File]]("library-path")
 
