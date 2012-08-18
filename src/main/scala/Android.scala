@@ -18,8 +18,8 @@ object AndroidProject extends Plugin {
     "Kill the adb server if it is running.")
 
   private def emulatorStartTask = (parsedTask: TaskKey[String]) =>
-    (parsedTask, toolsPath) map { (avd, toolsPath) =>
-      "%s/emulator -avd %s".format(toolsPath, avd).run
+    (parsedTask, toolsPath, emulatorOptions) map { (avd, toolsPath, emulatorOptions) =>
+      "%s/emulator -avd %s %s".format(toolsPath, avd, emulatorOptions).run
       ()
     }
 

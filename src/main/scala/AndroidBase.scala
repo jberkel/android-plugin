@@ -192,6 +192,7 @@ object AndroidBase {
 
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),
+    emulatorOptions := "", 
 
     proguardOption := "",
     proguardExclude <<= (libraryJarPath, classDirectory, resourceDirectory) map {
