@@ -154,15 +154,15 @@ object AndroidDdm {
     }
   }
 
-  private def writeHprof(client: Client, data: Array[Byte]) = {
+  private def writeHprof(toolsPath: File)(client: Client, data: Array[Byte]) = {
     val pkg = client.getClientData.getClientDescription
     val pid = client.getClientData.getPid
     val tmp = new File(pkg+".tmp")
     val fos = new FileOutputStream(tmp)
     fos.write(data)
     fos.close()
-    val hprof = "%s-%d.hprof".format(pkg, pid)
-    String.format("hprof-conv %s %s", tmp.getName, hprof).!
+    val hprof = "%s-%d-%d.hprof".format(pkg, pid, System.currentTimeMillis())
+    String.format("%s/hprof-conv %s %s", toolsPath, tmp.getName, hprof).!
     tmp.delete()
     System.err.println("heap dump written to "+hprof)
     file(hprof)
@@ -221,11 +221,11 @@ object AndroidDdm {
     screenshotEmulator <<= (dbPath, streams) map { (p,s) =>
       screenshot(true, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "emulator", s)
     },
-    hprofEmulator <<= (manifestPackage, dbPath, streams) map { (m,p,s) =>
-      dumpHprof(m, p.absolutePath, true, s)(writeHprof)
+    hprofEmulator <<= (manifestPackage, dbPath, streams, toolsPath) map { (m,p,s, toolsPath) =>
+      dumpHprof(m, p.absolutePath, true, s)(writeHprof(toolsPath))
     },
-    hprofDevice <<= (manifestPackage, dbPath, streams) map { (m,p,s) =>
-      dumpHprof(m, p.absolutePath, false, s)(writeHprof)
+    hprofDevice <<= (manifestPackage, dbPath, streams, toolsPath) map { (m,p,s, toolsPath) =>
+      dumpHprof(m, p.absolutePath, false, s)(writeHprof(toolsPath))
     },
     threadsEmulator <<= InputTask(
         (resolvedScoped, dbPath) ( (ctx, path) => (s: State) =>
