@@ -126,6 +126,7 @@ object AndroidKeys {
   val proguard = TaskKey[Option[File]]("proguard", "Optimize class files.")
   val dxInputs = TaskKey[Seq[File]]("dx-inputs", "Input for dex command")
   val dx = TaskKey[File]("dx", "Convert class files to dex files")
+  val resourceContainingJars = TaskKey[Seq[File]]("resource-containing-jars")
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
 
