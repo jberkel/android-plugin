@@ -190,6 +190,7 @@ object AndroidInstall {
          case None => (classDirectory +++ proguardInJars --- scalaInstance.libraryJar) get
       }
     },
+    resourceContainingJars <<= dxInputs map (_ ** "*.jar" get),
 
     cleanApk <<= (packageApkPath) map (IO.delete(_)),
 
@@ -198,7 +199,7 @@ object AndroidInstall {
 
     packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
-       nativeLibrariesPath, managedNativePath, dxInputs, resourceDirectory) map
+       nativeLibrariesPath, managedNativePath, resourceContainingJars, resourceDirectory) map
       (ApkConfig(_, _, _, _, _, _, _, _)),
 
     packageDebug <<= packageTask(true),
