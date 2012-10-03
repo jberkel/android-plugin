@@ -58,6 +58,20 @@ object AndroidBase {
     }
   }
 
+  private def apklibPackageTask =
+    (manifestPath, mainResPath, mainAssetsPath, javaSource, scalaSource, packageApkLibPath, streams) map {
+      (manPath, rPath, aPath, jPath, sPath, apklib, s) =>
+      s.log.info("packaging apklib")
+      val mapping =
+        (PathFinder(manPath)            x flat) ++
+        (PathFinder(jPath) ** "*.java"  x rebase(jPath, "src")) ++
+        (PathFinder(sPath) ** "*.scala" x rebase(sPath, "src")) ++
+        ((PathFinder(rPath) ***)        x rebase(rPath, "res")) ++
+        ((PathFinder(aPath) ***)        x rebase(rPath, "assets"))
+      IO.jar(mapping, apklib, new java.util.jar.Manifest)
+      apklib
+    }
+
   private def apklibDependenciesTask =
     (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
     (updateReport, srcManaged, javaManaged, resManaged, s) => {
@@ -163,6 +177,8 @@ object AndroidBase {
 
     packageApkName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apk", a.name, v)),
     packageApkPath <<= (target, packageApkName) map (_ / _),
+    packageApkLibName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apklib", a.name, v)),
+    packageApkLibPath <<= (target, packageApkLibName) map (_ / _),
     manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
 
     manifestPackage <<= findPath,
@@ -181,6 +197,7 @@ object AndroidBase {
     managedNativePath <<= (sourceManaged in Compile) (_ / "native_libs"),
 
     extractApkLibDependencies <<= apklibDependenciesTask,
+    apklibPackage <<= apklibPackageTask,
 
     managedSourceDirectories in Compile <<= (managedJavaPath, managedScalaPath) (Seq(_, _)),
 
@@ -237,6 +254,7 @@ object AndroidBase {
     resourceDirectory <<= (resourceDirectory in Compile),
     resourceDirectories <<= (resourceDirectories in Compile),
     javaSource <<= (javaSource in Compile),
+    scalaSource <<= (scalaSource in Compile),
     managedClasspath <<= (managedClasspath in Runtime),
     fullClasspath <<= (fullClasspath in Runtime)
   ))
