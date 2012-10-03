@@ -39,6 +39,7 @@ object AndroidKeys {
 
   /** Determined Settings */
   val packageApkName = TaskKey[String]("package-apk-name")
+  val packageApkLibName = TaskKey[String]("package-apklib-name")
   val osDxName = SettingKey[String]("os-dx-name")
 
   /** Path Settings */
@@ -68,6 +69,7 @@ object AndroidKeys {
   val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val packageApkPath = TaskKey[File]("package-apk-path")
+  val packageApkLibPath = TaskKey[File]("package-apklib-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
 
   /** Install Settings */
@@ -96,6 +98,7 @@ object AndroidKeys {
   /** Base Tasks */
   case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
 
+  val apklibPackage = TaskKey[File]("apklib-package")
   val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
   val copyNativeLibraries = TaskKey[Unit]("copy-native-libraries", "Copy native libraries added to libraryDependencies")
 
