@@ -7,6 +7,7 @@ import AndroidKeys._
 import AndroidHelpers._
 
 import java.io.{File => JFile}
+import util.matching.Regex
 
 object AndroidInstall {
 
@@ -16,6 +17,31 @@ object AndroidInstall {
 
   private def uninstallTask(taskTarget: AdbTaskTarget) = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
     adbTask(dp.absolutePath, taskTarget, s, "uninstall", m)
+  }
+
+  private def installAllTask = (dbPath, packageApkPath, streams) map { (dp, p, s) =>
+    withEachDeviceOrEmulator((serial: String) => {
+      s.log.info("Installing to " + serial)
+      adbTask(dp.absolutePath, SerialTaskTarget(serial), s, "install", "-r ", p.absolutePath)
+    })
+  }
+
+  private def unInstallAllTask = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
+    withEachDeviceOrEmulator((serial: String) => {
+      s.log.info("Uninstalling from " + serial)
+      adbTask(dp.absolutePath, SerialTaskTarget(serial), s, "uninstall", m)
+    })
+  }
+
+  private lazy val serialInAdbList: Regex = "([^\\s]+)".r
+
+  private def withEachDeviceOrEmulator(doWithSerial: (String) => Unit) {
+    val adbDeviceList = "adb devices".lines_!
+    val allSerials = adbDeviceList.slice(1, adbDeviceList.size).map(serialInAdbList.findFirstIn(_))
+    allSerials.foreach(_ match {
+      case Some(serial) => doWithSerial(serial)
+      case _ =>
+    })
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
@@ -171,12 +197,14 @@ object AndroidInstall {
 
   lazy val installerTasks = Seq (
     installEmulator <<= installTask(taskTarget = EmulatorTaskTarget) dependsOn packageDebug,
-    installDevice <<= installTask(taskTarget = DeviceTaskTarget) dependsOn packageDebug
+    installDevice <<= installTask(taskTarget = DeviceTaskTarget) dependsOn packageDebug,
+    installAll <<= installAllTask dependsOn packageDebug
   )
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ Seq (
     uninstallEmulator <<= uninstallTask(taskTarget = EmulatorTaskTarget),
     uninstallDevice <<= uninstallTask(taskTarget = DeviceTaskTarget),
+    uninstallAll <<= unInstallAllTask,
 
     makeAssetPath <<= directory(mainAssetsPath),
 

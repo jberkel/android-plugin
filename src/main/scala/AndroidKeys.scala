@@ -119,6 +119,9 @@ object AndroidKeys {
   val installDevice = TaskKey[Unit]("install-device")
   val uninstallDevice = TaskKey[Unit]("uninstall-device")
 
+  val installAll = TaskKey[Unit]("install-all", "Install debug package to all devices and emulators that are listed by 'adb devices'.")
+  val uninstallAll = TaskKey[Unit]("uninstall-all", "Uninstall APK from all devices and emulators that are listed by 'adb devices'.")
+
   val aaptPackage = TaskKey[File]("aapt-package",
     "Package resources and assets.")
   val packageDebug = TaskKey[File]("package-debug",

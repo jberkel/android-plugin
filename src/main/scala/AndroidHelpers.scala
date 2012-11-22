@@ -35,7 +35,7 @@ object AndroidHelpers {
   }
 
   def adbTaskWithOutput(dPath: String, taskTarget: AdbTaskTarget, s: TaskStreams, action: String*) = {
-    val adb = Seq(dPath, taskTarget.adbArgument) ++ action
+    val adb = Seq(dPath) ++ taskTarget.adbArgument ++ action
     s.log.debug(adb.mkString(" "))
     val out = new StringBuffer
     val exit = adb.run(new ProcessIO(input => (),
@@ -76,13 +76,17 @@ object AndroidHelpers {
 }
 
 abstract class AdbTaskTarget {
-  def adbArgument: String
+  def adbArgument: Seq[String]
 }
 
 case object DeviceTaskTarget extends AdbTaskTarget {
-  def adbArgument = "-d"
+  def adbArgument = Seq("-d")
 }
 
 case object EmulatorTaskTarget extends AdbTaskTarget {
-  def adbArgument = "-e"
+  def adbArgument = Seq("-e")
+}
+
+case class SerialTaskTarget(serial: String) extends AdbTaskTarget {
+  def adbArgument = Seq("-s", serial)
 }
