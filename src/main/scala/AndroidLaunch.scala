@@ -6,11 +6,11 @@ import AndroidHelpers._
 
 object AndroidLaunch {
 
-  private def startTask(emulator: Boolean) =
+  private def startTask(taskTarget: AdbTaskTarget) =
     (dbPath, manifestSchema, manifestPackage, manifestPath, streams) map {
       (dp, schema, mPackage, amPath, s) =>
       adbTask(dp.absolutePath,
-              emulator, s,
+              taskTarget, s,
               "shell", "am", "start", "-a", "android.intent.action.MAIN",
               "-n", mPackage+"/"+launcherActivity(schema, amPath.head, mPackage))
   }
@@ -33,8 +33,8 @@ object AndroidLaunch {
   lazy val settings: Seq[Setting[_]] =
     AndroidInstall.settings ++
     inConfig(Android) (Seq (
-      startDevice <<= startTask(false),
-      startEmulator <<= startTask(true),
+      startDevice <<= startTask(DeviceTaskTarget),
+      startEmulator <<= startTask(EmulatorTaskTarget),
 
       startDevice <<= startDevice dependsOn installDevice,
       startEmulator <<= startEmulator dependsOn installEmulator

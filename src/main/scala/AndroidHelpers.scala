@@ -24,8 +24,8 @@ object AndroidHelpers {
   def usesSdk(mpath: File, schema: String, key: String) =
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
-  def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) {
-    val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
+  def adbTask(dPath: String, taskTarget: AdbTaskTarget, s: TaskStreams, action: String*) {
+    val (exit, out) = adbTaskWithOutput(dPath, taskTarget, s, action:_*)
     if (exit != 0 ||
         // adb doesn't bother returning a non-zero exit code on failure
         out.toString.contains("Failure")) {
@@ -34,8 +34,8 @@ object AndroidHelpers {
     } else s.log.info(out.toString)
   }
 
-  def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
-    val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
+  def adbTaskWithOutput(dPath: String, taskTarget: AdbTaskTarget, s: TaskStreams, action: String*) = {
+    val adb = Seq(dPath) ++ taskTarget.adbArgument ++ action
     s.log.debug(adb.mkString(" "))
     val out = new StringBuffer
     val exit = adb.run(new ProcessIO(input => (),
@@ -46,11 +46,11 @@ object AndroidHelpers {
     (exit, out.toString)
   }
 
-  def startTask(emulator: Boolean) =
+  def startTask(taskTarget: AdbTaskTarget) =
     (dbPath, manifestSchema, manifestPackage, manifestPath, streams) map {
       (dp, schema, mPackage, amPath, s) =>
       adbTask(dp.absolutePath,
-              emulator, s,
+          taskTarget, s,
               "shell", "am", "start", "-a", "android.intent.action.MAIN",
               "-n", mPackage+"/"+
               launcherActivity(schema, amPath.head, mPackage))
@@ -73,4 +73,20 @@ object AndroidHelpers {
 
   def manifest(mpath: File) = xml.XML.loadFile(mpath)
 
+}
+
+abstract class AdbTaskTarget {
+  def adbArgument: Seq[String]
+}
+
+case object DeviceTaskTarget extends AdbTaskTarget {
+  def adbArgument = Seq("-d")
+}
+
+case object EmulatorTaskTarget extends AdbTaskTarget {
+  def adbArgument = Seq("-e")
+}
+
+case class SerialTaskTarget(serial: String) extends AdbTaskTarget {
+  def adbArgument = Seq("-s", serial)
 }
