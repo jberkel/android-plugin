@@ -20,20 +20,20 @@ object AndroidTest {
   }
 
 
-  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, testRunner, streams) map {
+  def instrumentationTestAction(taskTarget: AdbTaskTarget) = (dbPath, manifestPackage, testRunner, streams) map {
     (dbPath, manifestPackage, testRunner, s) =>
       val action = Seq("shell", "am", "instrument", "-r", "-w", manifestPackage+"/"+testRunner)
-      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
+      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, taskTarget, s, action:_*)
       if (exit == 0) parseTests(out, manifestPackage, s.log)
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
       ()
     }
 
-  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, testRunner, streams) map {
+  def runSingleTest(taskTarget: AdbTaskTarget) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, testRunner, streams) map {
         (test, dbPath, manifestPackage, testRunner, s) =>
       val action = Seq("shell", "am", "instrument", "-r", "-w", "-e", "class", test, manifestPackage+"/"+
                        testRunner)
-      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
+      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, taskTarget, s, action:_*)
       if (exit == 0) parseTests(out, manifestPackage, s.log)
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
       ()
@@ -70,13 +70,13 @@ object AndroidTest {
     AndroidInstall.settings ++
     inConfig(Android) (Seq (
       testRunner   <<= detectTestRunnerTask,
-      testEmulator <<= instrumentationTestAction(true),
-      testDevice   <<= instrumentationTestAction(false),
+      testEmulator <<= instrumentationTestAction(EmulatorTaskTarget),
+      testDevice   <<= instrumentationTestAction(DeviceTaskTarget),
       testOnlyEmulator <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
-        runSingleTest(true)(test)
+        runSingleTest(EmulatorTaskTarget)(test)
       },
       testOnlyDevice   <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
-        runSingleTest(false)(test)
+        runSingleTest(DeviceTaskTarget)(test)
       }
     )) ++ Seq (
       testEmulator <<= (testEmulator in Android),

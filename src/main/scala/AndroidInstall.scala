@@ -10,12 +10,12 @@ import java.io.{File => JFile}
 
 object AndroidInstall {
 
-  private def installTask(emulator: Boolean) = (dbPath, packageApkPath, streams) map { (dp, p, s) =>
-    adbTask(dp.absolutePath, emulator, s, "install", "-r ", p.absolutePath)
+  private def installTask(taskTarget: AdbTaskTarget) = (dbPath, packageApkPath, streams) map { (dp, p, s) =>
+    adbTask(dp.absolutePath, taskTarget, s, "install", "-r ", p.absolutePath)
   }
 
-  private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
-    adbTask(dp.absolutePath, emulator, s, "uninstall", m)
+  private def uninstallTask(taskTarget: AdbTaskTarget) = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
+    adbTask(dp.absolutePath, taskTarget, s, "uninstall", m)
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
@@ -170,13 +170,13 @@ object AndroidInstall {
   }
 
   lazy val installerTasks = Seq (
-    installEmulator <<= installTask(emulator = true) dependsOn packageDebug,
-    installDevice <<= installTask(emulator = false) dependsOn packageDebug
+    installEmulator <<= installTask(taskTarget = EmulatorTaskTarget) dependsOn packageDebug,
+    installDevice <<= installTask(taskTarget = DeviceTaskTarget) dependsOn packageDebug
   )
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ Seq (
-    uninstallEmulator <<= uninstallTask(emulator = true),
-    uninstallDevice <<= uninstallTask(emulator = false),
+    uninstallEmulator <<= uninstallTask(taskTarget = EmulatorTaskTarget),
+    uninstallDevice <<= uninstallTask(taskTarget = DeviceTaskTarget),
 
     makeAssetPath <<= directory(mainAssetsPath),
 
