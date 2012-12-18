@@ -66,6 +66,7 @@ object AndroidKeys {
   val jarPath = SettingKey[File]("jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = TaskKey[File]("main-res-path")
+  val resPath = TaskKey[Seq[File]]("res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
   val managedNativePath = SettingKey[File]("managed-native-path")
   val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
