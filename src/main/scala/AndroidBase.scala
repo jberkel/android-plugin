@@ -196,6 +196,10 @@ object AndroidBase {
     managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
     managedNativePath <<= (sourceManaged in Compile) (_ / "native_libs"),
 
+    resPath := Seq(),
+    resPath <+= mainResPath,
+    resPath <++= extractApkLibDependencies map (apklibs => apklibs.flatMap(_.resDir)),
+
     extractApkLibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
 
