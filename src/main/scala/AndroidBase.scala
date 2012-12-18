@@ -112,14 +112,10 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, generatedProguardConfigPath, extractApkLibDependencies, streams, buildConfigDebug) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath, proGen, apklibs, s, isDebug) =>
+    (manifestPackage, aaptPath, manifestPath, resPath, jarPath, managedJavaPath, generatedProguardConfigPath, extractApkLibDependencies, streams, buildConfigDebug) map {
+    (mPackage, aPath, mPath, rPath, jPath, javaPath, proGen, apklibs, s, isDebug) =>
 
-    val libraryResPathArgs = for (
-      lib <- apklibs;
-      d <- lib.resDir.toSeq;
-      arg <- Seq("-S", d.absolutePath)
-    ) yield arg
+    val libraryResPathArgs = rPath.flatMap(p => Seq("-S", p.absolutePath))
 
     val libraryAssetPathArgs = for (
       lib <- apklibs;
@@ -131,7 +127,6 @@ object AndroidBase {
       val aapt = Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
         "--custom-package", `package`,
         "-M", mPath.head.absolutePath,
-        "-S", resPath.absolutePath,
         "-I", jPath.absolutePath,
         "-J", javaPath.absolutePath,
         "-G", proGen.absolutePath) ++
