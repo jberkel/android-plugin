@@ -229,6 +229,12 @@ object AndroidBase {
        ).map(_.data) --- proguardExclude get
     },
 
+    proguardInJarsFilter := {file: File => {
+      val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
+                           "TR.class", "TR$.class", "library.properties")
+      ("\"" + file + "\"" + manifestr.mkString("(", ",!**/", ")"))
+    }},
+
     makeManagedJavaPath <<= directory(managedJavaPath),
 
     copyNativeLibraries <<= copyNativeLibrariesTask,

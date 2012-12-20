@@ -19,6 +19,7 @@ object AndroidKeys {
   val proguardOption = SettingKey[String]("proguard-option")
   val proguardOptimizations = SettingKey[Seq[String]]("proguard-optimizations")
   val libraryJarPath = SettingKey[Seq[File]]("library-path")
+  val proguardInJarsFilter = SettingKey[File => String]("proguard-in-jars-filter")
 
   /** Default Settings */
   val aaptName = SettingKey[String]("aapt-name")
@@ -81,7 +82,7 @@ object AndroidKeys {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
-  val layoutResources = TaskKey[Seq[File]]("layout-resources", 
+  val layoutResources = TaskKey[Seq[File]]("layout-resources",
       """All files that are in res/layout. They will
 		 be accessable through TR.layouts._""")
 
