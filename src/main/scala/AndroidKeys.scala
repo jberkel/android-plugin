@@ -72,6 +72,10 @@ object AndroidKeys {
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
 
+  val preserveServiceRegistry = SettingKey[Boolean]("preserve-service-registry")
+  val serviceRegistryInclude = SettingKey[Seq[String]]("service-registry-include")
+  val serviceRegistryExclude = SettingKey[Seq[String]]("service-registry-exclude")
+
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
     "Generates a Apk Config")
@@ -81,7 +85,7 @@ object AndroidKeys {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
-  val layoutResources = TaskKey[Seq[File]]("layout-resources", 
+  val layoutResources = TaskKey[Seq[File]]("layout-resources",
       """All files that are in res/layout. They will
 		 be accessable through TR.layouts._""")
 
