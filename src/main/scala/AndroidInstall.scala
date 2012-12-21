@@ -162,11 +162,99 @@ object AndroidInstall {
       }
     }
 
-  private def packageTask(debug: Boolean):Project.Initialize[Task[File]] = (packageConfig, streams) map { (c, s) =>
+  private def packageTask(debug: Boolean):Project.Initialize[Task[File]] = (packageConfig, fullClasspath, preserveServiceRegistry, serviceRegistryInclude, serviceRegistryExclude, streams) map { (c, cp, p, in, ex, s) =>
     val builder = new ApkBuilder(c, debug)
     builder.build.fold(sys.error(_), s.log.info(_))
     s.log.debug(builder.outputStream.toString)
+
+    if (p) {
+      val services = extractServiceRegistry(cp.files, in, ex)
+      insertServiceRegistry(c.packageApkPath, services)
+    }
+
     c.packageApkPath
+  }
+
+  private def extractServiceRegistry(
+    cp: Seq[JFile], in: Seq[String], ex: Seq[String]
+  ): Map[String, List[String]] = {
+    import java.util.jar.JarFile
+    import scala.io.Source
+    import scala.collection.JavaConversions._
+
+    var ret = Map[String, List[String]]()
+    cp.filter(_.toString.matches(".*\\.jar")).foreach {f => {
+      val jarfile = new JarFile(f)
+      try {
+        for (entry <- jarfile.entries()) {
+          val name = entry.getName()
+          if (name.matches("META-INF/services/..*")) {
+            val is = jarfile.getInputStream(entry)
+            try {
+              val lns = Source.fromInputStream(is).getLines().
+                filter(cls => in.exists(r => cls.matches(r))).
+                filter(cls => ex.forall(r => !cls.matches(r)))
+              ret += name -> (ret.getOrElse(name, List()) ++ lns)
+            }
+            finally {
+              is.close()
+            }
+          }
+        }
+      }
+      finally {
+        jarfile.close()
+      }
+    }}
+
+    ret
+  }
+
+  private def insertServiceRegistry(apk: File,
+                                    services: Map[String, List[String]]) = {
+    import java.util.zip.ZipOutputStream
+    import java.util.zip.ZipInputStream
+    import java.util.zip.ZipEntry
+    import java.io.FileOutputStream
+    import java.io.FileInputStream
+    import java.io.File
+
+    val tmp = new File(apk.getAbsolutePath + ".tmp")
+    tmp.delete()
+
+    if (!apk.renameTo(tmp)) {
+      throw new RuntimeException("could not rename file " + apk)
+    }
+    val buf = Array.ofDim[Byte](1024)
+
+    val in = new ZipInputStream(new FileInputStream(tmp))
+    val out = new ZipOutputStream(new FileOutputStream(apk))
+
+    try {
+      var entry = in.getNextEntry()
+
+      while (entry != null) {
+        out.putNextEntry(new ZipEntry(entry.getName))
+        var len = in.read(buf)
+        while (len > 0) {
+          out.write(buf, 0, len)
+          len = in.read(buf)
+        }
+        entry = in.getNextEntry()
+      }
+
+      for ((name, value) <- services) {
+        if (value.size > 0) {
+          out.putNextEntry(new ZipEntry(name))
+          out.write(value.mkString("\n").getBytes)
+        }
+      }
+    }
+    finally {
+      tmp.delete()
+      in.close()
+      out.close()
+    }
   }
 
   lazy val installerTasks = Seq (

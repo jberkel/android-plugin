@@ -207,6 +207,10 @@ object AndroidBase {
     useProguard := true,
     proguardOptimizations := Seq.empty,
 
+    preserveServiceRegistry := false,
+    serviceRegistryInclude := Seq(".*"),
+    serviceRegistryExclude := Seq.empty,
+
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),
 
