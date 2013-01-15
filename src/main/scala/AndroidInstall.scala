@@ -111,19 +111,28 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, 
+     proguardInJarsOption, proguardInJarsFilter) map {
     (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, 
+     proguardInJarsOption, proguardInJarsFilter) =>
       if (useProguard) {
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
           val sep = JFile.pathSeparator
-          val inJars = ("\"" + classDirectory.absolutePath + "\"") +:
-                       proguardInJars.map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
+          val inJars = ("\"" + classDirectory.absolutePath + "\"") +: 
+                       proguardInJars.map { jar =>
+                         val default: PartialFunction[String, Seq[String]] = { case _ => Seq.empty }
+                         val filter = (proguardInJarsFilter orElse default)(jar.getName()) 
+                         
+                         "\""+jar+"\""+manifestr.mkString("(", ",!**/", "") +
+                           (if(!filter.isEmpty) filter.mkString(",", ",", ")") else ")")
+                       }
+          
 
           val args = (
-                 "-injars" :: inJars.mkString(sep) ::
+                 "-injars" :: (proguardInJarsOption ++ inJars).mkString(sep) ::
                  "-outjars" :: "\""+classesMinJarPath.absolutePath+"\"" ::
                  "-libraryjars" :: libraryJarPath.map("\""+_+"\"").mkString(sep) ::
                  Nil) ++

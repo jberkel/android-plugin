@@ -206,6 +206,8 @@ object AndroidBase {
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
     useProguard := true,
     proguardOptimizations := Seq.empty,
+    proguardInJarsOption := Seq.empty,
+    proguardInJarsFilter := { case _ => Seq.empty},
 
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),
