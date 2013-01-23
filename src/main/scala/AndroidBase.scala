@@ -67,7 +67,7 @@ object AndroidBase {
         (PathFinder(jPath) ** "*.java"  x rebase(jPath, "src")) ++
         (PathFinder(sPath) ** "*.scala" x rebase(sPath, "src")) ++
         ((PathFinder(rPath) ***)        x rebase(rPath, "res")) ++
-        ((PathFinder(aPath) ***)        x rebase(rPath, "assets"))
+        ((PathFinder(aPath) ***)        x rebase(aPath, "assets"))
       IO.jar(mapping, apklib, new java.util.jar.Manifest)
       apklib
     }
