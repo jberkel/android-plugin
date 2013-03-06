@@ -221,6 +221,7 @@ object AndroidBase {
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
     useProguard := true,
+    skipScalaLibrary := false,
     proguardOptimizations := Seq.empty,
 
     buildConfigDebug := false,
