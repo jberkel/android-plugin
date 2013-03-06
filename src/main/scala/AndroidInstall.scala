@@ -110,17 +110,20 @@ object AndroidInstall {
     }
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
-    (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
+    (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
-    (useProguard, proguardOptimizations, classDirectory, proguardInJars, streams,
+    (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
       if (useProguard) {
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
           val sep = JFile.pathSeparator
+
           val inJars = ("\"" + classDirectory.absolutePath + "\"") +:
-                       proguardInJars.map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
+                       proguardInJars
+                       .filter(!skipScalaLibrary || _ != scalaInstance.libraryJar)
+                       .map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
 
           val args = (
                  "-injars" :: inJars.mkString(sep) ::
@@ -183,11 +186,12 @@ object AndroidInstall {
     aaptPackage <<= aaptPackageTask,
     aaptPackage <<= aaptPackage dependsOn (makeAssetPath, dx),
     dx <<= dxTask,
-    dxInputs <<= (proguard, proguardInJars, scalaInstance, classDirectory) map {
-      (proguard, proguardInJars, scalaInstance, classDirectory) =>
+    dxInputs <<= (proguard, skipScalaLibrary, proguardInJars, scalaInstance, classDirectory) map {
+      (proguard, skipScalaLibrary, proguardInJars, scalaInstance, classDirectory) =>
       proguard match {
          case Some(file) => Seq(file)
-         case None => (classDirectory +++ proguardInJars --- scalaInstance.libraryJar) get
+         case None if (skipScalaLibrary) => (classDirectory +++ proguardInJars --- scalaInstance.libraryJar) get
+         case None => (classDirectory +++ proguardInJars) get
       }
     },
 
