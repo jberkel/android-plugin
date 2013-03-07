@@ -71,6 +71,7 @@ object AndroidKeys {
   val packageApkPath = TaskKey[File]("package-apk-path")
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
+  val buildConfigDebug = SettingKey[Boolean]("build-config-debug")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",

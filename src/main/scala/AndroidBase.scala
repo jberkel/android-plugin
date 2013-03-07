@@ -108,8 +108,8 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s) =>
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams, buildConfigDebug) map {
+    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s, isDebug) =>
 
     val libraryResPathArgs = for (
       lib <- apklibs;
@@ -137,7 +137,23 @@ object AndroidBase {
     }
     runAapt(mPackage)
     apklibs.foreach(lib => runAapt(lib.pkgName, "--non-constant-id"))
-    javaPath ** "R.java" get
+
+    def createBuildConfig(`package`: String) = {
+      var path = javaPath
+      `package`.split('.').foreach { path /= _ }
+      path.mkdirs
+      val buildConfig = path / "BuildConfig.java"
+      IO.write(buildConfig, """
+        package %s;
+        public final class BuildConfig {
+          public static final boolean DEBUG = %s;
+        }""".format(`package`, isDebug))
+      buildConfig
+    }
+
+    (javaPath ** "R.java" get) ++
+      Seq(createBuildConfig(mPackage)) ++
+      apklibs.map(lib => createBuildConfig(lib.pkgName))
   }
 
   private def aidlGenerateTask =
@@ -206,6 +222,8 @@ object AndroidBase {
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
     useProguard := true,
     proguardOptimizations := Seq.empty,
+
+    buildConfigDebug := false,
 
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),
