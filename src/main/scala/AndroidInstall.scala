@@ -196,6 +196,8 @@ object AndroidInstall {
     proguard <<= proguardTask,
     proguard <<= proguard dependsOn (compile in Compile),
 
+    dxOpts := ("-JXmx512m", None),
+
     packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
        nativeLibrariesPath, managedNativePath, dxInputs, resourceDirectory) map
