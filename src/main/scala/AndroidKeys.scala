@@ -32,7 +32,7 @@ object AndroidKeys {
   val classesMinJarName = SettingKey[String]("classes-min-jar-name")
   val classesDexName = SettingKey[String]("classes-dex-name")
   val resourcesApkName = SettingKey[String]("resources-apk-name")
-  val dxOpts = SettingKey[Tuple2[String, Option[Seq[String]]]]("dx-opts")
+  val dxMemory = SettingKey[String]("dx-memory")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
   val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")

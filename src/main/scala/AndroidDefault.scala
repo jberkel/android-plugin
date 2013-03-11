@@ -30,7 +30,6 @@ object AndroidDefaults {
     classesMinJarName := DefaultClassesMinJarName,
     classesDexName := DefaultClassesDexName,
     resourcesApkName := DefaultResourcesApkName,
-    predexLibraries := false,
     manifestSchema := DefaultManifestSchema,
     envs := DefaultEnvs,
     // a list of modules which are already included in Android

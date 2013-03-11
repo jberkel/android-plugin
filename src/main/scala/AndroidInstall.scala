@@ -41,9 +41,9 @@ object AndroidInstall {
   }
 
   private def dxTask: Project.Initialize[Task[File]] =
-    (dxPath, dxInputs, dxOpts, target, predexLibraries,
+    (dxPath, dxInputs, dxMemory, target, predexLibraries,
       proguardOptimizations, classDirectory, classesDexPath, scalaInstance, streams) map {
-    (dxPath, dxInputs, dxOpts, target, predexLibraries,
+    (dxPath, dxInputs, dxMemory, target, predexLibraries,
       proguardOptimizations, classDirectory, classesDexPath, scalaInstance, streams) =>
 
       def dexing(inputs: Seq[JFile], output: JFile) {
@@ -59,7 +59,7 @@ object AndroidInstall {
         if (!uptodate) {
           val noLocals = if (proguardOptimizations.isEmpty) "" else "--no-locals"
           val dxCmd = (Seq(dxPath.absolutePath,
-                          dxMemoryParameter(dxOpts._1),
+                          dxMemoryParameter(dxMemory),
                           "--dex", noLocals,
                           "--num-threads="+java.lang.Runtime.getRuntime.availableProcessors,
                           "--output="+output.getAbsolutePath) ++
@@ -167,6 +167,8 @@ object AndroidInstall {
     aaptPackage <<= aaptPackageTask,
     aaptPackage <<= aaptPackage dependsOn (makeAssetPath, dx),
     dx <<= dxTask,
+    predexLibraries := false,
+    dxMemory := "-JXmx512m",
     dxInputs <<=
       (proguard, skipScalaLibrary, proguardInJars, scalaInstance, classDirectory) map {
       (proguard, skipScalaLibrary, proguardInJars, scalaInstance, classDirectory) =>
@@ -185,8 +187,6 @@ object AndroidInstall {
 
     proguard <<= proguardTask,
     proguard <<= proguard dependsOn (compile in Compile),
-
-    dxOpts := ("-JXmx512m", None),
 
     packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,
