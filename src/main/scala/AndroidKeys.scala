@@ -73,6 +73,7 @@ object AndroidKeys {
   val useProguard = SettingKey[Boolean]("use-proguard")
   val buildConfigDebug = SettingKey[Boolean]("build-config-debug")
   val skipScalaLibrary = SettingKey[Boolean]("skip-scala-library")
+  val predexLibraries = SettingKey[Boolean]("predex-libraries")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
