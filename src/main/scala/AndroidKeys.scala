@@ -72,6 +72,7 @@ object AndroidKeys {
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
   val skipScalaLibrary = SettingKey[Boolean]("skip-scala-library")
+  val predexLibraries = SettingKey[Boolean]("predex-libraries")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
