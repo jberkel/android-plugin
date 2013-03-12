@@ -193,4 +193,24 @@ object AndroidKeys {
 
   val cachePasswords = SettingKey[Boolean]("cache-passwords", "Cache passwords")
   val clearPasswords = TaskKey[Unit]("clear-passwords", "Clear cached passwords")
+
+  /** Advanced device manipulations **/
+  val rootDevice = TaskKey[Unit]("root-device")
+  val remountDevice = TaskKey[Unit]("remount-device")
+  val rootEmulator = TaskKey[Unit]("root-emulator")
+  val remountEmulator = TaskKey[Unit]("remount-emulator")
+
+  /** Install Scala on device/emulator **/
+  val preloadedDevice   = TaskKey[Option[String]]("preloaded-device", "The version of Scala currently on the device")
+  val preloadedEmulator = TaskKey[Option[String]]("preloaded-emulator", "The version of Scala currently on the emulator")
+  val preloadDevice     = TaskKey[Unit]("preload-device", "Setup device for development by uploading the predexed Scala library")
+  val preloadEmulator   = TaskKey[Unit]("preload-emulator", "Setup emulator for development by uploading the predexed Scala library")
+
+  /** Unload Scala from device/emulator **/
+  val unloadDevice   = TaskKey[Unit]("unload-device", "Unloads the Scala library from the device")
+  val unloadEmulator = TaskKey[Unit]("unload-emulator", "Unloads the Scala library from the emulator")
+
+  /** Use preloaded Scala for development **/
+  val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala",
+    "If true, will preload the current Scala version on the device or emulator and use it for development")
 }
