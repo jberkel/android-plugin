@@ -48,6 +48,7 @@ object AndroidProject extends Plugin {
 
   lazy val androidSettings: Seq[Setting[_]] =
     AndroidBase.settings ++
+    AndroidPreload.settings ++
     AndroidLaunch.settings ++
     AndroidDdm.settings
 

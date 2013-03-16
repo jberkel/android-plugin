@@ -24,14 +24,19 @@ object AndroidHelpers {
   def usesSdk(mpath: File, schema: String, key: String) =
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
-  def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) {
+  def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
     val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
+
+    // Check exit value
     if (exit != 0 ||
         // adb doesn't bother returning a non-zero exit code on failure
         out.toString.contains("Failure")) {
       s.log.error(out.toString)
       sys.error("error executing adb")
-    } else s.log.info(out.toString)
+    } else s.log.debug(out.toString)
+
+    // Return output
+    out.toString
   }
 
   def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {

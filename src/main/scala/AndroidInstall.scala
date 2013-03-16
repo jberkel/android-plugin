@@ -12,10 +12,12 @@ object AndroidInstall {
 
   private def installTask(emulator: Boolean) = (dbPath, packageApkPath, streams) map { (dp, p, s) =>
     adbTask(dp.absolutePath, emulator, s, "install", "-r ", p.absolutePath)
+    ()
   }
 
   private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
     adbTask(dp.absolutePath, emulator, s, "uninstall", m)
+    ()
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
