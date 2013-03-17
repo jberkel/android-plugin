@@ -6,13 +6,13 @@ import AndroidHelpers._
 object AndroidPreload {
 
   private def jarName(lib: File, ver: String) =
-    lib.getName.replace(".jar", "." + ver + ".jar")
+    lib.getName.replace(".jar", "-" + ver + ".jar")
 
   private def deviceJarPath(lib: File, ver: String) =
     "/system/framework/" + jarName(lib,ver)
 
   private def devicePermissionPath(ver: String) =
-    "/system/etc/permissions/scala-library." + ver + ".xml"
+    "/system/etc/permissions/scala-library-" + ver + ".xml"
 
   private def deviceDesignation(implicit emulator: Boolean) =
     if (emulator) "emulator" else "device"
@@ -43,7 +43,7 @@ object AndroidPreload {
 
     // Retrieve the contents of the `scala_library` permission file
     val permissions = adbTask(db.absolutePath, emulator, s,
-      "shell", "cat /system/etc/permissions/scala-library." + si.version + ".xml")
+      "shell", "cat /system/etc/permissions/scala-library-" + si.version + ".xml")
 
     // Parse the library file
     val preloadedScalaFile = (
@@ -85,7 +85,7 @@ object AndroidPreload {
     val xmlContent =
       <permissions>
         <library
-        name={{ "scala_library_" + si.version }}
+        name={{ "scala-library-" + si.version }}
         file={{ deviceJarPath(si.libraryJar, si.version) }} />
       </permissions>
 
