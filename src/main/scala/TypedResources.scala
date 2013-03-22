@@ -20,13 +20,13 @@ object TypedResources {
         }
       }
 
-      val layouts = layoutResources.get.map{ layout =>
+      val layouts: Set[String] = layoutResources.get.flatMap{ layout =>
         val Name = "(.*)\\.[^\\.]+".r
         layout.getName match {
           case Name(name) => Some(name)
           case _ => None
         }
-      }
+      }.toSet
       val reserved = List("extends", "trait", "type", "val", "var", "with")
 
       val resources = layoutResources.get.flatMap { path =>
@@ -97,9 +97,8 @@ object TypedResources {
               resources map { case (id, classname) =>
                 "  val %s = TypedResource[%s](R.id.%s)".format(id, classname, id)
               } mkString "\n",
-              layouts map {
-                case Some(layoutName) => " val %s = TypedLayout(R.layout.%s)".format(layoutName, layoutName)
-                case None => ""
+              layouts map { name =>
+                " val %s = TypedLayout(R.layout.%s)".format(name, name)
               } mkString "\n"
             )
         )
@@ -111,10 +110,7 @@ object TypedResources {
     typedResource <<= (manifestPackage, managedScalaPath) map {
       _.split('.').foldLeft(_) ((p, s) => p / s) / "TR.scala"
     },
-    layoutResources <<= (mainResPath) map { x=>
-      (x ** "layout*" get)
-        .flatMap(_ ** "*.xml" get)
-    },
+    layoutResources <<= (mainResPath) map { x=> (x * "layout*" * "*.xml" get) },
 
     generateTypedResources <<= generateTypedResourcesTask,
 
