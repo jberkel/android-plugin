@@ -2,9 +2,9 @@ name := "sbt-android-plugin"
 
 organization := "org.scala-sbt"
 
-version := "0.6.4-SNAPSHOT"
+version := "0.6.4"
 
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit")
 
 publishMavenStyle := false
 
@@ -27,3 +27,7 @@ libraryDependencies ++= Seq(
 sbtPlugin := true
 
 commands += Status.stampVersion
+
+crossScalaVersions := Seq("2.9.2", "2.10.1")
+
+publishTo := Some(Resolver.file("file",  new File( "./repo/releases" )) )
