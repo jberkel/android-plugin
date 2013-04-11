@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
-	<info organisation="org.scala-sbt" module="sbt-android-plugin" revision="0.6.4" status="release" publication="20130402233934" e:scalaVersion="2.9.2" e:sbtVersion="0.12">
+	<info organisation="org.scala-sbt" module="sbt-android-plugin" revision="0.6.4" status="release" publication="20130411223114" e:scalaVersion="2.9.2" e:sbtVersion="0.12">
 		<description>
 		sbt-android-plugin
 		</description>
@@ -27,8 +27,8 @@
 	<dependencies>
 		<dependency org="org.scala-sbt" name="sbt" rev="0.12.3" conf="provided->default(compile)"/>
 		<dependency org="org.scala-lang" name="scala-library" rev="2.9.2" conf="provided->default(compile)"/>
-		<dependency org="com.google.android.tools" name="ddmlib" rev="r10" conf="compile->default(compile)"/>
-		<dependency org="net.sf.proguard" name="proguard-base" rev="4.8" conf="compile->default(compile)"/>
+		<dependency org="com.google.android.tools" name="ddmlib" rev="r13" revConstraint="latest.release" conf="compile->default(compile)"/>
+		<dependency org="net.sf.proguard" name="proguard-base" rev="4.9" revConstraint="latest.release" conf="compile->default(compile)"/>
 		<exclude org="org.scala-lang" module="scala-library" artifact="*" type="jar" ext="*" matcher="exact"/>
 		<exclude org="org.scala-lang" module="scala-compiler" artifact="*" type="jar" ext="*" matcher="exact"/>
 		<override org="org.scala-lang" module="scala-library" matcher="exact" rev="2.9.2"/>
