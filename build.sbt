@@ -6,7 +6,7 @@ version := "0.6.4"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit")
 
-publishMavenStyle := true
+publishMavenStyle := false
 
 publishTo <<= (version) { version: String =>
     val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
