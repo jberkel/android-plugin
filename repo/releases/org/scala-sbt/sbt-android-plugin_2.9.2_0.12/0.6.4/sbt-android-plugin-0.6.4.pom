@@ -30,12 +30,12 @@
         <dependency>
             <groupId>com.google.android.tools</groupId>
             <artifactId>ddmlib</artifactId>
-            <version>r10</version>
+            <version>latest.release</version>
         </dependency>
         <dependency>
             <groupId>net.sf.proguard</groupId>
             <artifactId>proguard-base</artifactId>
-            <version>4.8</version>
+            <version>latest.release</version>
         </dependency>
     </dependencies>
 </project>

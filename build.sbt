@@ -20,8 +20,8 @@ publishTo <<= (version) { version: String =>
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 libraryDependencies ++= Seq(
-  "com.google.android.tools" % "ddmlib" % "r10",
-  "net.sf.proguard" % "proguard-base" % "4.8"
+  "com.google.android.tools" % "ddmlib" % "latest.release",
+  "net.sf.proguard" % "proguard-base" % "latest.release"
 )
 
 sbtPlugin := true
