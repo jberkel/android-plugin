@@ -2,9 +2,9 @@ name := "sbt-android-plugin"
 
 organization := "org.scala-sbt"
 
-version := "0.6.4-SNAPSHOT"
+version := "0.6.4"
 
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit")
 
 publishMavenStyle := false
 
@@ -20,10 +20,14 @@ publishTo <<= (version) { version: String =>
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 libraryDependencies ++= Seq(
-  "com.google.android.tools" % "ddmlib" % "r10",
-  "net.sf.proguard" % "proguard-base" % "4.8"
+  "com.google.android.tools" % "ddmlib" % "latest.release",
+  "net.sf.proguard" % "proguard-base" % "latest.release"
 )
 
 sbtPlugin := true
 
 commands += Status.stampVersion
+
+crossScalaVersions := Seq("2.9.2", "2.10.1")
+
+publishTo := Some(Resolver.file("file",  new File( "./repo/releases" )) )
