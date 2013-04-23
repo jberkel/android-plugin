@@ -70,7 +70,7 @@ object AndroidDdm {
     bridge = None
   }
 
-  def withDevice[F](emulator: Boolean, path: String)
+  def withDevice[F](androidTarget: Symbol, path: String)
                    (action: IDevice => F):Option[F] = {
     var count = 0
     val bridged = createBridge(path, true)
@@ -84,13 +84,13 @@ object AndroidDdm {
       None
     } else {
       val (emus, devices) = bridged.getDevices.partition(_.isEmulator)
-      (if (emulator) emus else devices).headOption.map(action)
+      (if (androidTarget == 'emulator) emus else devices).headOption.map(action)
     }
   }
 
-  def withClient[F](emulator: Boolean, path: String, clientPkg: String)
+  def withClient[F](androidTarget: Symbol, path: String, clientPkg: String)
                    (action: Client => F):Option[F] = {
-    withDevice(emulator, path) { device =>
+    withDevice(androidTarget, path) { device =>
       var client = device.getClient(clientPkg)
       var count = 0
       while (client == null && count < 10) {
@@ -107,8 +107,8 @@ object AndroidDdm {
   }
 
   // ported from http://dustingram.com/wiki/Device_Screenshots_with_the_Android_Debug_Bridge
-  def screenshot(emulator: Boolean, landscape: Boolean, path: String):Option[Screenshot] = {
-    withDevice(emulator, path) { device =>
+  def screenshot(androidTarget: Symbol, landscape: Boolean, path: String):Option[Screenshot] = {
+    withDevice(androidTarget, path) { device =>
       val raw = device.getScreenshot
       val (width2, height2) = if (landscape) (raw.height, raw.width) else (raw.width, raw.height)
       val image = new BufferedImage(width2, height2, BufferedImage.TYPE_INT_RGB)
@@ -126,9 +126,9 @@ object AndroidDdm {
     }
   }
 
-  def dumpHprof(app: String, path: String, emulator: Boolean, streams: TaskStreams)
+  def dumpHprof(app: String, path: String, androidTarget: Symbol, streams: TaskStreams)
                (success: (Client, Array[Byte]) => Unit) {
-    withClient(emulator, path, app) { client =>
+    withClient(androidTarget, path, app) { client =>
         ClientData.setHprofDumpHandler(new IHprofDumpHandler() {
 
           override def onSuccess(path: String, client: Client) { sys.error("not supported") }
@@ -140,8 +140,8 @@ object AndroidDdm {
     }.orElse(sys.error("can not get client "+app+", is it running"))
   }
 
-  def fetchThreads(app: String, path: String, emulator: Boolean):Option[Array[ThreadInfo]] = {
-    withClient(emulator, path, app) { client =>
+  def fetchThreads(app: String, path: String, androidTarget: Symbol):Option[Array[ThreadInfo]] = {
+    withClient(androidTarget, path, app) { client =>
       client.setThreadUpdateEnabled(true)
       client.requestThreadUpdate()
       val threads = client.getClientData.getThreads
@@ -154,7 +154,7 @@ object AndroidDdm {
     }
   }
 
-  private def writeHprof(toolsPath: File)(client: Client, data: Array[Byte]) = {
+  private def writeHprof(toolsPath: File)(client: Client, data: Array[Byte]): File = {
     val pkg = client.getClientData.getClientDescription
     val pid = client.getClientData.getPid
     val tmp = new File(pkg+".tmp")
@@ -207,34 +207,47 @@ object AndroidDdm {
       ()
     }
 
-  def threadListParser = (s: State, app: String, path: String, emu: Boolean) => {
-    fetchThreads(app, path, emu)
+  def threadListParser = (s: State, app: String, path: String, androidTarget: Symbol) => {
+    fetchThreads(app, path, androidTarget)
     Space ~> infos.map({ case (k, v) => token(k) })
                     .reduceLeftOption(_ | _)
                     .getOrElse(token("<name>"))
   }
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
+    screenshotAny <<= (dbPath, streams) map { (p,s) =>
+      screenshot('any, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "any", s)
+    },
     screenshotDevice <<= (dbPath, streams) map { (p,s) =>
-      screenshot(false, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "device", s)
+      screenshot('device, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "device", s)
     },
     screenshotEmulator <<= (dbPath, streams) map { (p,s) =>
-      screenshot(true, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "emulator", s)
+      screenshot('emulator, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "emulator", s)
+    },
+
+    hprofAny <<= (manifestPackage, dbPath, streams, toolsPath) map { (m,p,s, toolsPath) =>
+      dumpHprof(m, p.absolutePath, 'any, s)(writeHprof(toolsPath))
     },
     hprofEmulator <<= (manifestPackage, dbPath, streams, toolsPath) map { (m,p,s, toolsPath) =>
-      dumpHprof(m, p.absolutePath, true, s)(writeHprof(toolsPath))
+      dumpHprof(m, p.absolutePath, 'emulator, s)(writeHprof(toolsPath))
     },
     hprofDevice <<= (manifestPackage, dbPath, streams, toolsPath) map { (m,p,s, toolsPath) =>
-      dumpHprof(m, p.absolutePath, false, s)(writeHprof(toolsPath))
+      dumpHprof(m, p.absolutePath, 'device, s)(writeHprof(toolsPath))
     },
+
+    threadsAny <<= InputTask(
+      (resolvedScoped, dbPath) ( (ctx, path) => (s: State) =>
+        threadListParser(s, loadFromContext(manifestPackageName, ctx, s) getOrElse "", path.absolutePath, 'any)))
+      (printStackTask),
+
     threadsEmulator <<= InputTask(
         (resolvedScoped, dbPath) ( (ctx, path) => (s: State) =>
-        threadListParser(s, loadFromContext(manifestPackageName, ctx, s) getOrElse "", path.absolutePath, true)))
+        threadListParser(s, loadFromContext(manifestPackageName, ctx, s) getOrElse "", path.absolutePath, 'emulator)))
         (printStackTask),
 
     threadsDevice <<= InputTask(
         (resolvedScoped, dbPath) ( (ctx, path) => (s: State) =>
-        threadListParser(s, loadFromContext(manifestPackageName, ctx, s) getOrElse "", path.absolutePath, false)))
+        threadListParser(s, loadFromContext(manifestPackageName, ctx, s) getOrElse "", path.absolutePath, 'device)))
         (printStackTask),
 
     stopBridge <<= (streams) map { (s) =>

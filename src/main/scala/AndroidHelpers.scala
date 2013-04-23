@@ -24,8 +24,8 @@ object AndroidHelpers {
   def usesSdk(mpath: File, schema: String, key: String) =
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
-  def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
-    val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
+  def adbTask(dPath: String, androidTarget: Symbol, s: TaskStreams, action: String*) = {
+    val (exit, out) = adbTaskWithOutput(dPath, androidTarget, s, action:_*)
 
     // Check exit value
     if (exit != 0 ||
@@ -39,8 +39,9 @@ object AndroidHelpers {
     out.toString
   }
 
-  def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
-    val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
+  def adbTaskWithOutput(dPath: String, androidTarget: Symbol, s: TaskStreams, action: String*) = {
+    val sequence = if(androidTarget == 'any) Seq(dPath) else Seq(dPath, if(androidTarget == 'device) "-d" else "-e")
+    val adb = sequence ++ action
     s.log.debug(adb.mkString(" "))
     val out = new StringBuffer
     val exit = adb.run(new ProcessIO(input => (),
@@ -51,11 +52,11 @@ object AndroidHelpers {
     (exit, out.toString)
   }
 
-  def startTask(emulator: Boolean) =
+  def startTask(androidTarget: Symbol) =
     (dbPath, manifestSchema, manifestPackage, manifestPath, streams) map {
       (dp, schema, mPackage, amPath, s) =>
       adbTask(dp.absolutePath,
-              emulator, s,
+              androidTarget, s,
               "shell", "am", "start", "-a", "android.intent.action.MAIN",
               "-n", mPackage+"/"+
               launcherActivity(schema, amPath.head, mPackage))
