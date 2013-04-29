@@ -57,4 +57,4 @@ list.
 [projects using sbt-android-plugin]: https://github.com/jberkel/android-plugin/wiki/Projects-using-sbt-android-plugin
 [Getting started]: https://github.com/jberkel/android-plugin/wiki/getting-started
 [giter8]: https://github.com/n8han/giter8
-[sbt-getting-started]: https://github.com/harrah/xsbt/wiki/Getting-Started-Welcome
+[sbt-getting-started]: http://scala-sbt.org/release/docs/Getting-Started/Welcome
