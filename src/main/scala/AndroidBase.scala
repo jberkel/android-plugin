@@ -217,8 +217,6 @@ object AndroidBase {
     extractApkLibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
 
-    managedSourceDirectories in Compile <<= (managedJavaPath, managedScalaPath) (Seq(_, _)),
-
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
