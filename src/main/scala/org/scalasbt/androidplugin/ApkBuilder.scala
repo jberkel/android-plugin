@@ -1,3 +1,5 @@
+package org.scalasbt.androidplugin
+
 import sbt._
 import classpath._
 import java.io.{ByteArrayOutputStream, File, PrintStream}
