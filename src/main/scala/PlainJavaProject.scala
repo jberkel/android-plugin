@@ -1,5 +1,3 @@
-package org.scalasbt.androidplugin
-
 import sbt._
 import Keys._
 import AndroidKeys._

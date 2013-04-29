@@ -1,5 +1,3 @@
-package org.scalasbt.androidplugin
-
 import java.util.Properties
 import proguard.{Configuration=>ProGuardConfiguration, ProGuard, ConfigurationParser}
 
