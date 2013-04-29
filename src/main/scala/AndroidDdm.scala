@@ -1,3 +1,5 @@
+package org.scalasbt.androidplugin
+
 import sbt._
 import complete.Parser
 import Keys._
