@@ -110,8 +110,8 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams, buildConfigDebug) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s, isDebug) =>
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, generatedProguardConfigPath, extractApkLibDependencies, streams, buildConfigDebug) map {
+    (mPackage, aPath, mPath, resPath, jPath, javaPath, proGen, apklibs, s, isDebug) =>
 
     val libraryResPathArgs = for (
       lib <- apklibs;
@@ -131,7 +131,8 @@ object AndroidBase {
         "-M", mPath.head.absolutePath,
         "-S", resPath.absolutePath,
         "-I", jPath.absolutePath,
-        "-J", javaPath.absolutePath) ++
+        "-J", javaPath.absolutePath,
+        "-G", proGen.absolutePath) ++
         args ++
         libraryResPathArgs ++
         libraryAssetPathArgs
@@ -220,6 +221,7 @@ object AndroidBase {
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
+    generatedProguardConfigPath <<= (target, generatedProguardConfigName) (_ / _),
     useProguard := true,
     skipScalaLibrary := false,
     proguardOptimizations := Seq.empty,

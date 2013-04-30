@@ -96,10 +96,14 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, generatedProguardConfigPath) map {
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, genConfig) =>
       if (useProguard) {
+          val generatedOptions = 
+            if(genConfig.exists()) 
+              scala.io.Source.fromFile(genConfig).getLines.filterNot(x => x.isEmpty || x.head == '#').toSeq
+            else Seq()
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
@@ -114,19 +118,14 @@ object AndroidInstall {
                  "-injars" :: inJars.mkString(sep) ::
                  "-outjars" :: "\""+classesMinJarPath.absolutePath+"\"" ::
                  "-libraryjars" :: libraryJarPath.map("\""+_+"\"").mkString(sep) ::
-                 Nil) ++
+                 Nil) ++ 
+                 generatedOptions ++
                  optimizationOptions ++ (
                  "-dontwarn" :: "-dontobfuscate" ::
                  "-dontnote scala.Enumeration" ::
                  "-dontnote org.xml.sax.EntityResolver" ::
-                 "-keep public class * extends android.app.Activity" ::
-                 "-keep public class * extends android.app.Service" ::
                  "-keep public class * extends android.app.backup.BackupAgent" ::
                  "-keep public class * extends android.appwidget.AppWidgetProvider" ::
-                 "-keep public class * extends android.content.BroadcastReceiver" ::
-                 "-keep public class * extends android.content.ContentProvider" ::
-                 "-keep public class * extends android.view.View" ::
-                 "-keep public class * extends android.app.Application" ::
                  "-keep public class "+manifestPackage+".** { public protected *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
                  """
