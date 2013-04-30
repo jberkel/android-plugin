@@ -17,6 +17,7 @@ object AndroidDefaults {
   val DefaultClassesMinJarName = "classes.min.jar"
   val DefaultClassesDexName = "classes.dex"
   val DefaultResourcesApkName = "resources.apk"
+  val DefaultGeneratedProguardConfigName = "proguard-generated.txt"
   val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
   val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
 
@@ -32,6 +33,7 @@ object AndroidDefaults {
     classesMinJarName := DefaultClassesMinJarName,
     classesDexName := DefaultClassesDexName,
     resourcesApkName := DefaultResourcesApkName,
+    generatedProguardConfigName := DefaultGeneratedProguardConfigName,
     manifestSchema := DefaultManifestSchema,
     envs := DefaultEnvs,
     // a list of modules which are already included in Android
