@@ -3,8 +3,7 @@ package org.scalasbt.androidplugin
 import sbt._
 
 import Keys._
-import AndroidKeys.Android
-import AndroidNdkKeys._
+import AndroidPlugin._
 
 import java.io.File
 
@@ -29,21 +28,27 @@ object AndroidNdk {
   /** The make environment variable name for the javah generated header directory. */
   val DefaultJavahOutputEnv = "SBT_MANAGED_JNI_INCLUDE"
 
+  /**
+   * Default NDK settings
+   */
   lazy val defaultSettings: Seq[Setting[_]] = inConfig(Android) (Seq (
     ndkBuildName := DefaultNdkBuildName,
-    jniDirectoryName := DefaultJniDirectoryName,
-    objDirectoryName := DefaultObjDirectoryName,
+    ndkJniDirectoryName := DefaultJniDirectoryName,
+    ndkObjDirectoryName := DefaultObjDirectoryName,
     ndkEnvs := DefaultEnvs,
+
     javahName := "javah",
     javahOutputEnv := DefaultJavahOutputEnv,
     javahOutputFile := None
     ))
 
-  // ndk-related paths
+  /**
+   * NDK-related paths
+   */
   lazy val pathSettings: Seq[Setting[_]] = inConfig(Android) (Seq (
-    jniSourcePath <<= (sourceDirectory, jniDirectoryName) (_ / _),
-    nativeOutputPath <<= (jniSourcePath) (_.getParentFile),
-    nativeObjectPath <<= (nativeOutputPath, objDirectoryName) (_ / _),
+    ndkJniSourcePath <<= (baseDirectory, ndkJniDirectoryName) (_ / _),
+    ndkNativeOutputPath <<= (ndkJniSourcePath) (_.getParentFile),
+    ndkNativeObjectPath <<= (ndkNativeOutputPath, ndkObjDirectoryName) (_ / _),
     ndkBuildPath <<= (ndkEnvs, ndkBuildName) { (envs, ndkBuildName) =>
       val paths = for {
 	    e <- envs
@@ -118,13 +123,13 @@ object AndroidNdk {
   }
 
   private def ndkBuildTask(targets: String*) =
-    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, nativeOutputPath, streams) map {
+    (ndkBuildPath, javahOutputEnv, javahOutputDirectory, ndkNativeOutputPath, streams) map {
     (ndkBuildPath, javahOutputEnv, javahOutputDirectory, obj, s) =>
       val ndkBuild = ndkBuildPath.absolutePath :: "-C" :: obj.absolutePath ::
           (javahOutputEnv + "=" + javahOutputDirectory.absolutePath) :: targets.toList
       s.log.debug("Running ndk-build: " + ndkBuild.mkString(" "))
       val exitValue = ndkBuild.run(false).exitValue
-      if(exitValue != 0) sys.error("ndk-build failed with nonzero exit code (" + exitValue + ")")
+      if (exitValue != 0) sys.error("ndk-build failed with nonzero exit code (" + exitValue + ")")
       ()
     }
 
@@ -150,14 +155,17 @@ object AndroidNdk {
           javahOutputDirectory, javahOutputFile,
           streams)
     	),
+
     ndkBuild <<= ndkBuildTask(),
     ndkBuild <<= ndkBuild.dependsOn(javah),
     ndkClean <<= ndkBuildTask("clean"),
+
     jniClasses := Seq.empty,
     (products in Compile) <<= (products in Compile).dependsOn(ndkBuild),
     javahClean <<= (javahOutputDirectory) map IO.delete
+
   )) ++ Seq (
-    cleanFiles <+= (nativeObjectPath in Android),
+    cleanFiles <+= (ndkNativeObjectPath in Android),
     clean <<= clean.dependsOn(ndkClean in Android, javahClean in Android)
   )
 }

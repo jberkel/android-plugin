@@ -3,15 +3,40 @@ package org.scalasbt.androidplugin
 import sbt._
 import Keys._
 
-import AndroidKeys._
+import AndroidPlugin._
 
 object AndroidHelpers {
 
   def directory(path: SettingKey[File]) = path map (IO.createDirectory(_))
 
-  def determineAndroidSdkPath(es: Seq[String]) = {
-    val paths = for ( e <- es; p = System.getenv(e); if p != null) yield p
-    if (paths.isEmpty) None else Some(Path(paths.head).asFile)
+  /**
+   * Finds out where the Android SDK is located on your system, based on :
+   *   * Environment variables
+   *   * The local.properties files
+   */
+  def determineAndroidSdkPath(envs: Seq[String], dir: File): File = {
+    // Try to find the SDK path in the default environment variables
+    val paths = for ( e <- envs; p = System.getenv(e); if p != null) yield p
+    if (!paths.isEmpty) Path(paths.head).asFile
+
+    // If not found, try to read the `local.properties` file
+    else {
+      val local = new File(dir, "local.properties")
+      if (local.exists()) {
+        (for (sdkDir <- (for (l <- IO.readLines(local);
+             if (l.startsWith("sdk.dir")))
+             yield l.substring(l.indexOf('=')+1)))
+             yield new File(sdkDir)).headOption.getOrElse(
+              sys.error("local.properties did not contain sdk.dir")
+             )
+
+      // If nothing is found either, display an error
+      } else {
+        sys.error(
+          "Android SDK not found. You might need to set %s".format(envs.mkString(" or "))
+        )
+      }
+    }
   }
 
   def isWindows = System.getProperty("os.name").startsWith("Windows")

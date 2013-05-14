@@ -5,7 +5,7 @@ import complete.Parser
 import Keys._
 import complete.DefaultParsers._
 
-import AndroidKeys._
+import AndroidPlugin._
 
 import com.android.ddmlib.AndroidDebugBridge
 import com.android.ddmlib.AndroidDebugBridge.IClientChangeListener

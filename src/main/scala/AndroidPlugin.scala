@@ -1,14 +1,50 @@
 package org.scalasbt.androidplugin
 
 import sbt._
-
 import Keys._
 
-/*!# Android Keys
-`AndroidKeys` contains all the `SettingKey`s and `TaskKey`s for a standard
-Android project.
- */
-object AndroidKeys {
+import AndroidHelpers.isWindows
+
+import complete.DefaultParsers._
+
+object AndroidPlugin extends Plugin {
+
+  /***************************
+   * Default plugin settings *
+   ***************************/
+
+  // Base Android settings for standard projects
+  lazy val androidDefaultSetup: Seq[Setting[_]] =
+    AndroidBase.settings ++
+    AndroidPreload.settings ++
+    AndroidInstall.settings ++
+    AndroidLaunch.settings ++
+    AndroidDdm.settings
+
+  // Test settings
+  lazy val androidTestSettings: Seq[Setting[_]] =
+    AndroidBase.settings ++
+    AndroidPreload.settings ++
+    AndroidInstall.settings ++
+    AndroidTest.settings ++
+    AndroidDdm.settings
+
+  lazy val androidNdkSetup: Seq[Setting[_]] =
+    AndroidNdk.settings
+
+  lazy val androidTRSetup: Seq[Setting[_]] =
+    TypedResources.settings
+
+  // Android SDK and emulator tasks/settings will be automatically loaded
+  // for every project.
+  override lazy val settings: Seq[Setting[_]] =
+    AndroidSDK.settings ++ AndroidEmulator.settings
+
+
+  /**********************
+   * Public plugin keys *
+   **********************/
+
   val Android= config("android") extend (Compile)
 
   /** User Defines */
@@ -170,6 +206,15 @@ object AndroidKeys {
     "Sign with key alias using key-alias and keystore path.")
   val cleanAligned = TaskKey[Unit]("clean-aligned", "Remove zipaligned jar")
 
+  /** Emulator/AVDs/ADB controls **/
+  val emulatorStart = InputKey[Unit]("emulator-start",
+    "Launches a user specified avd")
+  val emulatorStop = TaskKey[Unit]("emulator-stop",
+    "Kills the running emulator.")
+  val listDevices = TaskKey[Unit]("list-devices",
+    "List devices from the adb server.")
+  val killAdb = TaskKey[Unit]("kill-server",
+    "Kill the adb server if it is running.")
 
   /** TypedResources Task */
   val generateTypedResources = TaskKey[Seq[File]]("generate-typed-resources",
@@ -187,11 +232,6 @@ object AndroidKeys {
   val testDevice       = TaskKey[Unit]("test-device",   "runs tests on device")
   val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
   val testOnlyDevice   = InputKey[Unit]("test-only-device",   "run a single test on device")
-
-  /** Github tasks & keys */
-  val uploadGithub = TaskKey[Option[String]]("github-upload", "Upload file to github")
-  val deleteGithub = TaskKey[Unit]("github-delete", "Delete file from github")
-  val githubRepo   = SettingKey[String]("github-repo", "Github repo")
 
   val cachePasswords = SettingKey[Boolean]("cache-passwords", "Cache passwords")
   val clearPasswords = TaskKey[Unit]("clear-passwords", "Clear cached passwords")
@@ -213,4 +253,41 @@ object AndroidKeys {
   /** Use preloaded Scala for development **/
   val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala",
     "If true, will preload the current Scala version on the device or emulator and use it for development")
+
+  /********************
+   * Android NDK keys *
+   ********************/
+
+  val ndkBuildName = SettingKey[String]("ndk-build-name", "Name for the 'ndk-build' tool")
+  val ndkBuildPath = SettingKey[File]("ndk-build-path", "Path to the 'ndk-build' tool")
+
+  val ndkJniDirectoryName = SettingKey[String]("ndk-jni-directory-name", "Directory name for native sources.")
+  val ndkObjDirectoryName =  SettingKey[String]("ndk-obj-directory-name", "Directory name for compiled native objects.")
+  val ndkEnvs = SettingKey[Seq[String]]("ndk-envs", "List of environment variables to check for the NDK.")
+
+  val ndkJniSourcePath = SettingKey[File]("jni-source-path", "Path to native sources. (with Android.mk)")
+  val ndkNativeOutputPath = SettingKey[File]("native-output-path", "NDK output path")
+  val ndkNativeObjectPath = SettingKey[File]("native-object-path", "Path to the compiled native objects")
+
+  val ndkBuild = TaskKey[Unit]("ndk-build", "Compile native C/C++ sources.")
+  val ndkClean = TaskKey[Unit]("ndk-clean", "Clean resources built from native C/C++ sources.")
+
+  /**************
+   * Javah keys *
+   **************/
+
+  val javahName = SettingKey[String]("javah-name", "The name of the javah command for generating JNI headers")
+  val javahPath = SettingKey[String]("javah-path", "The path to the javah executable")
+  val javah = TaskKey[Unit]("javah", "Produce C headers from Java classes with native methods")
+  val javahClean = TaskKey[Unit]("javah-clean", "Clean C headers built from Java classes with native methods")
+
+  val javahOutputDirectory = SettingKey[File]("javah-output-directory",
+      "The directory where JNI headers are written to.")
+  val javahOutputFile = SettingKey[Option[File]]("javah-output-file",
+      "filename for the generated C header, relative to javah-output-directory")
+  val javahOutputEnv = SettingKey[String]("javah-output-env",
+      "Name of the make environment variable to bind to the javah-output-directory")
+
+  val jniClasses = SettingKey[Seq[String]]("jni-classes",
+      "Fully qualified names of classes with native methods for which JNI headers are to be generated.")
 }

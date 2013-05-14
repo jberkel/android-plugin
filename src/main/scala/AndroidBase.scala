@@ -5,7 +5,7 @@ import sbt._
 import scala.xml._
 
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
 
 import sbinary.DefaultProtocol.StringFormat
@@ -197,8 +197,8 @@ object AndroidBase {
     packageApkPath <<= (target, packageApkName) map (_ / _),
     packageApkLibName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apklib", a.name, v)),
     packageApkLibPath <<= (target, packageApkLibName) map (_ / _),
-    manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
 
+    manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
     manifestPackage <<= findPath,
     manifestPackageName <<= findPath storeAs manifestPackageName triggeredBy manifestPath,
 
@@ -210,6 +210,7 @@ object AndroidBase {
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
+
     managedJavaPath <<= (sourceManaged in Compile) (_ / "java"),
     managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
     managedNativePath <<= (sourceManaged in Compile) (_ / "native_libs"),

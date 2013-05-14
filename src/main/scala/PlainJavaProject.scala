@@ -2,7 +2,7 @@ package org.scalasbt.androidplugin
 
 import sbt._
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 
 /** Some sensible defaults for building java projects with the plugin */
 object PlainJavaProject {

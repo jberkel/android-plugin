@@ -2,7 +2,7 @@ package org.scalasbt.androidplugin
 
 import sbt._
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
 
 object AndroidPreload {
@@ -317,11 +317,11 @@ object AndroidPreload {
     // Preload Scala on the device/emulator
     preloadDevice <<= preloadDeviceTask,
     preloadEmulator <<= InputTask(
-      (sdkPath)(AndroidProject.installedAvds(_)))(preloadEmulatorTask),
+      (sdkPath)(AndroidEmulator.installedAvds(_)))(preloadEmulatorTask),
 
     // Uninstall previously preloaded Scala
     unloadDevice <<= unloadDeviceTask,
     unloadEmulator <<= InputTask(
-      (sdkPath)(AndroidProject.installedAvds(_)))(unloadEmulatorTask)
+      (sdkPath)(AndroidEmulator.installedAvds(_)))(unloadEmulatorTask)
   ))
 }

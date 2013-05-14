@@ -5,7 +5,7 @@ import proguard.{Configuration=>ProGuardConfiguration, ProGuard, ConfigurationPa
 
 import sbt._
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
 
 import java.io.{File => JFile}

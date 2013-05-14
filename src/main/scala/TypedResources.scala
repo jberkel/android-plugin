@@ -5,7 +5,7 @@ import classpath._
 import scala.xml._
 
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 
 object TypedResources {
   private def generateTypedResourcesTask =

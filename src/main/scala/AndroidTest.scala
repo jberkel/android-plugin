@@ -3,7 +3,7 @@ package org.scalasbt.androidplugin
 import sbt._
 import Keys._
 
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
 import complete.DefaultParsers._
 import complete.Parser
