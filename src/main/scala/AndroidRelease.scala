@@ -3,9 +3,9 @@ package sbtandroid
 import sbt._
 
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 
-object AndroidMarketPublish {
+object AndroidRelease {
 
   def zipAlignTask: Project.Initialize[Task[File]] =
     (zipAlignPath, packageApkPath, packageAlignedPath, streams) map { (zip, apkPath, pPath, s) =>
@@ -43,29 +43,29 @@ object AndroidMarketPublish {
       pPath
     }
 
-  private def prepareMarketTask = (packageAlignedPath, streams) map { (path, s) =>
+  private def releaseTask = (packageAlignedPath, streams) map { (path, s) =>
     s.log.success("Ready for publication: \n" + path)
     path
   }
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
+  lazy val settings: Seq[Setting[_]] = (Seq(
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
     packageAlignedName <<= (artifact, versionName) map ((a,v) =>
-                                                String.format("%s-%s-market.apk", a.name, v)),
+                                                String.format("%s-signed-%s.apk", a.name, v)),
     packageAlignedPath <<= (target, packageAlignedName) map ( _ / _ ),
 
     // Configuring Tasks
     cleanAligned <<= (packageAlignedPath) map (IO.delete(_)),
 
-    prepareMarket <<= prepareMarketTask,
-    prepareMarket <<= prepareMarket dependsOn zipAlign,
+    release <<= releaseTask,
+    release <<= release dependsOn zipAlign,
 
     zipAlign <<= zipAlignTask,
     zipAlign <<= zipAlign dependsOn (signRelease, cleanAligned),
 
     signRelease <<= signReleaseTask,
-    signRelease <<= signRelease dependsOn packageRelease
+    signRelease <<= signRelease dependsOn apk
   ))
 }

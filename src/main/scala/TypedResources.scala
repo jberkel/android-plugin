@@ -5,7 +5,7 @@ import classpath._
 import scala.xml._
 
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 
 object TypedResources {
   private def generateTypedResourcesTask =
@@ -108,7 +108,7 @@ object TypedResources {
         Seq(typedResource)
     }
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
+  lazy val settings: Seq[Setting[_]] = (Seq (
     typedResource <<= (manifestPackage, managedScalaPath) map {
       _.split('.').foldLeft(_) ((p, s) => p / s) / "TR.scala"
     },
@@ -116,9 +116,7 @@ object TypedResources {
 
     generateTypedResources <<= generateTypedResourcesTask,
 
-    sourceGenerators in Compile <+= generateTypedResources,
-    watchSources in Compile <++= (layoutResources) map (ls => ls)
-  )) ++ Seq (
-    generateTypedResources <<= (generateTypedResources in Android)
-  )
+    sourceGenerators <+= generateTypedResources,
+    watchSources <++= (layoutResources) map (ls => ls)
+  ))
 }

@@ -8,15 +8,24 @@ import scala.xml.Node
 import sbt._
 import Keys._
 
-import AndroidKeys._
+import AndroidPlugin._
 
 object Github {
   val gitConfig = new File(System.getenv("HOME"), ".gitconfig")
   val apkMime = "application/vnd.android.package-archive"
   val gitDownloads = "https://api.github.com/repos/%s/downloads"
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
-    uploadGithub <<= (prepareMarket, githubRepo, cachePasswords, streams) map { (path, repo, cache, s) =>
+  /** Github keys **/
+  object Keys {
+    val uploadGithub = TaskKey[Option[String]]("github-upload", "Upload file to github")
+    val deleteGithub = TaskKey[Unit]("github-delete", "Delete file from github")
+    val githubRepo   = SettingKey[String]("github-repo", "Github repo")
+  }
+
+  import Keys._
+
+  lazy val settings: Seq[Setting[_]] = (Seq (
+    uploadGithub <<= (release, githubRepo, cachePasswords, streams) map { (path, repo, cache, s) =>
       val (user, password) = credentials(cache)
       upload(Upload(path, "", apkMime), user, password, repo, s)
     },
