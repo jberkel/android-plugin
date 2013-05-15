@@ -35,6 +35,9 @@ object AndroidPlugin extends Plugin {
   lazy val androidTRSetup: Seq[Setting[_]] =
     TypedResources.settings
 
+  lazy val androidAutoManifestSetup: Seq[Setting[_]] =
+    AndroidAutoManifest.settings
+
   // Android SDK and emulator tasks/settings will be automatically loaded
   // for every project.
   override lazy val settings: Seq[Setting[_]] =
