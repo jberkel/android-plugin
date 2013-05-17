@@ -265,7 +265,11 @@ object AndroidBase {
 
     resourceDirectories <+= (mainAssetsPath),
 
-    cachePasswords := false
+    cachePasswords := false,
+
+    // Auto-manifest settings
+    manifestRewriteRules := Seq.empty
+
   ) ++ Seq (
     // Handle the delegates for android settings
     classDirectory <<= (classDirectory in Compile),

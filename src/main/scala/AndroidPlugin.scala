@@ -4,8 +4,8 @@ import sbt._
 import Keys._
 
 import AndroidHelpers.isWindows
-
 import complete.DefaultParsers._
+import scala.xml.transform.RewriteRule
 
 object AndroidPlugin extends Plugin {
 
@@ -16,33 +16,30 @@ object AndroidPlugin extends Plugin {
   // Base Android settings for standard projects
   lazy val androidDefaultSetup: Seq[Setting[_]] =
     AndroidBase.settings ++
+    AndroidManifestGenerator.settings ++
     AndroidPreload.settings ++
     AndroidInstall.settings ++
     AndroidLaunch.settings ++
-    AndroidDdm.settings
+    AndroidDdm.settings ++
+    TypedResources.settings
 
   // Test settings
   lazy val androidTestSettings: Seq[Setting[_]] =
     AndroidBase.settings ++
+    AndroidManifestGenerator.settings ++
     AndroidPreload.settings ++
     AndroidInstall.settings ++
     AndroidTest.settings ++
-    AndroidDdm.settings
+    AndroidDdm.settings ++
+    TypedResources.settings
 
   lazy val androidNdkSetup: Seq[Setting[_]] =
     AndroidNdk.settings
-
-  lazy val androidTRSetup: Seq[Setting[_]] =
-    TypedResources.settings
-
-  lazy val androidAutoManifestSetup: Seq[Setting[_]] =
-    AndroidAutoManifest.settings
 
   // Android SDK and emulator tasks/settings will be automatically loaded
   // for every project.
   override lazy val settings: Seq[Setting[_]] =
     AndroidSDK.settings ++ AndroidEmulator.settings
-
 
   /**********************
    * Public plugin keys *
@@ -134,10 +131,6 @@ object AndroidPlugin extends Plugin {
   val zipAlignPath = SettingKey[File]("zip-align-path", "Path to zipalign")
   val packageAlignedName = TaskKey[String]("package-aligned-name")
   val packageAlignedPath = TaskKey[File]("package-aligned-path")
-
-  /** Manifest Generator */
-  val manifestTemplateName = SettingKey[String]("manifest-template-name")
-  val manifestTemplatePath = SettingKey[File]("manifest-template-path")
 
   /** Base Tasks */
   case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
@@ -293,4 +286,13 @@ object AndroidPlugin extends Plugin {
 
   val jniClasses = SettingKey[Seq[String]]("jni-classes",
       "Fully qualified names of classes with native methods for which JNI headers are to be generated.")
+
+  /*****************
+   * Auto-Manifest *
+   *****************/
+
+  val manifestTemplateName = SettingKey[String]("manifest-template-name")
+  val manifestTemplatePath = SettingKey[File]("manifest-template-path")
+  val manifestRewriteRules = TaskKey[Seq[RewriteRule]]("manifest-rewrite-rules",
+    "Rules for transforming the contents of AndroidManifest.xml based on the project state and settings.")
 }
