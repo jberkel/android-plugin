@@ -343,9 +343,6 @@ object AndroidPreload {
    *************************/
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
-    // By default, don't use the preloaded library
-    usePreloadedScala := false,
-
     // Automatically take care of AndroidManifest.xml when needed
     manifestRewriteRules <+= (usePreloadedScala, scalaInstance) map
       { (u, s) => UsesLibraryRule(u, s.version) },

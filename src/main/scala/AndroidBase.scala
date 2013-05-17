@@ -221,8 +221,6 @@ object AndroidBase {
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
-    useProguard := true,
-    skipScalaLibrary := false,
     proguardOptimizations := Seq.empty,
 
     buildConfigDebug := false,

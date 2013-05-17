@@ -13,8 +13,28 @@ object AndroidPlugin extends Plugin {
    * Default plugin settings *
    ***************************/
 
-  // Base Android settings for standard projects
-  lazy val androidDefaultSetup: Seq[Setting[_]] =
+  // Default Android settings for standard projects
+  // Standard presets :
+  //
+  //  * androidDevelopment:
+  //        Does not include the Scala library, skips Proguard,
+  //        predexes external libraries and automatically sets
+  //        AndroidManifest.xml to require a preloaded Scala library.
+  //
+  //        NOTE: The generated APK will NOT be compatible with stock devices
+  //              without a preloaded Scala library!
+  //
+  //  * androidDebug: Will generate a debug APK compatible with stock Android devices.
+  //  * androidRelease: Will generate a realeas APK compatible with stock Android devices.
+  //
+  // Advanced presets :
+  //
+  //  * androidDefaults: Base for all the other presets
+  //  * androidTest: Additional settings for test projects
+  //  * androidNdk: Additional settings for projects using the NDK
+
+  // Base defaults
+  lazy val androidDefaults: Seq[Setting[_]] =
     AndroidBase.settings ++
     AndroidManifestGenerator.settings ++
     AndroidPreload.settings ++
@@ -23,17 +43,39 @@ object AndroidPlugin extends Plugin {
     AndroidDdm.settings ++
     TypedResources.settings
 
-  // Test settings
-  lazy val androidTestSettings: Seq[Setting[_]] =
-    AndroidBase.settings ++
-    AndroidManifestGenerator.settings ++
-    AndroidPreload.settings ++
-    AndroidInstall.settings ++
-    AndroidTest.settings ++
-    AndroidDdm.settings ++
-    TypedResources.settings
+  // Development settings
+  lazy val androidDevelopment: Seq[Setting[_]] =
+    androidDefaults ++ Seq(
+      useProguard := false,
+      usePreloadedScala := true,
+      skipScalaLibrary := true,
+      predexLibraries := true
+    )
 
-  lazy val androidNdkSetup: Seq[Setting[_]] =
+  // Debug settings
+  lazy val androidDebug: Seq[Setting[_]] =
+    androidDefaults ++ Seq(
+      useProguard := true,
+      usePreloadedScala := false,
+      skipScalaLibrary := false,
+      predexLibraries := true
+    )
+
+  // Release settings
+  lazy val androidRelease: Seq[Setting[_]] =
+    androidDefaults ++ Seq(
+      useProguard := true,
+      usePreloadedScala := false,
+      skipScalaLibrary := false,
+      predexLibraries := true
+    )
+
+  // Test settings
+  lazy val androidTest: Seq[Setting[_]] =
+    AndroidTest.settings
+
+  // NDK settings
+  lazy val androidNdk: Seq[Setting[_]] =
     AndroidNdk.settings
 
   // Android SDK and emulator tasks/settings will be automatically loaded
