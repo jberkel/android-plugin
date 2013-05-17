@@ -96,9 +96,9 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) map {
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, target) map {
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption) =>
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, target) =>
       if (useProguard) {
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
@@ -110,15 +110,20 @@ object AndroidInstall {
                        .filter(!skipScalaLibrary || _ != scalaInstance.libraryJar)
                        .map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
 
+          val targetConfiguration = (target / "proguard.txt").toString
+
           val args = (
                  "-injars" :: inJars.mkString(sep) ::
                  "-outjars" :: "\""+classesMinJarPath.absolutePath+"\"" ::
                  "-libraryjars" :: libraryJarPath.map("\""+_+"\"").mkString(sep) ::
                  Nil) ++
                  optimizationOptions ++ (
+                 "-printconfiguration " + targetConfiguration ::
                  "-dontwarn" :: "-dontobfuscate" ::
                  "-dontnote scala.Enumeration" ::
                  "-dontnote org.xml.sax.EntityResolver" ::
+                 "-keep class scala.collection.SeqLike { public java.lang.String toString(); }" ::
+                 "-keep class scala.reflect.ScalaSignature" ::
                  "-keep public class * extends android.app.Activity" ::
                  "-keep public class * extends android.app.Service" ::
                  "-keep public class * extends android.app.backup.BackupAgent" ::
@@ -127,7 +132,7 @@ object AndroidInstall {
                  "-keep public class * extends android.content.ContentProvider" ::
                  "-keep public class * extends android.view.View" ::
                  "-keep public class * extends android.app.Application" ::
-                 "-keep public class "+manifestPackage+".** { public protected *; }" ::
+                 "-keep public class "+manifestPackage+".** { *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
                  """
                   -keepclassmembers class * implements java.io.Serializable {
@@ -141,7 +146,8 @@ object AndroidInstall {
                  proguardOption :: Nil )
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String], new Properties).parse(config)
-          streams.log.debug("executing proguard: "+args.mkString("\n"))
+          streams.log.info("Executing Proguard (configuration written to " + targetConfiguration + ")")
+          streams.log.debug("Proguard configuration: "+args.mkString("\n"))
           new ProGuard(config).execute
           Some(classesMinJarPath)
       } else {
