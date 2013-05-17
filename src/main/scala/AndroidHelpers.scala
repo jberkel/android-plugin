@@ -48,9 +48,15 @@ object AndroidHelpers {
     if (isWindows) "" else javaOpts
   }
 
+  /**
+   * Retrieves an attribute from the AndroidManifest.xml file
+   */
   def usesSdk(mpath: File, schema: String, key: String) =
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
+  /**
+   * Returns a task that only runs an ADB commond
+   */
   def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
     val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
 
@@ -66,6 +72,9 @@ object AndroidHelpers {
     out.toString
   }
 
+  /**
+   * Runs an ADB command
+   */
   def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
     val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
     s.log.debug(adb.mkString(" "))
@@ -78,6 +87,9 @@ object AndroidHelpers {
     (exit, out.toString)
   }
 
+  /**
+   * Returns a task for starting the app on a given device/emulator
+   */
   def startTask(emulator: Boolean) =
     (dbPath, manifestSchema, manifestPackage, manifestPath, streams) map {
       (dp, schema, mPackage, amPath, s) =>
@@ -88,6 +100,9 @@ object AndroidHelpers {
               launcherActivity(schema, amPath.head, mPackage))
   }
 
+  /**
+   * Returns the name of the app's main activity.
+   */
   def launcherActivity(schema: String, amPath: File, mPackage: String) = {
     val launcher = for (
          activity <- (manifest(amPath) \\ "activity");
@@ -103,6 +118,8 @@ object AndroidHelpers {
     launcher.headOption.getOrElse("")
   }
 
+  /**
+   * Loads the AndroidManifest.xml file at path `mpath`
+   */
   def manifest(mpath: File) = xml.XML.loadFile(mpath)
-
 }
