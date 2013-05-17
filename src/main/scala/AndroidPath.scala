@@ -15,9 +15,13 @@ object AndroidPath {
     toolsPath <<= (sdkPath) (_ / "tools"),
     dbPath <<= (platformToolsPath, adbName) (_ / _),
     platformToolsPath <<= (sdkPath) (_ / "platform-tools"),
-    aaptPath <<= (platformToolsPath, aaptName) (_ / _),
-    idlPath <<= (platformToolsPath, aidlName) (_ / _),
-    dxPath <<= (platformToolsPath, osDxName) (_ / _),
+    buildToolsPath <<= (sdkPath, platformToolsPath, buildToolsVersion) { (sdkPath, platformToolsPath, buildToolsVersion) =>
+      val btp = sdkPath / "build-tools"
+      if (btp.exists()) (btp / buildToolsVersion) else platformToolsPath
+    },
+    aaptPath <<= (buildToolsPath, aaptName) (_ / _),
+    idlPath <<= (buildToolsPath, aidlName) (_ / _),
+    dxPath <<= (buildToolsPath, osDxName) (_ / _),
 
     sdkPath <<= (envs, baseDirectory) { (es, dir) =>
       determineAndroidSdkPath(es).getOrElse {
