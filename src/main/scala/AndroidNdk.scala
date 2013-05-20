@@ -31,7 +31,7 @@ object AndroidNdk {
   /**
    * Default NDK settings
    */
-  lazy val defaultSettings: Seq[Setting[_]] = inConfig(Android) (Seq (
+  lazy val defaultSettings: Seq[Setting[_]] = (Seq (
     ndkBuildName := DefaultNdkBuildName,
     ndkJniDirectoryName := DefaultJniDirectoryName,
     ndkObjDirectoryName := DefaultObjDirectoryName,
@@ -45,8 +45,8 @@ object AndroidNdk {
   /**
    * NDK-related paths
    */
-  lazy val pathSettings: Seq[Setting[_]] = inConfig(Android) (Seq (
-    ndkJniSourcePath <<= (baseDirectory, ndkJniDirectoryName) (_ / _),
+  lazy val pathSettings: Seq[Setting[_]] = (Seq (
+    ndkJniSourcePath <<= (sourceDirectory, ndkJniDirectoryName) (_ / _),
     ndkNativeOutputPath <<= (ndkJniSourcePath) (_.getParentFile),
     ndkNativeObjectPath <<= (ndkNativeOutputPath, ndkObjDirectoryName) (_ / _),
     ndkBuildPath <<= (ndkEnvs, ndkBuildName) { (envs, ndkBuildName) =>
@@ -133,11 +133,11 @@ object AndroidNdk {
       ()
     }
 
-  lazy val settings: Seq[Setting[_]] = defaultSettings ++ pathSettings ++ inConfig(Android) (Seq (
+  lazy val settings: Seq[Setting[_]] = defaultSettings ++ pathSettings ++ (Seq (
     javah <<= (
-        (compile in Compile),
+        (compile),
         javahPath,
-        (classDirectory in Compile), (internalDependencyClasspath in Compile), (externalDependencyClasspath in Compile),
+        (classDirectory), (internalDependencyClasspath), (externalDependencyClasspath),
         jniClasses,
         javahOutputDirectory, javahOutputFile,
         streams) map ((
@@ -161,11 +161,11 @@ object AndroidNdk {
     ndkClean <<= ndkBuildTask("clean"),
 
     jniClasses := Seq.empty,
-    (products in Compile) <<= (products in Compile).dependsOn(ndkBuild),
+    (products) <<= (products).dependsOn(ndkBuild),
     javahClean <<= (javahOutputDirectory) map IO.delete
 
   )) ++ Seq (
-    cleanFiles <+= (ndkNativeObjectPath in Android),
-    clean <<= clean.dependsOn(ndkClean in Android, javahClean in Android)
+    cleanFiles <+= (ndkNativeObjectPath),
+    clean <<= clean.dependsOn(ndkClean, javahClean)
   )
 }

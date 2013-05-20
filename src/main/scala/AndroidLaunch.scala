@@ -35,7 +35,7 @@ object AndroidLaunch {
 
   lazy val settings: Seq[Setting[_]] =
     AndroidInstall.settings ++
-    inConfig(Android) (Seq (
+    (Seq (
       startDevice <<= startTask(false),
       startEmulator <<= startTask(true),
 

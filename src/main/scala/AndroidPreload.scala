@@ -342,7 +342,7 @@ object AndroidPreload {
    * Insert tasks into SBT *
    *************************/
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
+  lazy val settings: Seq[Setting[_]] = (Seq(
     // Automatically take care of AndroidManifest.xml when needed
     manifestRewriteRules <+= (usePreloadedScala, scalaInstance) map
       { (u, s) => UsesLibraryRule(u, s.version) },

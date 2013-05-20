@@ -48,7 +48,7 @@ object AndroidMarketPublish {
     path
   }
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
+  lazy val settings: Seq[Setting[_]] = (Seq(
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },

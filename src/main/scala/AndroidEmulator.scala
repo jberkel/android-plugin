@@ -38,20 +38,17 @@ object AndroidEmulator {
                  .reduceLeftOption(_ | _).getOrElse(token("none"))
   }
 
-  lazy val baseSettings: Seq[Setting[_]] = inConfig(Android) (Seq(
+  lazy val baseSettings: Seq[Setting[_]] = (Seq(
     listDevices <<= listDevicesTask,
     killAdb <<= killAdbTask,
     emulatorStart <<= InputTask((sdkPath)(installedAvds(_)))(emulatorStartTask),
     emulatorStop <<= emulatorStopTask
-  )) ++ Seq(
-    listDevices <<= (listDevices in Android)
-  )
+  ))
 
   lazy val aggregateSettings: Seq[Setting[_]] = Seq(
     listDevices,
-    listDevices in Android,
-    emulatorStart in Android,
-    emulatorStop in Android
+    emulatorStart,
+    emulatorStop
   ) map { aggregate in _ := false }
 
   lazy val settings: Seq[Setting[_]] = baseSettings ++ aggregateSettings

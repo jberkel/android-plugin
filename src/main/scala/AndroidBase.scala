@@ -21,7 +21,7 @@ object AndroidBase {
   }
 
   def copyNativeLibrariesTask =
-    (streams, managedNativePath, dependencyClasspath in Compile) map {
+    (streams, managedNativePath, dependencyClasspath) map {
     (s, natives, deps) => {
       val sos = (deps.map(_.data)).filter(_.name endsWith ".so")
       var copied = Seq.empty[File]
@@ -75,7 +75,7 @@ object AndroidBase {
     }
 
   private def apklibDependenciesTask =
-    (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
+    (update, sourceManaged, managedJavaPath, resourceManaged, streams) map {
     (updateReport, srcManaged, javaManaged, resManaged, s) => {
 
       val apklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
@@ -190,7 +190,7 @@ object AndroidBase {
       manifest(p.head).attribute("package").getOrElse(sys.error("package not defined")).text
   }
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
+  lazy val settings: Seq[Setting[_]] = (Seq (
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
 
     packageApkName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apk", a.name, v)),
@@ -211,9 +211,9 @@ object AndroidBase {
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
 
-    managedJavaPath <<= (sourceManaged in Compile) (_ / "java"),
-    managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
-    managedNativePath <<= (sourceManaged in Compile) (_ / "native_libs"),
+    managedJavaPath <<= (sourceManaged) (_ / "java"),
+    managedScalaPath <<= (sourceManaged) ( _ / "scala"),
+    managedNativePath <<= (sourceManaged) (_ / "native_libs"),
 
     extractApkLibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
@@ -233,7 +233,7 @@ object AndroidBase {
         (libPath, classDirectory, resourceDirectory) =>
           libPath :+ classDirectory :+ resourceDirectory
     },
-    proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules, classpathTypes in Compile) map {
+    proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules, classpathTypes) map {
       (fullClasspath, proguardExclude, preinstalledModules, classpathTypes) =>
        // remove preinstalled jars
        fullClasspath.filterNot( cp =>
@@ -250,34 +250,24 @@ object AndroidBase {
     makeManagedJavaPath <<= directory(managedJavaPath),
 
     copyNativeLibraries <<= copyNativeLibrariesTask,
-    classpathTypes in Compile := Set("jar", "bundle", "so"),
 
     apklibSources <<= apklibSourcesTask,
     aaptGenerate <<= aaptGenerateTask,
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
-    unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
-
-    sourceGenerators in Compile <+= (apklibSources, aaptGenerate, aidlGenerate) map (_ ++ _ ++ _),
+    unmanagedJars <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
+    classpathTypes := Set("jar", "bundle", "so"),
+    sourceGenerators <+= (apklibSources, aaptGenerate, aidlGenerate) map (_ ++ _ ++ _),
 
     resourceDirectories <+= (mainAssetsPath),
 
     cachePasswords := false,
 
     // Auto-manifest settings
-    manifestRewriteRules := Seq.empty
+    manifestRewriteRules := Seq.empty,
 
-  ) ++ Seq (
-    // Handle the delegates for android settings
-    classDirectory <<= (classDirectory in Compile),
-    sourceDirectory <<= (sourceDirectory in Compile),
-    sourceDirectories <<= (sourceDirectories in Compile),
-    resourceDirectory <<= (resourceDirectory in Compile),
-    resourceDirectories <<= (resourceDirectories in Compile),
-    javaSource <<= (javaSource in Compile),
-    scalaSource <<= (scalaSource in Compile),
-    managedClasspath <<= (managedClasspath in Runtime),
-    fullClasspath <<= (fullClasspath in Runtime)
+    // Migrate source directories
+    sourceDirectory <<= sourceDirectory in Compile
   ))
 }

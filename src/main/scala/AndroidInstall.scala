@@ -96,7 +96,7 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, resourceManaged in Compile) map {
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, resourceManaged) map {
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
      classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, resourceManaged) =>
       if (useProguard) {
@@ -168,7 +168,7 @@ object AndroidInstall {
     installDevice <<= installTask(emulator = false) dependsOn packageDebug
   )
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (installerTasks ++ Seq (
+  lazy val settings: Seq[Setting[_]] = (installerTasks ++ Seq (
     uninstallEmulator <<= uninstallTask(emulator = true),
     uninstallDevice <<= uninstallTask(emulator = false),
 
@@ -195,7 +195,7 @@ object AndroidInstall {
     cleanApk <<= (packageApkPath) map (IO.delete(_)),
 
     proguard <<= proguardTask,
-    proguard <<= proguard dependsOn (compile in Compile),
+    proguard <<= proguard dependsOn (compile),
 
     packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, classesDexPath,

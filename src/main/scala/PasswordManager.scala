@@ -6,7 +6,7 @@ import Keys._
 import AndroidPlugin._
 
 object PasswordManager extends PWManager {
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
+  lazy val settings: Seq[Setting[_]] = (Seq (
     clearPasswords <<= (streams) map { (s) =>
       clear()
       s.log.success("cleared passwords")

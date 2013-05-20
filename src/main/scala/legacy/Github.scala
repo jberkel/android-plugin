@@ -25,7 +25,7 @@ object Github {
 
   import Keys._
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
+  lazy val settings: Seq[Setting[_]] = (Seq (
     uploadGithub <<= (prepareMarket, githubRepo, cachePasswords, streams) map { (path, repo, cache, s) =>
       val (user, password) = credentials(cache)
       upload(Upload(path, "", apkMime), user, password, repo, s)

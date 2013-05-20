@@ -2,6 +2,7 @@ package org.scalasbt.androidplugin
 
 import sbt._
 import Keys._
+import Defaults._
 
 import AndroidHelpers.isWindows
 import complete.DefaultParsers._
@@ -77,6 +78,32 @@ object AndroidPlugin extends Plugin {
   // NDK settings
   lazy val androidNdk: Seq[Setting[_]] =
     AndroidNdk.settings
+
+  /**
+   * Configures a specific configuration to use SBT-Android.
+   *
+   * Example use:
+   *
+   *   One build type, development mode:
+   *     Project("main", file(".")).settings(androidConfigure(androidDevelopment))
+   *
+   *   One development build and one release build:
+   */
+  def androidConfigure(androidSettings: Seq[Setting[_]], configuration: Configuration = Compile) = {
+    inConfig(configuration) {
+      // First, setup the configuration
+      (
+        // If the configuration is Compile, no need to do anything
+        if (configuration == Compile) Seq.empty
+
+        // If the configuration is anything else, we import the default
+        // configuration tasks and settings (compile, run, sourceDirectory,...)
+        else configSettings
+
+      // And, last, add the Android settings
+      ) ++ androidSettings
+    }
+  }
 
   // Android SDK and emulator tasks/settings will be automatically loaded
   // for every project.

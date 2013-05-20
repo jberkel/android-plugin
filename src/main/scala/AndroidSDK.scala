@@ -21,7 +21,7 @@ object AndroidSDK {
   val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
   val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) {Seq(
+  lazy val settings: Seq[Setting[_]] = {Seq(
     // Command executable names
     aaptName := DefaultAaaptName,
     adbName := DefaultAadbName,

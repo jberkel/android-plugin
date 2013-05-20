@@ -41,7 +41,7 @@ object AndroidManifestGenerator {
    * series of transformations based on the project's settings.
    */
   private def generateManifestTask =
-    (resourceManaged in Compile, manifestTemplatePath, manifestRewriteRules, streams) map {
+    (resourceManaged, manifestTemplatePath, manifestRewriteRules, streams) map {
     (basedir, manifestTemplatePath, rules, streams) =>
 
       // Load the AndroidManifest.xml file as a template
@@ -64,11 +64,11 @@ object AndroidManifestGenerator {
    * Default settings that will override the default static AndroidManifest.xml
    * behavior.
    */
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
+  lazy val settings: Seq[Setting[_]] = (Seq(
     manifestRewriteRules <+= (version, versionCode) map (VersionRule(_, _)),
 
     manifestTemplateName := "AndroidManifest.xml",
-    manifestTemplatePath <<= (sourceDirectory in Compile, manifestTemplateName)(_/_),
+    manifestTemplatePath <<= (sourceDirectory, manifestTemplateName)(_/_),
 
     manifestPath <<= generateManifestTask,
     generateManifest <<= generateManifestTask
