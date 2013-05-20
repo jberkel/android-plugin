@@ -96,9 +96,9 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, resourceManaged) map {
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, sourceManaged) map {
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, resourceManaged) =>
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, sourceManaged) =>
       if (useProguard) {
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
@@ -110,7 +110,7 @@ object AndroidInstall {
                        .filter(!skipScalaLibrary || _ != scalaInstance.libraryJar)
                        .map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
 
-          val targetConfiguration = (resourceManaged / "proguard.txt").toString
+          val targetConfiguration = (sourceManaged / "proguard.txt").toString
 
           val args = (
                  "-injars" :: inJars.mkString(sep) ::
