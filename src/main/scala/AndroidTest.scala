@@ -67,12 +67,10 @@ object AndroidTest {
     )
 
   lazy val settings: Seq[Setting[_]] =
-    AndroidBase.settings ++
-    AndroidInstall.settings ++
     (Seq (
       testRunner   <<= detectTestRunnerTask,
-      testEmulator <<= instrumentationTestAction(true),
-      testDevice   <<= instrumentationTestAction(false),
+      testEmulator <<= instrumentationTestAction(true) dependsOn installEmulator,
+      testDevice   <<= instrumentationTestAction(false) dependsOn installDevice,
       testOnlyEmulator <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
         runSingleTest(true)(test)
       },
