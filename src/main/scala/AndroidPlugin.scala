@@ -31,11 +31,11 @@ object AndroidPlugin extends Plugin {
   // Advanced presets :
   //
   //  * androidDefaults: Base for all the other presets
-  //  * androidTest: Additional settings for test projects
+  //  * androidTest: Base settings for test projects
   //  * androidNdk: Additional settings for projects using the NDK
 
   // Base defaults
-  lazy val androidDefaults: Seq[Setting[_]] =
+  lazy val androidDefaults: Seq[Setting[_]] = {
     AndroidBase.settings ++
     AndroidManifestGenerator.settings ++
     AndroidPreload.settings ++
@@ -43,67 +43,57 @@ object AndroidPlugin extends Plugin {
     AndroidLaunch.settings ++
     AndroidDdm.settings ++
     TypedResources.settings
+  }
+
+  // Test settings
+  lazy val androidTest: Seq[Setting[_]] = {
+    AndroidBase.settings ++
+    AndroidManifestGenerator.settings ++
+    AndroidPreload.settings ++
+    AndroidInstall.settings ++
+    AndroidTest.settings ++
+    AndroidDdm.settings ++
+    TypedResources.settings ++ Seq(
+      useProguard := false,
+      usePreloadedScala := true,
+      skipScalaLibrary := true,
+      predexLibraries := true
+    )
+  }
 
   // Development settings
-  lazy val androidDevelopment: Seq[Setting[_]] =
+  lazy val androidDevelopment: Seq[Setting[_]] = {
     androidDefaults ++ Seq(
       useProguard := false,
       usePreloadedScala := true,
       skipScalaLibrary := true,
       predexLibraries := true
     )
+  }
 
   // Debug settings
-  lazy val androidDebug: Seq[Setting[_]] =
+  lazy val androidDebug: Seq[Setting[_]] = {
     androidDefaults ++ Seq(
       useProguard := true,
       usePreloadedScala := false,
       skipScalaLibrary := false,
       predexLibraries := true
     )
+  }
 
   // Release settings
-  lazy val androidRelease: Seq[Setting[_]] =
+  lazy val androidRelease: Seq[Setting[_]] = {
     androidDefaults ++ Seq(
       useProguard := true,
       usePreloadedScala := false,
       skipScalaLibrary := false,
       predexLibraries := true
     )
-
-  // Test settings
-  lazy val androidTest: Seq[Setting[_]] =
-    AndroidTest.settings
+  }
 
   // NDK settings
   lazy val androidNdk: Seq[Setting[_]] =
     AndroidNdk.settings
-
-  /**
-   * Configures a specific configuration to use SBT-Android.
-   *
-   * Example use:
-   *
-   *   One build type, development mode:
-   *     Project("main", file(".")).settings(androidConfigure(androidDevelopment))
-   *
-   *   One development build and one release build:
-   */
-  def androidConfigure(androidSettings: Seq[Setting[_]], configuration: Configuration = Compile) = {
-    inConfig(configuration) {
-      // First, setup the configuration
-      (
-        // If the configuration is Compile, no need to do anything
-        if (configuration == Compile) Seq.empty
-
-        // If the configuration is anything else, we import the default
-        // configuration tasks and settings (compile, run, sourceDirectory,...)
-        else configSettings
-
-      // And, last, add the Android settings
-      ) ++ androidSettings
-    }
-  }
 
   // Android SDK and emulator tasks/settings will be automatically loaded
   // for every project.
@@ -113,8 +103,6 @@ object AndroidPlugin extends Plugin {
   /**********************
    * Public plugin keys *
    **********************/
-
-  val Android= config("android") extend (Compile)
 
   /** User Defines */
   val platformName = SettingKey[String]("platform-name", "Targetted android platform")
