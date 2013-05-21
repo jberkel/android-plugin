@@ -41,8 +41,8 @@ object AndroidManifestGenerator {
    * series of transformations based on the project's settings.
    */
   private def generateManifestTask =
-    (sourceManaged, manifestTemplatePath, manifestRewriteRules, streams) map {
-    (sourceManaged, manifestTemplatePath, rules, streams) =>
+    (sourceManaged, configuration, manifestTemplatePath, manifestRewriteRules, streams) map {
+    (sourceManaged, configuration, manifestTemplatePath, rules, streams) =>
 
       // Load the AndroidManifest.xml file as a template
       val manifest = XML.loadFile(manifestTemplatePath)
@@ -51,13 +51,18 @@ object AndroidManifestGenerator {
       val newManifest = new RuleTransformer(rules: _*)(manifest)
 
       // Create the output file and directories
-      val out = sourceManaged / "AndroidManifest.xml"
-      sourceManaged.mkdirs()
+      val manifestDir = sourceManaged.getParentFile / configuration.name
+      manifestDir.mkdirs()
+
+      // This is the path to the manifest
+      val manifestPath = manifestDir / "AndroidManifest.xml"
 
       // Save the final AndroidManifest.xml file
-      XML.save(out.absolutePath, newManifest)
-      streams.log.info("Generated "+out)
-      Seq(out)
+      XML.save(manifestPath.absolutePath, newManifest)
+      streams.log.info("Generated " + manifestPath)
+
+      // Return the path of the generated manifest
+      Seq(manifestPath)
     }
 
   /**
