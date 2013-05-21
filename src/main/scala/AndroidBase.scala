@@ -126,6 +126,10 @@ object AndroidBase {
     ) yield arg
 
     def runAapt(`package`: String, args: String*) {
+      s.log.info("Running AAPT for package " + `package`)
+      s.log.info("  Resource path: " + resPath.absolutePath)
+      s.log.info("  Manifest path: " + mPath.head.absolutePath)
+
       val aapt = Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
         "--custom-package", `package`,
         "-M", mPath.head.absolutePath,
@@ -135,8 +139,10 @@ object AndroidBase {
         args ++
         libraryResPathArgs ++
         libraryAssetPathArgs
+
       if (aapt.run(false).exitValue != 0) sys.error("error generating resources")
     }
+
     runAapt(mPackage)
     apklibs.foreach(lib => runAapt(lib.pkgName, "--non-constant-id"))
 
@@ -193,9 +199,22 @@ object AndroidBase {
   lazy val settings: Seq[Setting[_]] = (Seq (
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
 
-    packageApkName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apk", a.name, v)),
+    classesMinJarName <<= (artifact, configuration, version) (
+      (a, c, v) => "classes-%s-%s-%s.min.jar".format(a.name, c.name, v) ),
+
+    classesDexName <<= (artifact, configuration, version) (
+      (a, c, v) => "classes-%s-%s-%s.dex".format(a.name, c.name, v) ),
+
+    resourcesApkName <<= (artifact, configuration, version) (
+      (a, c, v) => "resources-%s-%s-%s.apk".format(a.name, c.name, v) ),
+
+    packageApkName <<= (artifact, configuration, versionName) map (
+      (a, c, v) => "%s-%s-%s.apk".format(a.name, c.name, v) ),
+
+    packageApkLibName <<= (artifact, configuration, versionName) map (
+      (a, c, v) => "%s-%s-%s.apklib".format(a.name, c.name, v) ),
+
     packageApkPath <<= (target, packageApkName) map (_ / _),
-    packageApkLibName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apklib", a.name, v)),
     packageApkLibPath <<= (target, packageApkLibName) map (_ / _),
 
     manifestPath <<= (sourceDirectory, manifestName) map((s,m) => Seq(s / m)),
@@ -204,9 +223,11 @@ object AndroidBase {
 
     minSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "minSdkVersion")),
     maxSdkVersion <<= (manifestPath, manifestSchema) map ( (p,s) => usesSdk(p.head, s, "maxSdkVersion")),
+
     versionName <<= (manifestPath, manifestSchema, version) map ((p, schema, version) =>
         manifest(p.head).attribute(schema, "versionName").map(_.text).getOrElse(version)
     ),
+
     nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
@@ -256,10 +277,6 @@ object AndroidBase {
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
-    unmanagedJars <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
-    classpathTypes := Set("jar", "bundle", "so"),
-    sourceGenerators <+= (apklibSources, aaptGenerate, aidlGenerate) map (_ ++ _ ++ _),
-
     resourceDirectories <+= (mainAssetsPath),
 
     cachePasswords := false,
@@ -267,7 +284,18 @@ object AndroidBase {
     // Auto-manifest settings
     manifestRewriteRules := Seq.empty,
 
-    // Migrate source directories
-    sourceDirectory <<= sourceDirectory in Compile
+    // Migrate settings from the defaults in Compile
+    sourceDirectory <<= sourceDirectory in Compile,
+    sourceDirectories <<= sourceDirectories in Compile,
+    resourceDirectory <<= resourceDirectory in Compile,
+    resourceDirectories <<= resourceDirectories in Compile,
+    javaSource <<= javaSource in Compile,
+    scalaSource <<= scalaSource in Compile,
+    dependencyClasspath <<= dependencyClasspath in Compile,
+
+    // Set compile options
+    unmanagedJars <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
+    classpathTypes := Set("jar", "bundle", "so"),
+    sourceGenerators <+= (apklibSources, aaptGenerate, aidlGenerate) map (_ ++ _ ++ _)
   ))
 }

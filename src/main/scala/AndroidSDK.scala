@@ -15,9 +15,6 @@ object AndroidSDK {
   val DefaultAndroidJarName = "android.jar"
   val DefaultAssetsDirectoryName = "assets"
   val DefaultResDirectoryName = "res"
-  val DefaultClassesMinJarName = "classes.min.jar"
-  val DefaultClassesDexName = "classes.dex"
-  val DefaultResourcesApkName = "resources.apk"
   val DefaultManifestSchema = "http://schemas.android.com/apk/res/android"
   val DefaultEnvs = List("ANDROID_SDK_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME")
 
@@ -31,9 +28,6 @@ object AndroidSDK {
     jarName := DefaultAndroidJarName,
     assetsDirectoryName := DefaultAssetsDirectoryName,
     resDirectoryName := DefaultResDirectoryName,
-    classesMinJarName := DefaultClassesMinJarName,
-    classesDexName := DefaultClassesDexName,
-    resourcesApkName := DefaultResourcesApkName,
     manifestSchema := DefaultManifestSchema,
     envs := DefaultEnvs,
 
