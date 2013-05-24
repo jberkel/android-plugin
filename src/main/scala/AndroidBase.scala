@@ -78,7 +78,9 @@ object AndroidBase {
     (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
     (updateReport, srcManaged, javaManaged, resManaged, s) => {
 
-      val apklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val allApklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val providedDependencies = updateReport.matching(configurationFilter(name = "provided"))
+      val apklibs = allApklibs --- providedDependencies get
 
       apklibs map  { apklib =>
         s.log.info("extracting apklib " + apklib.name)
