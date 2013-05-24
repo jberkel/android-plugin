@@ -78,9 +78,11 @@ object AndroidBase {
     (update, sourceManaged, managedJavaPath, resourceManaged, streams) map {
     (updateReport, srcManaged, javaManaged, resManaged, s) => {
 
-      val apklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val allApklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val providedApklibs = updateReport.matching(configurationFilter(name = "provided"))
+      val apklibs = allApklibs --- providedApklibs get
 
-      apklibs map  { apklib =>
+      apklibs map { apklib =>
         s.log.info("extracting apklib " + apklib.name)
         val dest = srcManaged / ".." / apklib.base
 
@@ -110,8 +112,8 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams, buildConfigDebug) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s, isDebug) =>
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams, useDebug) map {
+    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s, useDebug) =>
 
     val libraryResPathArgs = for (
       lib <- apklibs;
@@ -155,7 +157,7 @@ object AndroidBase {
         package %s;
         public final class BuildConfig {
           public static final boolean DEBUG = %s;
-        }""".format(`package`, isDebug))
+        }""".format(`package`, useDebug))
       buildConfig
     }
 
@@ -194,6 +196,24 @@ object AndroidBase {
 
   def findPath() = (manifestPath) map { p =>
       manifest(p.head).attribute("package").getOrElse(sys.error("package not defined")).text
+  }
+
+  def isPreinstalled(f: Attributed[java.io.File], preinstalled: Seq[ModuleID]): Boolean = {
+    f.get(moduleID.key) match {
+      case Some(m) => preinstalled exists { pm =>
+        pm.organization == m.organization &&
+        pm.name == m.name
+      }
+
+      case None => false
+    }
+  }
+
+  def isArtifact(f: Attributed[java.io.File], classpathTypes: Set[String]): Boolean = {
+    f.get(artifact.key) match {
+      case Some(t) => (classpathTypes - "so") contains t.`type`
+      case None => true
+    }
   }
 
   lazy val settings: Seq[Setting[_]] = (Seq (
@@ -239,8 +259,19 @@ object AndroidBase {
     extractApkLibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
 
-    classesMinJarPath <<= (target, classesMinJarName) (_ / _),
-    classesDexPath <<= (target, classesDexName) (_ / _),
+    proguardOutputPath <<= (target, classesMinJarName) (_ / _),
+
+    dxOutputPath <<= (target, classesDexName) (_ / _),
+
+    dxInputs <<= (proguard, proguardInJars, proguardLibraryJars, classDirectory) map (
+      (proguard, proguardInJars, proguardLibraryJars, classDirectory) => proguard match {
+        case Some(f) => Seq(f)
+        case None => proguardInJars --- proguardLibraryJars get
+      }
+    ),
+
+    dxPredex <<= (managedClasspath) map (_.files),
+
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
     proguardOptimizations := Seq.empty,
 
@@ -250,22 +281,37 @@ object AndroidBase {
     libraryJarPath <<= (jarPath (_ get)),
 
     proguardOption := "",
-    proguardExclude <<= (libraryJarPath, classDirectory, resourceDirectory) map {
-        (libPath, classDirectory, resourceDirectory) =>
-          libPath :+ classDirectory :+ resourceDirectory
+
+    // JARs to be treater as library JARs by Proguard
+    proguardLibraryJars <<= (update, usePreloadedScala, scalaInstance, libraryJarPath, internalDependencyClasspath) map {
+      (updateReport, usePreloadedScala, scalaInstance, libraryJarPath, internalDependencyClasspath) => (
+
+        // Provided JARs are library JARs by default
+        updateReport.select(Set("provided")) ++
+
+        // Add the Scala library if usePreloadedScala is false
+        (usePreloadedScala match {
+          case true => Seq(scalaInstance.libraryJar)
+          case false => Seq.empty
+        }) ++
+
+        // The Android library is a library JAR
+        libraryJarPath ++
+
+        // Add the internal dependency classpath
+        // (Corresponds to the source classes inherited from other projects)
+        internalDependencyClasspath.files
+      )
     },
-    proguardInJars <<= (fullClasspath, proguardExclude, preinstalledModules, classpathTypes) map {
-      (fullClasspath, proguardExclude, preinstalledModules, classpathTypes) =>
-       // remove preinstalled jars
-       fullClasspath.filterNot( cp =>
-         cp.get(moduleID.key).map( module => preinstalledModules.exists( m =>
-               m.organization == module.organization &&
-               m.name == module.name)
-         ).getOrElse(false)
-       // only include jar files
-       ).filter( cp =>
-          cp.get(artifact.key).map(artifact => (classpathTypes - "so").contains(artifact.`type`)).getOrElse(true)
-       ).map(_.data) --- proguardExclude get
+
+    // All the input JARs, including the library ones
+    proguardInJars <<= (fullClasspath, preinstalledModules, classpathTypes, resourceDirectory) map {
+      (fullClasspath, preinstalledModules, classpathTypes, resourceDirectory) =>
+
+      fullClasspath filter { f =>
+        !isPreinstalled(f, preinstalledModules) &&
+        isArtifact(f, classpathTypes)
+      } map (_.data) filterNot(_ == resourceDirectory)
     },
 
     makeManagedJavaPath <<= directory(managedJavaPath),

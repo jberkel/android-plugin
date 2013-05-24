@@ -58,14 +58,6 @@ object AndroidTest {
                   .getOrElse(token(NotSpace))
 
   /** AndroidTestProject */
-  lazy val androidSettings = settings ++
-    Seq(
-      proguardInJars <<= (scalaInstance) map {
-        (scalaInstance) =>
-         Seq(scalaInstance.libraryJar)
-      }
-    )
-
   lazy val settings: Seq[Setting[_]] =
     (Seq (
       testRunner   <<= detectTestRunnerTask,
@@ -74,6 +66,7 @@ object AndroidTest {
       testOnlyEmulator <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
         runSingleTest(true)(test)
       },
+
       testOnlyDevice   <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
         runSingleTest(false)(test)
       }

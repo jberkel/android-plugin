@@ -66,6 +66,6 @@ object AndroidMarketPublish {
     zipAlign <<= zipAlign dependsOn (signRelease, cleanAligned),
 
     signRelease <<= signReleaseTask,
-    signRelease <<= signRelease dependsOn packageRelease
+    signRelease <<= signRelease dependsOn apk
   ))
 }

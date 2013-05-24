@@ -54,40 +54,36 @@ object AndroidPlugin extends Plugin {
     AndroidTest.settings ++
     AndroidDdm.settings ++
     TypedResources.settings ++ Seq(
+      useDebug := true,
       useProguard := false,
-      usePreloadedScala := true,
-      skipScalaLibrary := true,
-      predexLibraries := true
+      usePreloadedScala := true
     )
   }
 
   // Development settings
   lazy val androidDevelopment: Seq[Setting[_]] = {
     androidDefaults ++ Seq(
+      useDebug := true,
       useProguard := false,
-      usePreloadedScala := true,
-      skipScalaLibrary := true,
-      predexLibraries := true
+      usePreloadedScala := true
     )
   }
 
   // Debug settings
   lazy val androidDebug: Seq[Setting[_]] = {
     androidDefaults ++ Seq(
+      useDebug := true,
       useProguard := true,
-      usePreloadedScala := false,
-      skipScalaLibrary := false,
-      predexLibraries := true
+      usePreloadedScala := false
     )
   }
 
   // Release settings
   lazy val androidRelease: Seq[Setting[_]] = {
     androidDefaults ++ Seq(
+      useDebug := false,
       useProguard := true,
-      usePreloadedScala := false,
-      skipScalaLibrary := false,
-      predexLibraries := true
+      usePreloadedScala := false
     )
   }
 
@@ -110,10 +106,39 @@ object AndroidPlugin extends Plugin {
   val versionCode = SettingKey[Int]("version-code")
   val versionName = TaskKey[String]("version-name")
 
-  /** Proguard Settings */
+  /** Packaging settings **/
+  val useProguard = SettingKey[Boolean]("use-proguard", "Use Proguard to package the app")
+  val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala", "Use a preloaded Scala library for development")
+  val useDebug = SettingKey[Boolean]("use-debug", "Use debug settings when building an APK")
+
+  /** Proguard Settings **/
+  val proguardLibraryJars = TaskKey[Seq[File]]("proguard-library-jars")
+  val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
   val proguardOption = SettingKey[String]("proguard-option")
   val proguardOptimizations = SettingKey[Seq[String]]("proguard-optimizations")
-  val libraryJarPath = SettingKey[Seq[File]]("library-path")
+  val proguardOutputPath = SettingKey[File]("proguard-output-path", "Path to Proguard's output JAR")
+  val proguard = TaskKey[Option[File]]("proguard", "Run Proguard on the class files")
+
+  /** Dexing **/
+  val dxOutputPath = SettingKey[File]("dx-output-path")
+  val dxInputs = TaskKey[Seq[File]]("dx-inputs", "Input class files included in the final APK")
+  val dxPredex = TaskKey[Seq[File]]("dx-predex", "Paths that will be predexed before generating the final DEX")
+  val dx = TaskKey[File]("dx", "Convert class files to DEX files")
+
+  /** APK Generation **/
+  val apk = TaskKey[File]("apk", "Package and sign with a debug key.")
+
+  /** Install Scala on device/emulator **/
+  val preloadDevice     = TaskKey[Unit]("preload-device", "Setup device for development by uploading the predexed Scala library")
+  val preloadEmulator   = InputKey[Unit]("preload-emulator", "Setup emulator for development by uploading the predexed Scala library")
+
+  /** Unload Scala from device/emulator **/
+  val unloadDevice   = TaskKey[Unit]("unload-device", "Unloads the Scala library from the device")
+  val unloadEmulator = InputKey[Unit]("unload-emulator", "Unloads the Scala library from the emulator")
+
+  /** Modules that are preloaded on the device **/
+  val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
+  val providedModules = TaskKey[Seq[ModuleID]]("provided-modules")
 
   /** Default Settings */
   val aaptName = SettingKey[String]("aapt-name")
@@ -130,7 +155,7 @@ object AndroidPlugin extends Plugin {
   val dxMemory = SettingKey[String]("dx-memory")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
-  val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
+  val libraryJarPath = SettingKey[Seq[File]]("library-path")
 
   /** Determined Settings */
   val packageApkName = TaskKey[String]("package-apk-name")
@@ -160,15 +185,10 @@ object AndroidPlugin extends Plugin {
   val mainResPath = TaskKey[File]("main-res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
   val managedNativePath = SettingKey[File]("managed-native-path")
-  val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
-  val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val packageApkPath = TaskKey[File]("package-apk-path")
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
-  val useProguard = SettingKey[Boolean]("use-proguard")
   val buildConfigDebug = SettingKey[Boolean]("build-config-debug")
-  val skipScalaLibrary = SettingKey[Boolean]("skip-scala-library")
-  val predexLibraries = SettingKey[Boolean]("predex-libraries")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
@@ -179,7 +199,7 @@ object AndroidPlugin extends Plugin {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
-  val layoutResources = TaskKey[Seq[File]]("layout-resources", 
+  val layoutResources = TaskKey[Seq[File]]("layout-resources",
       """All files that are in res/layout. They will
 		 be accessable through TR.layouts._""")
 
@@ -201,9 +221,6 @@ object AndroidPlugin extends Plugin {
   val aidlGenerate = TaskKey[Seq[File]]("aidl-generate",
     "Generate Java classes from .aidl files.")
 
-  val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
-  val proguardExclude = TaskKey[Seq[File]]("proguard-exclude")
-
   val makeManagedJavaPath = TaskKey[Unit]("make-managed-java-path")
 
   /** Installable Tasks */
@@ -215,14 +232,7 @@ object AndroidPlugin extends Plugin {
 
   val aaptPackage = TaskKey[File]("aapt-package",
     "Package resources and assets.")
-  val packageDebug = TaskKey[File]("package-debug",
-    "Package and sign with a debug key.")
-  val packageRelease = TaskKey[File]("package-release", "Package without signing.")
   val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
-
-  val proguard = TaskKey[Option[File]]("proguard", "Optimize class files.")
-  val dxInputs = TaskKey[Seq[File]]("dx-inputs", "Input for dex command")
-  val dx = TaskKey[File]("dx", "Convert class files to dex files")
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
 
@@ -294,18 +304,6 @@ object AndroidPlugin extends Plugin {
   val remountDevice = TaskKey[Unit]("remount-device")
   val rootEmulator = TaskKey[Unit]("root-emulator")
   val remountEmulator = TaskKey[Unit]("remount-emulator")
-
-  /** Install Scala on device/emulator **/
-  val preloadDevice     = TaskKey[Unit]("preload-device", "Setup device for development by uploading the predexed Scala library")
-  val preloadEmulator   = InputKey[Unit]("preload-emulator", "Setup emulator for development by uploading the predexed Scala library")
-
-  /** Unload Scala from device/emulator **/
-  val unloadDevice   = TaskKey[Unit]("unload-device", "Unloads the Scala library from the device")
-  val unloadEmulator = InputKey[Unit]("unload-emulator", "Unloads the Scala library from the emulator")
-
-  /** Use preloaded Scala for development **/
-  val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala",
-    "If true, will preload the current Scala version on the device or emulator and use it for development")
 
   /********************
    * Android NDK keys *
