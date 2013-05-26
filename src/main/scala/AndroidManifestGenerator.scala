@@ -51,11 +51,10 @@ object AndroidManifestGenerator {
       val newManifest = new RuleTransformer(rules: _*)(manifest)
 
       // Create the output file and directories
-      val manifestDir = sourceManaged.getParentFile / configuration.name
-      manifestDir.mkdirs()
+      sourceManaged.mkdirs()
 
       // This is the path to the manifest
-      val manifestPath = manifestDir / "AndroidManifest.xml"
+      val manifestPath = sourceManaged / "AndroidManifest.xml"
 
       // Save the final AndroidManifest.xml file
       XML.save(manifestPath.absolutePath, newManifest)
