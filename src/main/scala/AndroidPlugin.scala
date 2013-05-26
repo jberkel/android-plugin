@@ -10,82 +10,21 @@ import scala.xml.transform.RewriteRule
 
 object AndroidPlugin extends Plugin {
 
-  /***************************
-   * Default plugin settings *
-   ***************************/
+  /***************************************
+   * Default configurations and projects *
+   ***************************************/
 
-  // Default Android settings for standard projects
-  // Standard presets :
-  //
-  //  * androidDevelopment:
-  //        Does not include the Scala library, skips Proguard,
-  //        predexes external libraries and automatically sets
-  //        AndroidManifest.xml to require a preloaded Scala library.
-  //
-  //        NOTE: The generated APK will NOT be compatible with stock devices
-  //              without a preloaded Scala library!
-  //
-  //  * androidDebug: Will generate a debug APK compatible with stock Android devices.
-  //  * androidRelease: Will generate a realeas APK compatible with stock Android devices.
-  //
-  // Advanced presets :
-  //
-  //  * androidDefaults: Base for all the other presets
-  //  * androidTest: Base settings for test projects
-  //  * androidNdk: Additional settings for projects using the NDK
+  // Standard configurations
+  val Debug = config("debug")
+  val Release = config("release")
 
-  // Base defaults
-  lazy val androidDefaults: Seq[Setting[_]] = {
-    AndroidBase.settings ++
-    AndroidManifestGenerator.settings ++
-    AndroidPreload.settings ++
-    AndroidInstall.settings ++
-    AndroidLaunch.settings ++
-    AndroidDdm.settings ++
-    TypedResources.settings
-  }
+  // Standard projects
+  val AndroidProject = AndroidProjects.Standard
+  val AndroidTestProject = AndroidProjects.Test
 
-  // Test settings
-  lazy val androidTest: Seq[Setting[_]] = {
-    AndroidBase.settings ++
-    AndroidManifestGenerator.settings ++
-    AndroidPreload.settings ++
-    AndroidInstall.settings ++
-    AndroidTest.settings ++
-    AndroidDdm.settings ++
-    TypedResources.settings ++ Seq(
-      useDebug := true,
-      useProguard := false,
-      usePreloadedScala := true
-    )
-  }
-
-  // Development settings
-  lazy val androidDevelopment: Seq[Setting[_]] = {
-    androidDefaults ++ Seq(
-      useDebug := true,
-      useProguard := false,
-      usePreloadedScala := true
-    )
-  }
-
-  // Debug settings
-  lazy val androidDebug: Seq[Setting[_]] = {
-    androidDefaults ++ Seq(
-      useDebug := true,
-      useProguard := true,
-      usePreloadedScala := false
-    )
-  }
-
-  // Release settings
-  lazy val androidRelease: Seq[Setting[_]] = {
-    androidDefaults ++ Seq(
-      useDebug := false,
-      useProguard := true,
-      usePreloadedScala := false
-    )
-  }
+  // Standard configurations
+  lazy val androidDefaults = AndroidProject.defaults
+  lazy val androidTestDefaults = AndroidTestProject.defaults
 
   // NDK settings
   lazy val androidNdk: Seq[Setting[_]] =

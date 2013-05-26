@@ -217,7 +217,10 @@ object AndroidBase {
   }
 
   lazy val settings: Seq[Setting[_]] = (Seq (
+
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
+    jarPath <<= (platformPath, jarName) (_ / _),
+    libraryJarPath <<= (jarPath (_ get)),
 
     classesMinJarName <<= (artifact, configuration, version) (
       (a, c, v) => "classes-%s-%s-%s.min.jar".format(a.name, c.name, v) ),
@@ -277,9 +280,6 @@ object AndroidBase {
 
     buildConfigDebug := false,
 
-    jarPath <<= (platformPath, jarName) (_ / _),
-    libraryJarPath <<= (jarPath (_ get)),
-
     proguardOption := "",
 
     // JARs to be treater as library JARs by Proguard
@@ -338,9 +338,10 @@ object AndroidBase {
     javaSource <<= javaSource in Compile,
     scalaSource <<= scalaSource in Compile,
     dependencyClasspath <<= dependencyClasspath in Compile,
+    managedClasspath <<= managedClasspath in Compile,
 
     // Set compile options
-    unmanagedJars <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
+    unmanagedJars in Compile <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
     classpathTypes := Set("jar", "bundle", "so"),
     sourceGenerators <+= (apklibSources, aaptGenerate, aidlGenerate) map (_ ++ _ ++ _)
   ))
