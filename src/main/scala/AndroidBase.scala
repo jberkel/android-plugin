@@ -216,11 +216,44 @@ object AndroidBase {
     }
   }
 
-  lazy val settings: Seq[Setting[_]] = (Seq (
+  /**
+   * Returns the internal dependencies for the "provided" scope only
+   */
+  def providedInternalDependenciesTask(proj: ProjectRef, struct: Load.BuildStructure) = {
+    // "Provided" dependencies of a ResolvedProject
+    def providedDeps(op: ResolvedProject): Seq[ProjectRef] = {
+      op.dependencies
+        .filter(p => (p.configuration getOrElse "") == "provided")
+        .map(_.project)
+    }
 
+    // Collect every "provided" dependency in the dependency graph
+    def collectDeps(projRef: ProjectRef): Seq[ProjectRef] = {
+      val deps = Project.getProject(projRef, struct).toSeq.flatMap(providedDeps)
+      deps.flatMap(ref => ref +: collectDeps(ref)).distinct
+    }
+
+    // Return the list of "provided" internal dependencies for the ProjectRef
+    // in argument.
+    collectDeps(proj)
+      .flatMap(exportedProducts in (_, Compile) get struct.data)
+      .join.map(_.flatten.files)
+  }
+
+  lazy val globalSettings: Seq[Setting[_]] = (Seq(
+    proguardOptions := Seq.empty,
+    proguardOptimizations := Seq.empty,
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),
+    cachePasswords := false
+  ))
+
+  lazy val settings: Seq[Setting[_]] = (Seq (
+
+    /****************
+     * Output paths *
+     ****************/
 
     classesMinJarName <<= (artifact, configuration, version) (
       (a, c, v) => "classes-%s-%s-%s.min.jar".format(a.name, c.name, v) ),
@@ -230,6 +263,7 @@ object AndroidBase {
 
     resourcesApkName <<= (artifact, configuration, version) (
       (a, c, v) => "resources-%s-%s-%s.apk".format(a.name, c.name, v) ),
+    resourcesApkPath <<= (target, resourcesApkName) (_ / _),
 
     packageApkName <<= (artifact, configuration, versionName) map (
       (a, c, v) => "%s-%s-%s.apk".format(a.name, c.name, v) ),
@@ -262,10 +296,12 @@ object AndroidBase {
     extractApkLibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
 
-    proguardOutputPath <<= (target, classesMinJarName) (_ / _),
-
     dxOutputPath <<= (target, classesDexName) (_ / _),
 
+    // Inputs for the DX command.
+    //
+    //   Defaults to either the Proguard-ed JAR, or paths that are in
+    //   proguardInJars but not in proguardLibraryJars if Proguard is not used.
     dxInputs <<= (proguard, proguardInJars, proguardLibraryJars, classDirectory) map (
       (proguard, proguardInJars, proguardLibraryJars, classDirectory) => proguard match {
         case Some(f) => Seq(f)
@@ -273,36 +309,35 @@ object AndroidBase {
       }
     ),
 
+    // Paths to be predexed by DX to improve build times.
+    // (Usually, libraries that won't change much)
+    //
+    //   Defaults to the managed classpath.
     dxPredex <<= (managedClasspath) map (_.files),
 
-    resourcesApkPath <<= (target, resourcesApkName) (_ / _),
-    proguardOptimizations := Seq.empty,
+    // JARs to be treated as library JARs by Proguard
+    //
+    //   By default, includes the "provided" dependencies, the Scala library if
+    //   usePreloadedScala is false, and the Android library.
+    proguardLibraryJars <<= (update, usePreloadedScala, scalaInstance, libraryJarPath) map {
+        (update, usePreloadedScala, scalaInstance, libraryJarPath) => (
 
-    buildConfigDebug := false,
+          // Provided JARs are library JARs by default
+          update.select(Set("provided")) ++
 
-    proguardOption := "",
+          // Add the Scala library if usePreloadedScala is false
+          (usePreloadedScala match {
+            case true => Seq(scalaInstance.libraryJar)
+            case false => Seq.empty
+          }) ++
 
-    // JARs to be treater as library JARs by Proguard
-    proguardLibraryJars <<= (update, usePreloadedScala, scalaInstance, libraryJarPath, internalDependencyClasspath) map {
-      (updateReport, usePreloadedScala, scalaInstance, libraryJarPath, internalDependencyClasspath) => (
-
-        // Provided JARs are library JARs by default
-        updateReport.select(Set("provided")) ++
-
-        // Add the Scala library if usePreloadedScala is false
-        (usePreloadedScala match {
-          case true => Seq(scalaInstance.libraryJar)
-          case false => Seq.empty
-        }) ++
-
-        // The Android library is a library JAR
-        libraryJarPath ++
-
-        // Add the internal dependency classpath
-        // (Corresponds to the source classes inherited from other projects)
-        internalDependencyClasspath.files
-      )
+          // The Android library is a library JAR
+          libraryJarPath
+        )
     },
+
+    // "Provided" exported products are also treated as Proguard libraryjars
+    proguardLibraryJars <++= (thisProjectRef, buildStructure) flatMap providedInternalDependenciesTask,
 
     // All the input JARs, including the library ones
     proguardInJars <<= (fullClasspath, preinstalledModules, classpathTypes, resourceDirectory) map {
@@ -314,6 +349,9 @@ object AndroidBase {
       } map (_.data) filterNot(_ == resourceDirectory)
     },
 
+    // Path to Proguard's output JAR
+    proguardOutputPath <<= (target, classesMinJarName) (_ / _),
+
     makeManagedJavaPath <<= directory(managedJavaPath),
 
     copyNativeLibraries <<= copyNativeLibrariesTask,
@@ -323,9 +361,8 @@ object AndroidBase {
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
+    resourceDirectories <<= resourceDirectories in Compile,
     resourceDirectories <+= (mainAssetsPath),
-
-    cachePasswords := false,
 
     // Auto-manifest settings
     manifestRewriteRules := Seq.empty,
@@ -334,7 +371,6 @@ object AndroidBase {
     sourceDirectory <<= sourceDirectory in Compile,
     sourceDirectories <<= sourceDirectories in Compile,
     resourceDirectory <<= resourceDirectory in Compile,
-    resourceDirectories <<= resourceDirectories in Compile,
     javaSource <<= javaSource in Compile,
     scalaSource <<= scalaSource in Compile,
     dependencyClasspath <<= dependencyClasspath in Compile,

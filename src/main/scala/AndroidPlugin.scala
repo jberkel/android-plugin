@@ -53,7 +53,7 @@ object AndroidPlugin extends Plugin {
   /** Proguard Settings **/
   val proguardLibraryJars = TaskKey[Seq[File]]("proguard-library-jars")
   val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
-  val proguardOption = SettingKey[String]("proguard-option")
+  val proguardOptions = SettingKey[Seq[String]]("proguard-options")
   val proguardOptimizations = SettingKey[Seq[String]]("proguard-optimizations")
   val proguardOutputPath = SettingKey[File]("proguard-output-path", "Path to Proguard's output JAR")
   val proguard = TaskKey[Option[File]]("proguard", "Run Proguard on the class files")
@@ -127,7 +127,6 @@ object AndroidPlugin extends Plugin {
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val packageApkPath = TaskKey[File]("package-apk-path")
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
-  val buildConfigDebug = SettingKey[Boolean]("build-config-debug")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",

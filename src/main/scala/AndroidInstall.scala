@@ -100,9 +100,9 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, proguardLibraryJars, streams,
-     proguardOutputPath, manifestPackage, proguardOption, sourceManaged) map {
+     proguardOutputPath, manifestPackage, proguardOptions, sourceManaged) map {
     (useProguard, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, proguardLibraryJars, streams,
-     proguardOutputPath, manifestPackage, proguardOption, sourceManaged) =>
+     proguardOutputPath, manifestPackage, proguardOptions, sourceManaged) =>
       if (useProguard) {
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
@@ -148,7 +148,7 @@ object AndroidInstall {
                  "-keep public class * extends android.content.ContentProvider" ::
                  "-keep public class * extends android.view.View" ::
                  "-keep public class * extends android.app.Application" ::
-                 "-keep public class "+manifestPackage+".** { *; }" ::
+                 "-keep public class " + manifestPackage + ".** { *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
                  """
                   -keepclassmembers class * implements java.io.Serializable {
@@ -158,14 +158,20 @@ object AndroidInstall {
                     java.lang.Object writeReplace();
                     java.lang.Object readResolve();
                    }
-                   """ ::
-                 proguardOption :: Nil )
+                   """ :: Nil) ++ proguardOptions
+
+          // Instantiate the Proguard configuration
           val config = new ProGuardConfiguration
           new ConfigurationParser(args.toArray[String], new Properties).parse(config)
+
+          // Execute Proguard
           streams.log.info("Executing Proguard (configuration written to " + targetConfiguration + ")")
           streams.log.debug("Proguard configuration: "+args.mkString("\n"))
           new ProGuard(config).execute
+
+          // Return the proguard-ed output JAR
           Some(proguardOutputPath)
+
       } else {
           streams.log.info("Skipping Proguard")
           None
