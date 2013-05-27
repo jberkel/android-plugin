@@ -46,15 +46,17 @@ object AndroidKeys {
 
   /** Path Settings */
   val sdkPath = SettingKey[File]("sdk-path")
+  val platformToolsPath = SettingKey[File]("platform-tools-path")
+  val buildToolsPath = SettingKey[File]("build-tools-path")
   val toolsPath = SettingKey[File]("tools-path")
   val dbPath = SettingKey[File]("db-path")
-  val platformPath = SettingKey[File]("platform-path")
   val aaptPath = SettingKey[File]("apt-path")
   val idlPath = SettingKey[File]("idl-path")
   val dxPath = SettingKey[File]("dx-path")
 
   /** Base Settings */
-  val platformToolsPath = SettingKey[File]("platform-tools-path")
+  val platformPath = SettingKey[File]("platform-path")
+  val buildToolsVersion = SettingKey[String]("build-tools-version")
   val manifestPackage = TaskKey[String]("manifest-package")
   val manifestPackageName = TaskKey[String]("manifest-package-name")
   val minSdkVersion = TaskKey[Option[Int]]("min-sdk-version")
