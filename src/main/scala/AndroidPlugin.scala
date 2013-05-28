@@ -50,6 +50,15 @@ object AndroidPlugin extends Plugin {
   val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala", "Use a preloaded Scala library for development")
   val useDebug = SettingKey[Boolean]("use-debug", "Use debug settings when building an APK")
 
+  /** ApkLib dependencies */
+  case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
+  val apklibPackage = TaskKey[File]("apklib-package")
+  val apklibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
+  val apklibBaseDirectory = SettingKey[File]("apklib-base-directory", "Base directory for the ApkLib dependencies")
+  val apklibSourceManaged = SettingKey[File]("apklib-source-managed", "Base directory for the ApkLib sources")
+  val apklibResourceManaged = SettingKey[File]("apklib-resource-managed", "Base directory for the resources included in the ApkLibs")
+  val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
+
   /** Proguard Settings **/
   val proguardLibraryJars = TaskKey[Seq[File]]("proguard-library-jars")
   val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
@@ -147,14 +156,8 @@ object AndroidPlugin extends Plugin {
   val packageAlignedName = TaskKey[String]("package-aligned-name")
   val packageAlignedPath = TaskKey[File]("package-aligned-path")
 
-  /** Base Tasks */
-  case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
-
-  val apklibPackage = TaskKey[File]("apklib-package")
-  val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
   val copyNativeLibraries = TaskKey[Unit]("copy-native-libraries", "Copy native libraries added to libraryDependencies")
 
-  val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")
   val aidlGenerate = TaskKey[Seq[File]]("aidl-generate",
     "Generate Java classes from .aidl files.")

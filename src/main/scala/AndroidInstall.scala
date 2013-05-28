@@ -23,7 +23,7 @@ object AndroidInstall {
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
-  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, extractApkLibDependencies, streams) map {
+  (aaptPath, manifestPath, mainResPath, mainAssetsPath, jarPath, resourcesApkPath, apklibDependencies, streams) map {
     (apPath, manPath, rPath, assetPath, jPath, resApkPath, apklibs, s) =>
 
     val libraryResPathArgs = for (

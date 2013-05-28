@@ -45,16 +45,16 @@ object AndroidBase {
   }
 
   private def apklibSourcesTask =
-    (extractApkLibDependencies, streams) map {
+    (apklibDependencies, streams) map {
     (projectLibs, s) => {
       if (!projectLibs.isEmpty) {
-        s.log.debug("generating source files from apklibs")
+        s.log.debug("Generating source files from ApkLibs")
         val xs = for (
           l <- projectLibs;
           f <- l.sources
         ) yield f
 
-        s.log.info("generated " + xs.size + " source files from " + projectLibs.size + " apklibs")
+        s.log.info("Generated " + xs.size + " source files from " + projectLibs.size + " ApkLibs")
         xs
       } else Seq.empty
     }
@@ -75,18 +75,30 @@ object AndroidBase {
     }
 
   private def apklibDependenciesTask =
-    (update, sourceManaged, managedJavaPath, resourceManaged, streams) map {
-    (updateReport, srcManaged, javaManaged, resManaged, s) => {
+    (update, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resourceManaged, streams) map {
+    (updateReport, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resManaged, s) => {
 
+      // We want to extract every apklib in the classpath that is not already
+      // set to provided (which should mean that another project already
+      // provides the ApkLib).
       val allApklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
       val providedApklibs = updateReport.matching(configurationFilter(name = "provided"))
       val apklibs = allApklibs --- providedApklibs get
 
-      apklibs map { apklib =>
-        s.log.info("extracting apklib " + apklib.name)
-        val dest = srcManaged / ".." / apklib.base
+      // Make the destination directories
+      apklibBaseDirectory.mkdirs
+      apklibSourceManaged.mkdirs
+      apklibResourceManaged.mkdirs
 
+      // Extract the ApkLibs
+      apklibs map { apklib =>
+
+        // Unzip the apklib to a temporary directory
+        s.log.info("Extracting apklib " + apklib.name)
+        val dest = apklibResourceManaged / apklib.base
         val unzipped = IO.unzip(apklib, dest)
+
+        // Move the sources to ApkLib source directory
         def moveContents(fromDir: File, toDir: File) = {
           toDir.mkdirs()
           val pairs = for (
@@ -96,10 +108,13 @@ object AndroidBase {
           IO.move(pairs)
           pairs map { case (_,t) => t }
         }
-        val sources = moveContents(dest / "src", javaManaged)
+        val sources = moveContents(dest / "src", apklibSourceManaged)
 
+        // Read the package name from the manifest
         val manifest = dest / "AndroidManifest.xml"
         val pkgName = XML.loadFile(manifest).attribute("package").get.head.text
+
+        // Return a LibraryProject instance with some info about this ApkLib
         LibraryProject(
           pkgName,
           manifest,
@@ -112,8 +127,9 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams, useDebug) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s, useDebug) =>
+    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, apklibDependencies,
+     apklibSourceManaged, streams, useDebug) map {
+    (mPackage, aPath, mPath, resPath, jarPath, javaPath, apklibs, apklibJavaPath, s, useDebug) =>
 
     val libraryResPathArgs = for (
       lib <- apklibs;
@@ -127,7 +143,7 @@ object AndroidBase {
       arg <- Seq("-A", d.absolutePath)
     ) yield arg
 
-    def runAapt(`package`: String, args: String*) {
+    def runAapt(`package`: String, outJavaPath: File, args: String*) {
       s.log.info("Running AAPT for package " + `package`)
       s.log.info("  Resource path: " + resPath.absolutePath)
       s.log.info("  Manifest path: " + mPath.head.absolutePath)
@@ -136,8 +152,8 @@ object AndroidBase {
         "--custom-package", `package`,
         "-M", mPath.head.absolutePath,
         "-S", resPath.absolutePath,
-        "-I", jPath.absolutePath,
-        "-J", javaPath.absolutePath) ++
+        "-I", jarPath.absolutePath,
+        "-J", outJavaPath.absolutePath) ++
         args ++
         libraryResPathArgs ++
         libraryAssetPathArgs
@@ -145,8 +161,11 @@ object AndroidBase {
       if (aapt.run(false).exitValue != 0) sys.error("error generating resources")
     }
 
-    runAapt(mPackage)
-    apklibs.foreach(lib => runAapt(lib.pkgName, "--non-constant-id"))
+    // Run aapt to generate resources for the main package
+    runAapt(mPackage, javaPath)
+
+    // Run aapt to generate resources for each apklib dependency
+    apklibs.foreach(lib => runAapt(lib.pkgName, apklibJavaPath, "--non-constant-id"))
 
     def createBuildConfig(`package`: String) = {
       var path = javaPath
@@ -289,12 +308,17 @@ object AndroidBase {
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
     mainResPath <<= (sourceDirectory, resDirectoryName) (_ / _) map (x=> x),
 
+    managedSourceDirectories <+= apklibSourceManaged,
     managedJavaPath <<= (sourceManaged) (_ / "java"),
     managedScalaPath <<= (sourceManaged) ( _ / "scala"),
     managedNativePath <<= (sourceManaged) (_ / "native_libs"),
 
-    extractApkLibDependencies <<= apklibDependenciesTask,
+    apklibBaseDirectory <<= crossTarget (_ / "apklib_managed"),
+    apklibSourceManaged <<= apklibBaseDirectory (_ / "src"),
+    apklibResourceManaged <<= apklibBaseDirectory (_ / "res"),
+    apklibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
+    apklibSources <<= apklibSourcesTask,
 
     dxOutputPath <<= (target, classesDexName) (_ / _),
 
@@ -356,7 +380,6 @@ object AndroidBase {
 
     copyNativeLibraries <<= copyNativeLibrariesTask,
 
-    apklibSources <<= apklibSourcesTask,
     aaptGenerate <<= aaptGenerateTask,
     aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
