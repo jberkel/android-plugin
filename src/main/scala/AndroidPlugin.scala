@@ -1,15 +1,43 @@
 package org.scalasbt.androidplugin
 
 import sbt._
-
 import Keys._
+import Defaults._
 
-/*!# Android Keys
-`AndroidKeys` contains all the `SettingKey`s and `TaskKey`s for a standard
-Android project.
- */
-object AndroidKeys {
-  val Android= config("android") extend (Compile)
+import AndroidHelpers.isWindows
+import complete.DefaultParsers._
+import scala.xml.transform.RewriteRule
+
+object AndroidPlugin extends Plugin {
+
+  /***************************************
+   * Default configurations and projects *
+   ***************************************/
+
+  // Standard configurations
+  val Debug = config("debug")
+  val Release = config("release")
+
+  // Standard projects
+  val AndroidProject = AndroidProjects.Standard
+  val AndroidTestProject = AndroidProjects.Test
+
+  // Standard configurations
+  lazy val androidDefaults = AndroidProject.defaults
+  lazy val androidTestDefaults = AndroidTestProject.defaults
+
+  // NDK settings
+  lazy val androidNdk: Seq[Setting[_]] =
+    AndroidNdk.settings
+
+  // Android SDK and emulator tasks/settings will be automatically loaded
+  // for every project.
+  override lazy val settings: Seq[Setting[_]] =
+    AndroidSDK.settings ++ AndroidEmulator.settings
+
+  /**********************
+   * Public plugin keys *
+   **********************/
 
   /** User Defines */
   val platformName = SettingKey[String]("platform-name", "Targetted android platform")
@@ -17,10 +45,48 @@ object AndroidKeys {
   val versionCode = SettingKey[Int]("version-code")
   val versionName = TaskKey[String]("version-name")
 
-  /** Proguard Settings */
-  val proguardOption = SettingKey[String]("proguard-option")
+  /** Packaging settings **/
+  val useProguard = SettingKey[Boolean]("use-proguard", "Use Proguard to package the app")
+  val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala", "Use a preloaded Scala library for development")
+  val useDebug = SettingKey[Boolean]("use-debug", "Use debug settings when building an APK")
+
+  /** ApkLib dependencies */
+  case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
+  val apklibPackage = TaskKey[File]("apklib-package")
+  val apklibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
+  val apklibBaseDirectory = SettingKey[File]("apklib-base-directory", "Base directory for the ApkLib dependencies")
+  val apklibSourceManaged = SettingKey[File]("apklib-source-managed", "Base directory for the ApkLib sources")
+  val apklibResourceManaged = SettingKey[File]("apklib-resource-managed", "Base directory for the resources included in the ApkLibs")
+  val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
+
+  /** Proguard Settings **/
+  val proguardLibraryJars = TaskKey[Seq[File]]("proguard-library-jars")
+  val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
+  val proguardOptions = SettingKey[Seq[String]]("proguard-options")
   val proguardOptimizations = SettingKey[Seq[String]]("proguard-optimizations")
-  val libraryJarPath = SettingKey[Seq[File]]("library-path")
+  val proguardOutputPath = SettingKey[File]("proguard-output-path", "Path to Proguard's output JAR")
+  val proguard = TaskKey[Option[File]]("proguard", "Run Proguard on the class files")
+
+  /** Dexing **/
+  val dxOutputPath = SettingKey[File]("dx-output-path")
+  val dxInputs = TaskKey[Seq[File]]("dx-inputs", "Input class files included in the final APK")
+  val dxPredex = TaskKey[Seq[File]]("dx-predex", "Paths that will be predexed before generating the final DEX")
+  val dx = TaskKey[File]("dx", "Convert class files to DEX files")
+
+  /** APK Generation **/
+  val apk = TaskKey[File]("apk", "Package and sign with a debug key.")
+
+  /** Install Scala on device/emulator **/
+  val preloadDevice     = TaskKey[Unit]("preload-device", "Setup device for development by uploading the predexed Scala library")
+  val preloadEmulator   = InputKey[Unit]("preload-emulator", "Setup emulator for development by uploading the predexed Scala library")
+
+  /** Unload Scala from device/emulator **/
+  val unloadDevice   = TaskKey[Unit]("unload-device", "Unloads the Scala library from the device")
+  val unloadEmulator = InputKey[Unit]("unload-emulator", "Unloads the Scala library from the emulator")
+
+  /** Modules that are preloaded on the device **/
+  val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
+  val providedModules = TaskKey[Seq[ModuleID]]("provided-modules")
 
   /** Default Settings */
   val aaptName = SettingKey[String]("aapt-name")
@@ -37,7 +103,7 @@ object AndroidKeys {
   val dxMemory = SettingKey[String]("dx-memory")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
-  val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
+  val libraryJarPath = SettingKey[Seq[File]]("library-path")
 
   /** Determined Settings */
   val packageApkName = TaskKey[String]("package-apk-name")
@@ -67,15 +133,9 @@ object AndroidKeys {
   val mainResPath = TaskKey[File]("main-res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
   val managedNativePath = SettingKey[File]("managed-native-path")
-  val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
-  val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val packageApkPath = TaskKey[File]("package-apk-path")
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
-  val useProguard = SettingKey[Boolean]("use-proguard")
-  val buildConfigDebug = SettingKey[Boolean]("build-config-debug")
-  val skipScalaLibrary = SettingKey[Boolean]("skip-scala-library")
-  val predexLibraries = SettingKey[Boolean]("predex-libraries")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
@@ -86,7 +146,7 @@ object AndroidKeys {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
-  val layoutResources = TaskKey[Seq[File]]("layout-resources", 
+  val layoutResources = TaskKey[Seq[File]]("layout-resources",
       """All files that are in res/layout. They will
 		 be accessable through TR.layouts._""")
 
@@ -96,24 +156,11 @@ object AndroidKeys {
   val packageAlignedName = TaskKey[String]("package-aligned-name")
   val packageAlignedPath = TaskKey[File]("package-aligned-path")
 
-  /** Manifest Generator */
-  val manifestTemplateName = SettingKey[String]("manifest-template-name")
-  val manifestTemplatePath = SettingKey[File]("manifest-template-path")
-
-  /** Base Tasks */
-  case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
-
-  val apklibPackage = TaskKey[File]("apklib-package")
-  val extractApkLibDependencies = TaskKey[Seq[LibraryProject]]("apklib-dependencies", "Unpack apklib dependencies")
   val copyNativeLibraries = TaskKey[Unit]("copy-native-libraries", "Copy native libraries added to libraryDependencies")
 
-  val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
   val aaptGenerate = TaskKey[Seq[File]]("aapt-generate", "Generate R.java")
   val aidlGenerate = TaskKey[Seq[File]]("aidl-generate",
     "Generate Java classes from .aidl files.")
-
-  val proguardInJars = TaskKey[Seq[File]]("proguard-in-jars")
-  val proguardExclude = TaskKey[Seq[File]]("proguard-exclude")
 
   val makeManagedJavaPath = TaskKey[Unit]("make-managed-java-path")
 
@@ -126,14 +173,7 @@ object AndroidKeys {
 
   val aaptPackage = TaskKey[File]("aapt-package",
     "Package resources and assets.")
-  val packageDebug = TaskKey[File]("package-debug",
-    "Package and sign with a debug key.")
-  val packageRelease = TaskKey[File]("package-release", "Package without signing.")
   val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
-
-  val proguard = TaskKey[Option[File]]("proguard", "Optimize class files.")
-  val dxInputs = TaskKey[Seq[File]]("dx-inputs", "Input for dex command")
-  val dx = TaskKey[File]("dx", "Convert class files to dex files")
 
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
 
@@ -170,6 +210,15 @@ object AndroidKeys {
     "Sign with key alias using key-alias and keystore path.")
   val cleanAligned = TaskKey[Unit]("clean-aligned", "Remove zipaligned jar")
 
+  /** Emulator/AVDs/ADB controls **/
+  val emulatorStart = InputKey[Unit]("emulator-start",
+    "Launches a user specified avd")
+  val emulatorStop = TaskKey[Unit]("emulator-stop",
+    "Kills the running emulator.")
+  val listDevices = TaskKey[Unit]("list-devices",
+    "List devices from the adb server.")
+  val killAdb = TaskKey[Unit]("kill-server",
+    "Kill the adb server if it is running.")
 
   /** TypedResources Task */
   val generateTypedResources = TaskKey[Seq[File]]("generate-typed-resources",
@@ -188,11 +237,6 @@ object AndroidKeys {
   val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
   val testOnlyDevice   = InputKey[Unit]("test-only-device",   "run a single test on device")
 
-  /** Github tasks & keys */
-  val uploadGithub = TaskKey[Option[String]]("github-upload", "Upload file to github")
-  val deleteGithub = TaskKey[Unit]("github-delete", "Delete file from github")
-  val githubRepo   = SettingKey[String]("github-repo", "Github repo")
-
   val cachePasswords = SettingKey[Boolean]("cache-passwords", "Cache passwords")
   val clearPasswords = TaskKey[Unit]("clear-passwords", "Clear cached passwords")
 
@@ -202,15 +246,49 @@ object AndroidKeys {
   val rootEmulator = TaskKey[Unit]("root-emulator")
   val remountEmulator = TaskKey[Unit]("remount-emulator")
 
-  /** Install Scala on device/emulator **/
-  val preloadDevice     = TaskKey[Unit]("preload-device", "Setup device for development by uploading the predexed Scala library")
-  val preloadEmulator   = InputKey[Unit]("preload-emulator", "Setup emulator for development by uploading the predexed Scala library")
+  /********************
+   * Android NDK keys *
+   ********************/
 
-  /** Unload Scala from device/emulator **/
-  val unloadDevice   = TaskKey[Unit]("unload-device", "Unloads the Scala library from the device")
-  val unloadEmulator = InputKey[Unit]("unload-emulator", "Unloads the Scala library from the emulator")
+  val ndkBuildName = SettingKey[String]("ndk-build-name", "Name for the 'ndk-build' tool")
+  val ndkBuildPath = SettingKey[File]("ndk-build-path", "Path to the 'ndk-build' tool")
 
-  /** Use preloaded Scala for development **/
-  val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala",
-    "If true, will preload the current Scala version on the device or emulator and use it for development")
+  val ndkJniDirectoryName = SettingKey[String]("ndk-jni-directory-name", "Directory name for native sources.")
+  val ndkObjDirectoryName =  SettingKey[String]("ndk-obj-directory-name", "Directory name for compiled native objects.")
+  val ndkEnvs = SettingKey[Seq[String]]("ndk-envs", "List of environment variables to check for the NDK.")
+
+  val ndkJniSourcePath = SettingKey[File]("jni-source-path", "Path to native sources. (with Android.mk)")
+  val ndkNativeOutputPath = SettingKey[File]("native-output-path", "NDK output path")
+  val ndkNativeObjectPath = SettingKey[File]("native-object-path", "Path to the compiled native objects")
+
+  val ndkBuild = TaskKey[Unit]("ndk-build", "Compile native C/C++ sources.")
+  val ndkClean = TaskKey[Unit]("ndk-clean", "Clean resources built from native C/C++ sources.")
+
+  /**************
+   * Javah keys *
+   **************/
+
+  val javahName = SettingKey[String]("javah-name", "The name of the javah command for generating JNI headers")
+  val javahPath = SettingKey[String]("javah-path", "The path to the javah executable")
+  val javah = TaskKey[Unit]("javah", "Produce C headers from Java classes with native methods")
+  val javahClean = TaskKey[Unit]("javah-clean", "Clean C headers built from Java classes with native methods")
+
+  val javahOutputDirectory = SettingKey[File]("javah-output-directory",
+      "The directory where JNI headers are written to.")
+  val javahOutputFile = SettingKey[Option[File]]("javah-output-file",
+      "filename for the generated C header, relative to javah-output-directory")
+  val javahOutputEnv = SettingKey[String]("javah-output-env",
+      "Name of the make environment variable to bind to the javah-output-directory")
+
+  val jniClasses = SettingKey[Seq[String]]("jni-classes",
+      "Fully qualified names of classes with native methods for which JNI headers are to be generated.")
+
+  /*****************
+   * Auto-Manifest *
+   *****************/
+
+  val manifestTemplateName = SettingKey[String]("manifest-template-name")
+  val manifestTemplatePath = SettingKey[File]("manifest-template-path")
+  val manifestRewriteRules = TaskKey[Seq[RewriteRule]]("manifest-rewrite-rules",
+    "Rules for transforming the contents of AndroidManifest.xml based on the project state and settings.")
 }

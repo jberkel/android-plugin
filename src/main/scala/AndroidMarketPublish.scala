@@ -3,7 +3,7 @@ package org.scalasbt.androidplugin
 import sbt._
 
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 
 object AndroidMarketPublish {
 
@@ -48,7 +48,7 @@ object AndroidMarketPublish {
     path
   }
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
+  lazy val settings: Seq[Setting[_]] = (Seq(
     // Configuring Settings
     keystorePath := Path.userHome / ".keystore",
     zipAlignPath <<= (toolsPath) { _ / "zipalign" },
@@ -66,6 +66,6 @@ object AndroidMarketPublish {
     zipAlign <<= zipAlign dependsOn (signRelease, cleanAligned),
 
     signRelease <<= signReleaseTask,
-    signRelease <<= signRelease dependsOn packageRelease
+    signRelease <<= signRelease dependsOn apk
   ))
 }

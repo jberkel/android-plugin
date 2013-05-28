@@ -5,7 +5,7 @@ import complete.Parser
 import Keys._
 import complete.DefaultParsers._
 
-import AndroidKeys._
+import AndroidPlugin._
 
 import com.android.ddmlib.AndroidDebugBridge
 import com.android.ddmlib.AndroidDebugBridge.IClientChangeListener
@@ -216,7 +216,7 @@ object AndroidDdm {
                     .getOrElse(token("<name>"))
   }
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
+  lazy val settings: Seq[Setting[_]] = (Seq (
     screenshotDevice <<= (dbPath, streams) map { (p,s) =>
       screenshot(false, false, p.absolutePath).getOrElse(sys.error("could not get screenshot")).toFile("png", "device", s)
     },

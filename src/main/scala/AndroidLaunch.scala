@@ -3,7 +3,7 @@ package org.scalasbt.androidplugin
 import sbt._
 
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
 
 object AndroidLaunch {
@@ -35,7 +35,7 @@ object AndroidLaunch {
 
   lazy val settings: Seq[Setting[_]] =
     AndroidInstall.settings ++
-    inConfig(Android) (Seq (
+    (Seq (
       startDevice <<= startTask(false),
       startEmulator <<= startTask(true),
 

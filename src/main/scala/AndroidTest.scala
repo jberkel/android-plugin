@@ -3,7 +3,7 @@ package org.scalasbt.androidplugin
 import sbt._
 import Keys._
 
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
 import complete.DefaultParsers._
 import complete.Parser
@@ -58,34 +58,19 @@ object AndroidTest {
                   .getOrElse(token(NotSpace))
 
   /** AndroidTestProject */
-  lazy val androidSettings = settings ++
-    inConfig(Android)( Seq(
-      proguardInJars <<= (scalaInstance) map {
-        (scalaInstance) =>
-         Seq(scalaInstance.libraryJar)
-      }
-    )
-  )
-
   lazy val settings: Seq[Setting[_]] =
-    AndroidBase.settings ++
-    AndroidInstall.settings ++
-    inConfig(Android) (Seq (
+    (Seq (
       testRunner   <<= detectTestRunnerTask,
-      testEmulator <<= instrumentationTestAction(true),
-      testDevice   <<= instrumentationTestAction(false),
+      testEmulator <<= instrumentationTestAction(true) dependsOn installEmulator,
+      testDevice   <<= instrumentationTestAction(false) dependsOn installDevice,
       testOnlyEmulator <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
         runSingleTest(true)(test)
       },
+
       testOnlyDevice   <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
         runSingleTest(false)(test)
       }
-    )) ++ Seq (
-      testEmulator <<= (testEmulator in Android),
-      testDevice   <<= (testDevice in Android),
-      testOnlyEmulator <<= (testOnlyEmulator in Android),
-      testOnlyDevice   <<= (testOnlyDevice in Android)
-    )
+    ))
 
   class TestListener(log: Logger) extends ITestRunListener {
     import com.android.ddmlib.testrunner.TestIdentifier

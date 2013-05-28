@@ -3,15 +3,40 @@ package org.scalasbt.androidplugin
 import sbt._
 import Keys._
 
-import AndroidKeys._
+import AndroidPlugin._
 
 object AndroidHelpers {
 
   def directory(path: SettingKey[File]) = path map (IO.createDirectory(_))
 
-  def determineAndroidSdkPath(es: Seq[String]) = {
-    val paths = for ( e <- es; p = System.getenv(e); if p != null) yield p
-    if (paths.isEmpty) None else Some(Path(paths.head).asFile)
+  /**
+   * Finds out where the Android SDK is located on your system, based on :
+   *   * Environment variables
+   *   * The local.properties files
+   */
+  def determineAndroidSdkPath(envs: Seq[String], dir: File): File = {
+    // Try to find the SDK path in the default environment variables
+    val paths = for ( e <- envs; p = System.getenv(e); if p != null) yield p
+    if (!paths.isEmpty) Path(paths.head).asFile
+
+    // If not found, try to read the `local.properties` file
+    else {
+      val local = new File(dir, "local.properties")
+      if (local.exists()) {
+        (for (sdkDir <- (for (l <- IO.readLines(local);
+             if (l.startsWith("sdk.dir")))
+             yield l.substring(l.indexOf('=')+1)))
+             yield new File(sdkDir)).headOption.getOrElse(
+              sys.error("local.properties did not contain sdk.dir")
+             )
+
+      // If nothing is found either, display an error
+      } else {
+        sys.error(
+          "Android SDK not found. You might need to set %s".format(envs.mkString(" or "))
+        )
+      }
+    }
   }
 
   def isWindows = System.getProperty("os.name").startsWith("Windows")
@@ -23,9 +48,15 @@ object AndroidHelpers {
     if (isWindows) "" else javaOpts
   }
 
+  /**
+   * Retrieves an attribute from the AndroidManifest.xml file
+   */
   def usesSdk(mpath: File, schema: String, key: String) =
     (manifest(mpath) \ "uses-sdk").head.attribute(schema, key).map(_.text.toInt)
 
+  /**
+   * Returns a task that only runs an ADB commond
+   */
   def adbTask(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
     val (exit, out) = adbTaskWithOutput(dPath, emulator, s, action:_*)
 
@@ -41,6 +72,9 @@ object AndroidHelpers {
     out.toString
   }
 
+  /**
+   * Runs an ADB command
+   */
   def adbTaskWithOutput(dPath: String, emulator: Boolean, s: TaskStreams, action: String*) = {
     val adb = Seq(dPath, if (emulator) "-e" else "-d") ++ action
     s.log.debug(adb.mkString(" "))
@@ -53,6 +87,9 @@ object AndroidHelpers {
     (exit, out.toString)
   }
 
+  /**
+   * Returns a task for starting the app on a given device/emulator
+   */
   def startTask(emulator: Boolean) =
     (dbPath, manifestSchema, manifestPackage, manifestPath, streams) map {
       (dp, schema, mPackage, amPath, s) =>
@@ -63,6 +100,9 @@ object AndroidHelpers {
               launcherActivity(schema, amPath.head, mPackage))
   }
 
+  /**
+   * Returns the name of the app's main activity.
+   */
   def launcherActivity(schema: String, amPath: File, mPackage: String) = {
     val launcher = for (
          activity <- (manifest(amPath) \\ "activity");
@@ -78,6 +118,8 @@ object AndroidHelpers {
     launcher.headOption.getOrElse("")
   }
 
+  /**
+   * Loads the AndroidManifest.xml file at path `mpath`
+   */
   def manifest(mpath: File) = xml.XML.loadFile(mpath)
-
 }

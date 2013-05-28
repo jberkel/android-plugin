@@ -2,7 +2,7 @@ name := "sbt-android-plugin"
 
 organization := "org.scala-sbt"
 
-version := "0.6.3-20130429-SNAPSHOT"
+version := "0.7-SNAPSHOT"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
 

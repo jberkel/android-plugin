@@ -2,8 +2,11 @@ package org.scalasbt.androidplugin
 
 import sbt._
 import Keys._
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
+
+import scala.xml._
+import scala.xml.transform._
 
 object AndroidPreload {
 
@@ -18,6 +21,32 @@ object AndroidPreload {
 
   private def deviceDesignation(implicit emulator: Boolean) =
     if (emulator) "emulator" else "device"
+
+  /**
+   * Rewrite rule to add the uses-library tag to the Android manifest if the
+   * preloaded library is needed.
+   */
+  case class UsesLibraryRule(use: Boolean, version: String) extends RewriteRule {
+    val namespacePrefix = "http://schemas.android.com/apk/res/android"
+
+    override def transform(n: scala.xml.Node): Seq[scala.xml.Node] = n match {
+      case Elem(namespace, "application", attribs,
+                scope, children @ _*) if (use) => {
+
+        // Create a new uses-library tag
+        val libraryName = "scala-library-" + version
+        val tag =
+          <uses-library
+            android:name={libraryName}
+            android:required="true" />
+
+        // Update the element
+        Elem(namespace, "application", attribs, scope, children ++ tag: _*)
+      }
+
+      case other => other
+    }
+  }
 
   /****************
    * State checks *
@@ -313,15 +342,19 @@ object AndroidPreload {
    * Insert tasks into SBT *
    *************************/
 
-  lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
+  lazy val settings: Seq[Setting[_]] = (Seq(
+    // Automatically take care of AndroidManifest.xml when needed
+    manifestRewriteRules <+= (usePreloadedScala, scalaInstance) map
+      { (u, s) => UsesLibraryRule(u, s.version) },
+
     // Preload Scala on the device/emulator
     preloadDevice <<= preloadDeviceTask,
     preloadEmulator <<= InputTask(
-      (sdkPath)(AndroidProject.installedAvds(_)))(preloadEmulatorTask),
+      (sdkPath)(AndroidEmulator.installedAvds(_)))(preloadEmulatorTask),
 
     // Uninstall previously preloaded Scala
     unloadDevice <<= unloadDeviceTask,
     unloadEmulator <<= InputTask(
-      (sdkPath)(AndroidProject.installedAvds(_)))(unloadEmulatorTask)
+      (sdkPath)(AndroidEmulator.installedAvds(_)))(unloadEmulatorTask)
   ))
 }
