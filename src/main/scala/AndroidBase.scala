@@ -145,8 +145,6 @@ object AndroidBase {
 
     def runAapt(`package`: String, outJavaPath: File, args: String*) {
       s.log.info("Running AAPT for package " + `package`)
-      s.log.info("  Resource path: " + resPath.absolutePath)
-      s.log.info("  Manifest path: " + mPath.head.absolutePath)
 
       val aapt = Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
         "--custom-package", `package`,
@@ -181,6 +179,7 @@ object AndroidBase {
     }
 
     (javaPath ** "R.java" get) ++
+    (apklibJavaPath ** "R.java" get) ++
       Seq(createBuildConfig(mPackage)) ++
       apklibs.map(lib => createBuildConfig(lib.pkgName))
   }

@@ -13,11 +13,17 @@ import java.io.{File => JFile}
 object AndroidInstall {
 
   private def installTask(emulator: Boolean) = (dbPath, packageApkPath, streams) map { (dp, p, s) =>
+    s.log.info("Installing %s on %s".format(
+      p.name, if (emulator) "emulator" else "device"))
+
     adbTask(dp.absolutePath, emulator, s, "install", "-r ", p.absolutePath)
     ()
   }
 
   private def uninstallTask(emulator: Boolean) = (dbPath, manifestPackage, streams) map { (dp, m, s) =>
+    s.log.info("Uninstalling %s from %s".format(
+      m, if (emulator) "emulator" else "device"))
+
     adbTask(dp.absolutePath, emulator, s, "uninstall", m)
     ()
   }
@@ -39,7 +45,7 @@ object AndroidInstall {
         "-I", jPath.absolutePath,
         "-F", resApkPath.absolutePath) ++
         libraryResPathArgs
-    s.log.debug("packaging: "+aapt.mkString(" "))
+    s.log.debug("packaging: " + aapt.mkString(" "))
     if (aapt.run(false).exitValue != 0) sys.error("error packaging resources")
     resApkPath
   }
