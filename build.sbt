@@ -1,4 +1,4 @@
-name := "sbt-android-plugin"
+name := "sbt-android"
 
 organization := "org.scala-sbt"
 
