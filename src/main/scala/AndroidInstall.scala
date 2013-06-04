@@ -1,4 +1,4 @@
-package org.scalasbt.androidplugin
+package sbtandroid
 
 import java.util.Properties
 import proguard.{Configuration=>ProGuardConfiguration, ProGuard, ConfigurationParser}

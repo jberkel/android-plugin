@@ -1,4 +1,4 @@
-package org.scalasbt.androidplugin
+package sbtandroid
 
 import sbt._
 import classpath._
