@@ -191,8 +191,6 @@ object AndroidBase {
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq (
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
 
-    buildToolsVersion <<= (platformName) (_.split('-').last + ".0.0"),
-
     packageApkName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apk", a.name, v)),
     packageApkPath <<= (target, packageApkName) map (_ / _),
     packageApkLibName <<= (artifact, versionName) map ((a, v) => String.format("%s-%s.apklib", a.name, v)),
