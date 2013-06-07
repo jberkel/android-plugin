@@ -4,6 +4,7 @@ import sbt._
 import Keys._
 import AndroidKeys._
 import AndroidHelpers._
+import scala.xml.XML
 
 object AndroidPreload {
 
@@ -16,17 +17,17 @@ object AndroidPreload {
   private def devicePermissionPath(ver: String) =
     "/system/etc/permissions/scala-library-" + ver + ".xml"
 
-  private def deviceDesignation(implicit emulator: Boolean) =
-    if (emulator) "emulator" else "device"
+  private def deviceDesignation(implicit androidTarget: Symbol) =
+    if (androidTarget == 'emulator) "emulator" else if(androidTarget == 'device) "device" else "any"
 
   /****************
    * State checks *
    ****************/
 
-  private def checkFileExists (db: File, s: TaskStreams, filename: String)(implicit emulator: Boolean) = {
+  private def checkFileExists (db: File, s: TaskStreams, filename: String)(implicit androidTarget: Symbol) = {
 
     // Run the `ls` command on the device/emulator
-    val flist = adbTask(db.absolutePath, emulator, s,
+    val flist = adbTask(db.absolutePath, androidTarget, s,
       "shell", "ls", filename, "2>/dev/null")
 
     // Check if we found the file
@@ -40,11 +41,11 @@ object AndroidPreload {
     found
   }
 
-  private def checkPreloadedScalaVersion (db: File, si: ScalaInstance, s: TaskStreams)(implicit emulator: Boolean) = {
+  private def checkPreloadedScalaVersion (db: File, si: ScalaInstance, s: TaskStreams)(implicit androidTarget: Symbol) = {
     import scala.xml._
 
     // Retrieve the contents of the `scala_library` permission file
-    val permissions = adbTask(db.absolutePath, emulator, s,
+    val permissions = adbTask(db.absolutePath, androidTarget, s,
       "shell", "cat /system/etc/permissions/scala-library-" + si.version + ".xml")
 
     // Parse the library file
@@ -77,19 +78,18 @@ object AndroidPreload {
    ****************************/
 
   private def doPreloadPermissions(
-    db: File, si: ScalaInstance, s: TaskStreams)(implicit emulator: Boolean): Unit = {
+    db: File, si: ScalaInstance, s: TaskStreams)(implicit androidTarget: Symbol): Unit = {
 
     // Inform the user
     s.log.info("Setting permissions for "
       + jarName(si.libraryJar, si.version))
 
     // Create the contents of the file
-    val xmlContent =
-      <permissions>
-        <library
-        name={{ "scala-library-" + si.version }}
-        file={{ deviceJarPath(si.libraryJar, si.version) }} />
-      </permissions>
+    val xmlContent = XML.loadString("""|<permissions>
+                                       |  <library
+                                       |  name={{ "scala-library-" + si.version }}
+                                       |  file={{ deviceJarPath(si.libraryJar, si.version) }} />
+                                       |</permissions>""")
 
     // Generate string from the XML
     val xmlString = scala.xml.Utility.toXML(
@@ -98,14 +98,14 @@ object AndroidPreload {
     ).toString.replace("\"", "\\\"")
 
     // Load the file on the device
-    adbTask (db.absolutePath, emulator, s,
+    adbTask (db.absolutePath, androidTarget, s,
       "shell", "echo", xmlString,
       ">", devicePermissionPath(si.version)
     )
   }
 
   private def doPreloadJar(
-    db: File, dx: File, target: File, si: ScalaInstance, s: TaskStreams)(implicit emulator: Boolean): Unit = {
+    db: File, dx: File, target: File, si: ScalaInstance, s: TaskStreams)(implicit androidTarget: Symbol): Unit = {
 
     // This is the temporary JAR path
     val name = jarName(si.libraryJar, si.version)
@@ -129,25 +129,25 @@ object AndroidPreload {
 
     // Load the file on the device
     s.log.info("Installing " + name)
-    adbTask (db.absolutePath, emulator, s,
+    adbTask (db.absolutePath, androidTarget, s,
       "push",
       tempJarPath.getAbsolutePath,
       deviceJarPath(si.libraryJar, si.version)
     )
   }
 
-  private def doReboot (db: File, s: TaskStreams)(implicit emulator: Boolean) = {
+  private def doReboot (db: File, s: TaskStreams)(implicit androidTarget: Symbol) = {
       s.log.info("Rebooting " + deviceDesignation)
-      if (emulator) adbTask(db.absolutePath, emulator, s, "emu", "kill")
-      else adbTask(db.absolutePath, emulator, s, "reboot")
+      if (androidTarget == 'emulator) adbTask(db.absolutePath, androidTarget, s, "emu", "kill")
+      else adbTask(db.absolutePath, androidTarget, s, "reboot")
       ()
   }
 
-  private def doRemountReadWrite (db: File, s: TaskStreams)(implicit emulator: Boolean) = {
+  private def doRemountReadWrite (db: File, s: TaskStreams)(implicit androidTarget: Symbol) = {
     s.log.info("Remounting /system as read-write")
-    adbTask(db.absolutePath, emulator, s, "root")
-    adbTask(db.absolutePath, emulator, s, "wait-for-device")
-    adbTask(db.absolutePath, emulator, s, "remount")
+    adbTask(db.absolutePath, androidTarget, s, "root")
+    adbTask(db.absolutePath, androidTarget, s, "wait-for-device")
+    adbTask(db.absolutePath, androidTarget, s, "remount")
   }
 
   /***************************
@@ -167,7 +167,7 @@ object AndroidPreload {
     val configContents = scala.io.Source.fromFile(configFile).mkString
 
     // Regexp to match the system dir
-    val sysre = "image.sysdir.1 *= *(.*)".r 
+    val sysre = "image.sysdir.1 *= *(.*)".r
 
     sysre findFirstIn configContents match {
       case Some(sysre(sys)) =>
@@ -193,18 +193,18 @@ object AndroidPreload {
         rwemuCmd.run
 
         // Remount system as read-write
-        adbTask(db.absolutePath, true, s, "wait-for-device")
-        adbTask(db.absolutePath, true, s, "root")
-        adbTask(db.absolutePath, true, s, "wait-for-device")
-        adbTask(db.absolutePath, true, s, "remount")
+        adbTask(db.absolutePath, 'emulator, s, "wait-for-device")
+        adbTask(db.absolutePath, 'emulator, s, "root")
+        adbTask(db.absolutePath, 'emulator, s, "wait-for-device")
+        adbTask(db.absolutePath, 'emulator, s, "remount")
 
       case None => throw new Exception("Unable to find the system image")
     }
   }
 
-  private def doKillEmu (db: File, s: TaskStreams)(implicit emulator: Boolean) = {
-      if (emulator)
-        adbTaskWithOutput(db.absolutePath, emulator, s, "emu", "kill")
+  private def doKillEmu (db: File, s: TaskStreams)(implicit androidTarget: Symbol) = {
+      if (androidTarget == 'emulator)
+        adbTaskWithOutput(db.absolutePath, androidTarget, s, "emu", "kill")
       ()
   }
 
@@ -213,17 +213,47 @@ object AndroidPreload {
    * Tasks related to preloading *
    *******************************/
 
+  private def preloadAnyTask =
+    (dbPath, dxPath, target, scalaInstance, streams) map {
+    (dbPath, dxPath, target, scalaInstance, streams) =>
+
+    // We're not using any device
+      implicit val androidTarget = 'any
+
+      // Wait for the device
+      adbTask(dbPath.absolutePath, androidTarget, streams, "wait-for-device")
+
+      // Check if the Scala library is already preloaded
+      checkPreloadedScalaVersion(dbPath, scalaInstance, streams) match {
+
+        // Don't do anything if the library is preloaded
+        case Some(_) => ()
+
+        // Preload the Scala library
+        case None =>
+          // Remount the device in read-write mode
+          doRemountReadWrite (dbPath, streams)
+
+          // Push files to the device
+          doPreloadJar         (dbPath, dxPath, target, scalaInstance, streams)
+          doPreloadPermissions (dbPath, scalaInstance, streams)
+
+          // Reboot / Kill emulator
+          doReboot (dbPath, streams); ()
+      }
+    }
+
   private def preloadDeviceTask =
     (dbPath, dxPath, target, scalaInstance, streams) map {
     (dbPath, dxPath, target, scalaInstance, streams) =>
 
       // We're not using the emulator
-      implicit val emulator = false
+      implicit val androidTarget = 'device
 
       // Wait for the device
-      adbTask(dbPath.absolutePath, emulator, streams, "wait-for-device")
+      adbTask(dbPath.absolutePath, androidTarget, streams, "wait-for-device")
 
-      // Check if the Scala library is already prelaoded
+      // Check if the Scala library is already preloaded
       checkPreloadedScalaVersion(dbPath, scalaInstance, streams) match {
 
         // Don't do anything if the library is preloaded
@@ -248,7 +278,7 @@ object AndroidPreload {
     (emulatorName, toolsPath, sdkPath, dbPath, dxPath, target, scalaInstance, streams) =>
 
       // We're using the emulator
-      implicit val emulator = true
+      implicit val androidTarget = 'emulator
 
       // Kill any running emulator
       doKillEmu (dbPath, streams)
@@ -264,22 +294,35 @@ object AndroidPreload {
       doKillEmu (dbPath, streams); ()
     }
 
-  private def commandTask(command: String)(implicit emulator: Boolean) =
+  private def commandTask(command: String)(implicit androidTarget: Symbol) =
     (dbPath, streams) map {
-      (d,s) => adbTask(d.absolutePath, emulator, s, command)
+      (d,s) => adbTask(d.absolutePath, androidTarget, s, command)
       ()
+    }
+
+  private def unloadAnyTask =
+    (dbPath, scalaInstance, streams) map {
+      (d,si,s) =>
+      implicit val androidTarget = 'any
+      adbTask(d.absolutePath, androidTarget, s, "root")
+      adbTask(d.absolutePath, androidTarget, s, "wait-for-device")
+      adbTask(d.absolutePath, androidTarget, s, "remount")
+      adbTask(d.absolutePath, androidTarget, s, "wait-for-device")
+      adbTask(d.absolutePath, androidTarget, s, "shell", "rm", deviceJarPath(si.libraryJar, si.version))
+      adbTask(d.absolutePath, androidTarget, s, "shell", "rm", devicePermissionPath(si.version))
+      s.log.info("Scala has been removed from the " + deviceDesignation)
     }
 
   private def unloadDeviceTask =
     (dbPath, scalaInstance, streams) map {
       (d,si,s) =>
-        implicit val emulator = false
-        adbTask(d.absolutePath, emulator, s, "root")
-        adbTask(d.absolutePath, emulator, s, "wait-for-device")
-        adbTask(d.absolutePath, emulator, s, "remount")
-        adbTask(d.absolutePath, emulator, s, "wait-for-device")
-        adbTask(d.absolutePath, emulator, s, "shell", "rm", deviceJarPath(si.libraryJar, si.version))
-        adbTask(d.absolutePath, emulator, s, "shell", "rm", devicePermissionPath(si.version))
+        implicit val androidTarget = 'device
+        adbTask(d.absolutePath, androidTarget, s, "root")
+        adbTask(d.absolutePath, androidTarget, s, "wait-for-device")
+        adbTask(d.absolutePath, androidTarget, s, "remount")
+        adbTask(d.absolutePath, androidTarget, s, "wait-for-device")
+        adbTask(d.absolutePath, androidTarget, s, "shell", "rm", deviceJarPath(si.libraryJar, si.version))
+        adbTask(d.absolutePath, androidTarget, s, "shell", "rm", devicePermissionPath(si.version))
         s.log.info("Scala has been removed from the " + deviceDesignation)
     }
 
@@ -288,7 +331,7 @@ object AndroidPreload {
     (emulatorName, toolsPath, sdkPath, d, dxPath, target, si, s) =>
 
         // We're using the emulator
-        implicit val emulator = true
+        implicit val androidTarget = 'emulator
 
         // Kill any running emulator
         doKillEmu (d, s)
@@ -297,13 +340,13 @@ object AndroidPreload {
         doStartEmuReadWrite (d, s, sdkPath, toolsPath, emulatorName, false)
 
         // Remove the scala libs
-        adbTask(d.absolutePath, emulator, s, "wait-for-device")
-        adbTask(d.absolutePath, emulator, s, "root")
-        adbTask(d.absolutePath, emulator, s, "wait-for-device")
-        adbTask(d.absolutePath, emulator, s, "remount")
-        adbTask(d.absolutePath, emulator, s, "wait-for-device")
-        adbTask(d.absolutePath, emulator, s, "shell", "rm", deviceJarPath(si.libraryJar, si.version))
-        adbTask(d.absolutePath, emulator, s, "shell", "rm", devicePermissionPath(si.version))
+        adbTask(d.absolutePath, androidTarget, s, "wait-for-device")
+        adbTask(d.absolutePath, androidTarget, s, "root")
+        adbTask(d.absolutePath, androidTarget, s, "wait-for-device")
+        adbTask(d.absolutePath, androidTarget, s, "remount")
+        adbTask(d.absolutePath, androidTarget, s, "wait-for-device")
+        adbTask(d.absolutePath, androidTarget, s, "shell", "rm", deviceJarPath(si.libraryJar, si.version))
+        adbTask(d.absolutePath, androidTarget, s, "shell", "rm", devicePermissionPath(si.version))
         doKillEmu (d, s)
 
         s.log.info("Scala has been removed from the " + deviceDesignation)
@@ -315,11 +358,13 @@ object AndroidPreload {
 
   lazy val settings: Seq[Setting[_]] = inConfig(Android) (Seq(
     // Preload Scala on the device/emulator
+    preloadAny <<= preloadAnyTask,
     preloadDevice <<= preloadDeviceTask,
     preloadEmulator <<= InputTask(
       (sdkPath)(AndroidProject.installedAvds(_)))(preloadEmulatorTask),
 
     // Uninstall previously preloaded Scala
+    unloadAny <<= unloadAnyTask,
     unloadDevice <<= unloadDeviceTask,
     unloadEmulator <<= InputTask(
       (sdkPath)(AndroidProject.installedAvds(_)))(unloadEmulatorTask)

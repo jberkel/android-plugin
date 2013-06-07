@@ -91,7 +91,7 @@ object AndroidKeys {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
-  val layoutResources = TaskKey[Seq[File]]("layout-resources", 
+  val layoutResources = TaskKey[Seq[File]]("layout-resources",
       """All files that are in res/layout. They will
 		 be accessable through TR.layouts._""")
 
@@ -123,6 +123,9 @@ object AndroidKeys {
   val makeManagedJavaPath = TaskKey[Unit]("make-managed-java-path")
 
   /** Installable Tasks */
+  val installAny = TaskKey[Unit]("install-any")
+  val uninstallAny = TaskKey[Unit]("uninstall-any")
+
   val installEmulator = TaskKey[Unit]("install-emulator")
   val uninstallEmulator = TaskKey[Unit]("uninstall-emulator")
 
@@ -143,6 +146,8 @@ object AndroidKeys {
   val makeAssetPath = TaskKey[Unit]("make-assest-path")
 
   /** Launch Tasks */
+  val startAny = TaskKey[Unit]("start-any",
+    "Start package on any Android platform after installation")
   val startDevice = TaskKey[Unit]("start-device",
     "Start package on device after installation")
   val startEmulator = TaskKey[Unit]("start-emulator",
@@ -151,17 +156,23 @@ object AndroidKeys {
   /** ddm Support tasks */
   val stopBridge = TaskKey[Unit]("stop-bridge",
     "Terminates the ADB debugging bridge")
+  val screenshotAny = TaskKey[File]("screenshot-any",
+    "Take a screenshot from any Android platform")
   val screenshotEmulator = TaskKey[File]("screenshot-emulator",
     "Take a screenshot from the emulator")
   val screenshotDevice = TaskKey[File]("screenshot-device",
     "Take a screenshot from the device")
 
   // hprof tasks are Unit because of async nature
+  val hprofAny = TaskKey[Unit]("hprof-any",
+    "Take a dump of the current heap from any Android platform")
   val hprofEmulator = TaskKey[Unit]("hprof-emulator",
     "Take a dump of the current heap from the emulator")
   val hprofDevice = TaskKey[Unit]("hprof-device",
     "Take a dump of the current heap from the device")
 
+  val threadsAny = InputKey[Unit]("threads-any",
+    "Show thread dump from any Android platform")
   val threadsEmulator = InputKey[Unit]("threads-emulator",
     "Show thread dump from the emulator")
   val threadsDevice = InputKey[Unit]("threads-device",
@@ -188,8 +199,10 @@ object AndroidKeys {
 
   /** Test Project Tasks */
   val testRunner       = TaskKey[String]("test-runner", "get the current test runner")
+  val testAny          = TaskKey[Unit]("test-any", "runs the tests on any Android platform")
   val testEmulator     = TaskKey[Unit]("test-emulator", "runs tests in emulator")
   val testDevice       = TaskKey[Unit]("test-device",   "runs tests on device")
+  val testOnlyAny      = InputKey[Unit]("test-only-any", "run a single test on any Android platform")
   val testOnlyEmulator = InputKey[Unit]("test-only-emulator", "run a single test on emulator")
   val testOnlyDevice   = InputKey[Unit]("test-only-device",   "run a single test on device")
 
@@ -202,16 +215,20 @@ object AndroidKeys {
   val clearPasswords = TaskKey[Unit]("clear-passwords", "Clear cached passwords")
 
   /** Advanced device manipulations **/
+  val rootAny = TaskKey[Unit]("root-any")
+  val remountAny = TaskKey[Unit]("remount-any")
   val rootDevice = TaskKey[Unit]("root-device")
   val remountDevice = TaskKey[Unit]("remount-device")
   val rootEmulator = TaskKey[Unit]("root-emulator")
   val remountEmulator = TaskKey[Unit]("remount-emulator")
 
   /** Install Scala on device/emulator **/
+  val preloadAny        = TaskKey[Unit]("preload-Any", "Setup any Android platform for development by uploading the predexed Scala library")
   val preloadDevice     = TaskKey[Unit]("preload-device", "Setup device for development by uploading the predexed Scala library")
   val preloadEmulator   = InputKey[Unit]("preload-emulator", "Setup emulator for development by uploading the predexed Scala library")
 
   /** Unload Scala from device/emulator **/
+  val unloadAny   = TaskKey[Unit]("unload-Any", "Unloads the Scala library from any Android Platform")
   val unloadDevice   = TaskKey[Unit]("unload-device", "Unloads the Scala library from the device")
   val unloadEmulator = InputKey[Unit]("unload-emulator", "Unloads the Scala library from the emulator")
 
