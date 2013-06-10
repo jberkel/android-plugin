@@ -277,9 +277,6 @@ object AndroidBase {
     // Default key alias
     keyalias := "alias_name",
 
-    // Release defaults to the Release scope
-    release <<= release in Release,
-
     // Apk defaults to the Compile scope
     apk <<= apk in Compile
   )

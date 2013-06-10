@@ -110,7 +110,8 @@ object AndroidProjects {
       AndroidRelease.settings ++ Seq(
         useDebug := false,
         useProguard := true,
-        usePreloaded := false
+        usePreloaded := false,
+        release in Global <<= release
       )
     }
 
