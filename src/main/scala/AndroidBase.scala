@@ -275,7 +275,13 @@ object AndroidBase {
     ideaConfiguration := Compile,
 
     // Default key alias
-    keyalias := "alias_name"
+    keyalias := "alias_name",
+
+    // Release defaults to the Release scope
+    release <<= release in Release,
+
+    // Apk defaults to the Compile scope
+    apk <<= apk in Compile
   )
 
   lazy val settings: Seq[Setting[_]] = (Seq (
