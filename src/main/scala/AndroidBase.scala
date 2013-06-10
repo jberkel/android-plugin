@@ -272,7 +272,10 @@ object AndroidBase {
     preloadFilters := Seq(filterName("scala-library")),
 
     // Default IntelliJ configuration (for sbtidea integration)
-    ideaConfiguration := Compile
+    ideaConfiguration := Compile,
+
+    // Default key alias
+    keyalias := "alias_name"
   )
 
   lazy val settings: Seq[Setting[_]] = (Seq (
