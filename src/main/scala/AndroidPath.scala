@@ -48,7 +48,11 @@ object AndroidPath {
       idlPath <<= (buildToolsPath, aidlName) (_ / _),
       dxPath <<= (buildToolsPath, osDxName) (_ / _),
 
-      sdkPath <<= (envs, baseDirectory) { determineAndroidSdkPath(_, _) }
+      sdkPath <<= (envs, baseDirectory) { determineAndroidSdkPath(_, _) },
+
+      // Add the Google repository
+      resolvers <+= (sdkPath) { p => "Google Repository" at ("file://" + (p / "extras" / "google" / "m2repository").getAbsolutePath) },
+      resolvers <+= (sdkPath) { p => "Android Support Repository" at ("file://" + (p / "extras" / "android" / "m2repository").getAbsolutePath) }
     )
   }
 }

@@ -75,6 +75,61 @@ object AndroidBase {
       apklib
     }
 
+  private def aarlibDependenciesTask =
+    (update, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resourceManaged, streams) map {
+    (updateReport, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resManaged, s) => {
+
+      // We want to extract every aarlib in the classpath that is not already
+      // set to provided (which should mean that another project already
+      // provides the aarLib).
+      val allaarlibs = updateReport.matching(artifactFilter(`type` = "aar"))
+      val providedaarlibs = updateReport.matching(configurationFilter(name = "provided"))
+      val aarlibs = allaarlibs --- providedaarlibs get
+
+      // Make the destination directories
+      aarlibBaseDirectory.mkdirs
+      aarlibManaged.mkdirs
+      aarlibResourceManaged.mkdirs
+
+      // Extract the aarLibs
+      aarlibs map { aarlib =>
+
+        // Check if the AAR lib is up to date
+        val dest = aarlibResourceManaged / aarlib.base
+        val destjar = aarlibManaged / (aarlib.base + ".jar")
+        val timestamp = dest / ".timestamp"
+
+        // Check if the AAR lib is up to date
+        if (timestamp.lastModified < aarlib.lastModified) {
+
+          // Unzip the aarlib to a temporary directory
+          s.log.info("Extracting library " + aarlib.name)
+          val unzipped = IO.unzip(aarlib, dest)
+
+          // Move the classres in place
+          IO.move(dest / "classes.jar", destjar)
+
+          // Add a marker
+          IO.delete(timestamp)
+          new java.io.PrintWriter(timestamp, "UTF-8").close
+        }
+
+        // Read the package name from the manifest
+        val manifest = dest / "AndroidManifest.xml"
+        val pkgName = XML.loadFile(manifest).attribute("package").get.head.text
+
+        // Return a LibraryProject instance with some info about this aarLib
+        LibraryProject(
+          pkgName,
+          manifest,
+          Set(destjar),
+          Some(dest / "res") filter { _.exists },
+          Some(dest / "assets") filter { _.exists }
+        )
+      }
+    }
+  }
+
   private def apklibDependenciesTask =
     (update, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resourceManaged, streams) map {
     (updateReport, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resManaged, s) => {
@@ -94,12 +149,12 @@ object AndroidBase {
       // Extract the ApkLibs
       apklibs map { apklib =>
 
-        // Unzip the apklib to a temporary directory
-        s.log.info("Extracting apklib " + apklib.name)
+        // Unzip the ApkLib to a temporary directory
+        s.log.info("Extracting library " + apklib.name)
         val dest = apklibResourceManaged / apklib.base
         val unzipped = IO.unzip(apklib, dest)
 
-        // Move the sources to ApkLib source directory
+        // Move sources to the managed dir
         def moveContents(fromDir: File, toDir: File) = {
           toDir.mkdirs()
           val pairs = for (
@@ -128,16 +183,17 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, resPath, jarPath,
-    managedJavaPath, generatedProguardConfigPath, apklibDependencies,
-    apklibSourceManaged, streams, useDebug) map {
+    (manifestPackage, aaptPath, manifestPath, resPath, jarPath, managedJavaPath,
+     generatedProguardConfigPath, aarlibDependencies, apklibDependencies, apklibSourceManaged, streams, useDebug) map {
 
-    (mPackage, aPath, mPath, rPath, jarPath, javaPath, proGen, apklibs, apklibJavaPath, s, useDebug) =>
+    (mPackage, aPath, mPath, rPath, jarPath, javaPath, proGen, aarlibs, apklibs, apklibJavaPath, s, useDebug) =>
 
     val libraryResPathArgs = rPath.flatMap(p => Seq("-S", p.absolutePath))
 
+    val extlibs = apklibs ++ aarlibs
+
     val libraryAssetPathArgs = for (
-      lib <- apklibs;
+      lib <- extlibs;
       d <- lib.assetsDir.toSeq;
       arg <- Seq("-A", d.absolutePath)
     ) yield arg
@@ -338,6 +394,7 @@ object AndroidBase {
     resPath := Seq(),
     resPath <+= mainResPath,
     resPath <++= apklibDependencies map (apklibs => apklibs.flatMap(_.resDir)),
+    resPath <++= aarlibDependencies map (aarlibs => aarlibs.flatMap(_.resDir)),
 
     // Path to the resources APK file
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
@@ -353,6 +410,14 @@ object AndroidBase {
     apklibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
     apklibSources <<= apklibSourcesTask,
+
+    // AAR lib paths
+    aarlibBaseDirectory <<= crossTarget (_ / "aarlib_managed"),
+    aarlibManaged <<= aarlibBaseDirectory (_ / "lib"),
+    aarlibResourceManaged <<= aarlibBaseDirectory (_ / "res"),
+    aarlibDependencies <<= aarlibDependenciesTask,
+    managedClasspath <++= (aarlibDependencies) map {
+      libs => libs.flatMap(_.sources).map(Attributed.blank(_)) },
 
     // Output path of the DX command
     dxOutputPath <<= (target, classesDexName) (_ / _),
@@ -444,7 +509,7 @@ object AndroidBase {
     dependencyClasspath <<= dependencyClasspath in Compile,
     managedClasspath <<= managedClasspath in Compile,
 
-    // Add the Android library to the classpath
+    // Add the Android libraries to the classpath
     unmanagedJars <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
 
     // Set the default classpath types

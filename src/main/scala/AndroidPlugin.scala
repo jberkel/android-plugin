@@ -42,8 +42,9 @@ object AndroidPlugin extends Plugin {
    * Helper methods *
    ******************/
 
-  // ApkLib artifact definition
+  // ApkLib and AAR artifact definitions
   def apklib(module: ModuleID) = module artifacts(Artifact(module.name, "apklib", "apklib"))
+  def aarlib(module: ModuleID) = module artifacts(Artifact(module.name, "aar", "aar"))
 
   // Common module filters
   def filterFilename(filename: String) = (f: Attributed[File]) => f.data.name contains filename
@@ -84,6 +85,12 @@ object AndroidPlugin extends Plugin {
   val apklibSourceManaged = SettingKey[File]("apklib-source-managed", "Base directory for the ApkLib sources")
   val apklibResourceManaged = SettingKey[File]("apklib-resource-managed", "Base directory for the resources included in the ApkLibs")
   val apklibSources = TaskKey[Seq[File]]("apklib-sources", "Enumerate Java sources from apklibs")
+
+  /** AAR dependencies */
+  val aarlibDependencies = TaskKey[Seq[LibraryProject]]("aarlib-dependencies", "Unpack aarlib dependencies")
+  val aarlibBaseDirectory = SettingKey[File]("aarlib-base-directory", "Base directory for the aarLib dependencies")
+  val aarlibManaged = SettingKey[File]("aarlib-source-managed", "Base directory for the aarLib sources")
+  val aarlibResourceManaged = SettingKey[File]("aarlib-resource-managed", "Base directory for the resources included in the aarLibs")
 
   /** General inputs for the APK **/
   val inputClasspath = TaskKey[Seq[File]]("input-classpath", "All the classpath entries needed by the APK")
