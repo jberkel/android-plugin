@@ -131,15 +131,19 @@ object AndroidBase {
   }
 
   private def apklibDependenciesTask =
-    (update, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resourceManaged, streams) map {
-    (updateReport, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resManaged, s) => {
+    (update, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resourceManaged, streams,
+     unmanagedBase) map {
+    (updateReport, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resManaged, s,
+     unmanagedBase) => {
 
       // We want to extract every apklib in the classpath that is not already
       // set to provided (which should mean that another project already
       // provides the ApkLib).
+      // We also want to include apklibs in unmanagedBase.
       val allApklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val unmanagedApklibs = unmanagedBase.listFiles.filter(_.name.endsWith(".apklib"))
       val providedApklibs = updateReport.matching(configurationFilter(name = "provided"))
-      val apklibs = allApklibs --- providedApklibs get
+      val apklibs = (allApklibs --- providedApklibs get) ++ unmanagedApklibs
 
       // Make the destination directories
       apklibBaseDirectory.mkdirs
