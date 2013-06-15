@@ -334,7 +334,10 @@ object AndroidBase {
     keyalias := "alias_name",
 
     // Apk defaults to the Compile scope
-    apk <<= apk in Compile
+    apk <<= apk in Compile,
+
+    // Use typed resources by default
+    useTypedResources := true
   )
 
   lazy val settings: Seq[Setting[_]] = (Seq (

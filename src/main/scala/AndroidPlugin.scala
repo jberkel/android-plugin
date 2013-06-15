@@ -76,6 +76,7 @@ object AndroidPlugin extends Plugin {
   val useProguard = SettingKey[Boolean]("use-proguard", "Use Proguard to package the app")
   val usePreloaded = SettingKey[Boolean]("use-preloaded", "Use preloaded libraries for development")
   val useDebug = SettingKey[Boolean]("use-debug", "Use debug settings when building an APK")
+  val useTypedResources = SettingKey[Boolean]("use-typed-resources", "Use typed resources")
 
   /** ApkLib dependencies */
   case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])

@@ -116,7 +116,10 @@ object TypedResources {
 
     generateTypedResources <<= generateTypedResourcesTask,
 
-    sourceGenerators <+= generateTypedResources,
+    sourceGenerators <+= (generateTypedResources, useTypedResources) map {
+      (res, use) => if (use) res else Seq.empty
+    },
+
     watchSources <++= (layoutResources) map (ls => ls)
   ))
 }
