@@ -136,6 +136,12 @@ object AndroidBase {
     (updateReport, apklibBaseDirectory, apklibSourceManaged, apklibResourceManaged, resManaged, s,
      unmanagedBase) => {
 
+      // Make the destination directories
+      unmanagedBase.mkdirs
+      apklibBaseDirectory.mkdirs
+      apklibSourceManaged.mkdirs
+      apklibResourceManaged.mkdirs
+
       // We want to extract every apklib in the classpath that is not already
       // set to provided (which should mean that another project already
       // provides the ApkLib).
@@ -144,11 +150,6 @@ object AndroidBase {
       val unmanagedApklibs = unmanagedBase.listFiles.filter(_.name.endsWith(".apklib"))
       val providedApklibs = updateReport.matching(configurationFilter(name = "provided"))
       val apklibs = (allApklibs --- providedApklibs get) ++ unmanagedApklibs
-
-      // Make the destination directories
-      apklibBaseDirectory.mkdirs
-      apklibSourceManaged.mkdirs
-      apklibResourceManaged.mkdirs
 
       // Extract the ApkLibs
       apklibs map { apklib =>
