@@ -255,7 +255,7 @@ object AndroidBase {
     (sDirs, idPath, platformPath, javaPath, jSource, s) =>
     val aidlPaths = sDirs.map(_ ** "*.aidl").reduceLeft(_ +++ _).get
     if (aidlPaths.isEmpty) {
-      s.log.debug("no AIDL files found, skipping")
+      s.log.debug("No AIDL files found, skipping")
       Nil
     } else {
       val processor = aidlPaths.map { ap =>

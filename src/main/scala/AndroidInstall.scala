@@ -77,7 +77,7 @@ object AndroidInstall {
           streams.log.debug(dxCmd.mkString(" "))
           streams.log.info("Dexing "+output.getAbsolutePath)
           streams.log.debug(dxCmd !!)
-        } else streams.log.debug("dex file " + output.getAbsolutePath + " uptodate, skipping")
+        } else streams.log.debug("DEX file " + output.getAbsolutePath + "is up to date, skipping")
       }
 
       // First, predex the inputs in dxPredex
