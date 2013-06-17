@@ -29,6 +29,10 @@ object AndroidPlugin extends Plugin {
   lazy val androidTest = AndroidTestProject.defaults
   lazy val androidDefaults = AndroidProject.defaults
 
+  // Additional configuration for those using Java/Ant projects
+  lazy val androidJavaLayout: Seq[Setting[_]] =
+    AndroidJavaLayout.settings
+
   // NDK settings
   lazy val androidNdk: Seq[Setting[_]] =
     AndroidNdk.settings
