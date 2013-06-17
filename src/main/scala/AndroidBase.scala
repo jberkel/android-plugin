@@ -76,15 +76,20 @@ object AndroidBase {
     }
 
   private def aarlibDependenciesTask =
-    (update, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resourceManaged, streams) map {
-    (updateReport, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resManaged, s) => {
+    (update, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resourceManaged, streams,
+     unmanagedBase) map {
+    (updateReport, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resManaged, s,
+     unmanagedBase) => {
 
       // We want to extract every aarlib in the classpath that is not already
       // set to provided (which should mean that another project already
       // provides the aarLib).
       val allaarlibs = updateReport.matching(artifactFilter(`type` = "aar"))
+      val unmanagedaarlibs = Option(unmanagedBase.listFiles)
+                              .map(f => f.filter(_.name.endsWith(".aar")).toList)
+                              .getOrElse(Seq.empty)
       val providedaarlibs = updateReport.matching(configurationFilter(name = "provided"))
-      val aarlibs = allaarlibs --- providedaarlibs get
+      val aarlibs = (allaarlibs --- providedaarlibs get) ++ unmanagedaarlibs
 
       // Make the destination directories
       aarlibBaseDirectory.mkdirs
@@ -137,7 +142,6 @@ object AndroidBase {
      unmanagedBase) => {
 
       // Make the destination directories
-      unmanagedBase.mkdirs
       apklibBaseDirectory.mkdirs
       apklibSourceManaged.mkdirs
       apklibResourceManaged.mkdirs
@@ -147,7 +151,9 @@ object AndroidBase {
       // provides the ApkLib).
       // We also want to include apklibs in unmanagedBase.
       val allApklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
-      val unmanagedApklibs = unmanagedBase.listFiles.filter(_.name.endsWith(".apklib"))
+      val unmanagedApklibs = Option(unmanagedBase.listFiles)
+                              .map(f => f.filter(_.name.endsWith(".apklib")).toList)
+                              .getOrElse(Seq.empty)
       val providedApklibs = updateReport.matching(configurationFilter(name = "provided"))
       val apklibs = (allApklibs --- providedApklibs get) ++ unmanagedApklibs
 
