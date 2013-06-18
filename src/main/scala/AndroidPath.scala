@@ -62,8 +62,10 @@ object AndroidPath {
       sdkPath <<= (envs, baseDirectory) { determineAndroidSdkPath(_, _) },
 
       // Add the Google repository
-      resolvers <+= (sdkPath) { p => "Google Repository" at ("file://" + (p / "extras" / "google" / "m2repository").getAbsolutePath) },
-      resolvers <+= (sdkPath) { p => "Android Support Repository" at ("file://" + (p / "extras" / "android" / "m2repository").getAbsolutePath) }
+      resolvers <+= (sdkPath) { p => "Google Repository" at (
+        (p / "extras" / "google" / "m2repository").toURI.toString) },
+      resolvers <+= (sdkPath) { p => "Android Support Repository" at (
+        (p / "extras" / "android" / "m2repository").toURI.toString) }
     )
   }
 }
