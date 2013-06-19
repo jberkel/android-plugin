@@ -178,7 +178,7 @@ object AndroidPlugin extends Plugin {
   val buildToolsVersion = SettingKey[Option[String]]("build-tools-version")
 
   val manifestPath = TaskKey[Seq[File]]("manifest-path")
-  val nativeLibrariesPath = SettingKey[File]("natives-lib-path")
+  val nativeLibrariesPath = SettingKey[File]("native-libraries-path")
   val jarPath = SettingKey[File]("jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = TaskKey[File]("main-res-path")
