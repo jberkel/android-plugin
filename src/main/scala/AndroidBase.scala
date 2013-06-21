@@ -350,8 +350,16 @@ object AndroidBase {
     // Use typed resources by default
     useTypedResources := true,
 
-    // Path to the native libraries (.so) base directory
-    nativeLibrariesPath <<= unmanagedBase
+    // Path to the unmanaged native libraries
+    unmanagedNativePath <<= unmanagedBase,
+
+    // Path to the managed native libraries
+    managedNativePath <<= (crossTarget) (_ / "native_managed"),
+
+    // Default native directories
+    nativeDirectories := Seq.empty,
+    nativeDirectories <+= unmanagedNativePath map (x => x),
+    nativeDirectories <+= managedNativePath map (x => x)
   )
 
   lazy val settings: Seq[Setting[_]] = (Seq (
@@ -399,7 +407,6 @@ object AndroidBase {
     managedSourceDirectories <+= apklibSourceManaged,
     managedJavaPath <<= (sourceManaged) (_ / "java"),
     managedScalaPath <<= (sourceManaged) ( _ / "scala"),
-    managedNativePath <<= (sourceManaged) (_ / "native_libs"),
 
     // Resource paths
     //

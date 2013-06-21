@@ -14,6 +14,7 @@ object AndroidProjects {
      */
     lazy val defaults =
       AndroidBase.globalSettings ++
+      AndroidNdk.globalSettings ++
       inConfig(Compile)(
         AndroidBase.settings ++
         AndroidManifestGenerator.settings ++
@@ -21,6 +22,7 @@ object AndroidProjects {
         AndroidInstall.settings ++
         AndroidDdm.settings ++
         AndroidTest.settings ++
+        AndroidNdk.settings ++
         TypedResources.settings ++
         Seq(
           // Test projects are Debug projects by default
@@ -83,6 +85,7 @@ object AndroidProjects {
       AndroidInstall.settings ++
       AndroidDdm.settings ++
       AndroidLaunch.settings ++
+      AndroidNdk.settings ++
       TypedResources.settings
     }
 
@@ -123,6 +126,7 @@ object AndroidProjects {
      */
     lazy val defaults =
       AndroidBase.globalSettings ++
+      AndroidNdk.globalSettings ++
       inConfig(Compile)(androidDebug) ++
       inConfig(Preload)(compileSettings ++ androidPreload) ++
       inConfig(Release)(compileSettings ++ androidRelease)

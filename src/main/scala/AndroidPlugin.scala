@@ -178,17 +178,20 @@ object AndroidPlugin extends Plugin {
   val buildToolsVersion = SettingKey[Option[String]]("build-tools-version")
 
   val manifestPath = TaskKey[Seq[File]]("manifest-path")
-  val nativeLibrariesPath = SettingKey[File]("native-libraries-path")
   val jarPath = SettingKey[File]("jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = TaskKey[File]("main-res-path")
   val resPath = TaskKey[Seq[File]]("res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
-  val managedNativePath = SettingKey[File]("managed-native-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val generatedProguardConfigPath = SettingKey[File]("generated-proguard-config-path")
   val packageApkPath = TaskKey[File]("package-apk-path")
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
+
+  /** Native libraries */
+  val unmanagedNativePath = SettingKey[File]("unmanaged-native-path")
+  val managedNativePath = SettingKey[File]("managed-native-path")
+  val nativeDirectories = TaskKey[Seq[File]]("native-directories")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
@@ -303,15 +306,18 @@ object AndroidPlugin extends Plugin {
   val ndkBuildName = SettingKey[String]("ndk-build-name", "Name for the 'ndk-build' tool")
   val ndkBuildPath = SettingKey[File]("ndk-build-path", "Path to the 'ndk-build' tool")
 
+  val ndkLibDirectoryName =  SettingKey[String]("ndk-lib-directory-name", "Directory name for compiled native libraries.")
   val ndkJniDirectoryName = SettingKey[String]("ndk-jni-directory-name", "Directory name for native sources.")
   val ndkObjDirectoryName =  SettingKey[String]("ndk-obj-directory-name", "Directory name for compiled native objects.")
+  val ndkUnmanagedEnv = SettingKey[String]("ndk-unmanaged-env",
+      "Name of the make environment variable to bind to the unmanaged-base directory")
   val ndkEnvs = SettingKey[Seq[String]]("ndk-envs", "List of environment variables to check for the NDK.")
 
   val ndkJniSourcePath = SettingKey[File]("jni-source-path", "Path to native sources. (with Android.mk)")
   val ndkNativeOutputPath = SettingKey[File]("native-output-path", "NDK output path")
   val ndkNativeObjectPath = SettingKey[File]("native-object-path", "Path to the compiled native objects")
 
-  val ndkBuild = TaskKey[Unit]("ndk-build", "Compile native C/C++ sources.")
+  val ndkBuild = TaskKey[Seq[File]]("ndk-build", "Compile native C/C++ sources.")
   val ndkClean = TaskKey[Unit]("ndk-clean", "Clean resources built from native C/C++ sources.")
 
   /**************

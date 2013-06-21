@@ -238,8 +238,8 @@ object AndroidInstall {
     // Final APK generation
     packageConfig <<=
       (toolsPath, packageApkPath, resourcesApkPath, dxOutputPath,
-       nativeLibrariesPath, managedNativePath, dxInputs, resourceDirectory) map
-      (ApkConfig(_, _, _, _, _, _, _, _)),
+       nativeDirectories, dxInputs, resourceDirectory) map
+      (ApkConfig(_, _, _, _, _, _, _)),
 
     apk <<= apkTask dependsOn (cleanApk, aaptPackage, copyNativeLibraries),
 
