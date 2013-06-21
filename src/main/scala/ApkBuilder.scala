@@ -1,3 +1,5 @@
+package sbtandroid
+
 import sbt._
 import classpath._
 import java.io.{ByteArrayOutputStream, File, PrintStream}

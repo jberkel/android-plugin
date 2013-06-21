@@ -1,3 +1,5 @@
+package sbtandroid
+
 import sbt._
 import Keys._
 import AndroidKeys._

@@ -1,3 +1,5 @@
+package sbtandroid
+
 import java.io.{File,FileInputStream,OutputStreamWriter,PrintWriter}
 import java.net.{URL, HttpURLConnection}
 

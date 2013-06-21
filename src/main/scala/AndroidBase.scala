@@ -1,3 +1,5 @@
+package sbtandroid
+
 import sbt._
 
 import scala.xml._
@@ -67,7 +69,7 @@ object AndroidBase {
         (PathFinder(jPath) ** "*.java"  x rebase(jPath, "src")) ++
         (PathFinder(sPath) ** "*.scala" x rebase(sPath, "src")) ++
         ((PathFinder(rPath) ***)        x rebase(rPath, "res")) ++
-        ((PathFinder(aPath) ***)        x rebase(rPath, "assets"))
+        ((PathFinder(aPath) ***)        x rebase(aPath, "assets"))
       IO.jar(mapping, apklib, new java.util.jar.Manifest)
       apklib
     }
@@ -76,7 +78,9 @@ object AndroidBase {
     (update in Compile, sourceManaged, managedJavaPath, resourceManaged, streams) map {
     (updateReport, srcManaged, javaManaged, resManaged, s) => {
 
-      val apklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val allApklibs = updateReport.matching(artifactFilter(`type` = "apklib"))
+      val providedDependencies = updateReport.matching(configurationFilter(name = "provided"))
+      val apklibs = allApklibs --- providedDependencies get
 
       apklibs map  { apklib =>
         s.log.info("extracting apklib " + apklib.name)
@@ -108,14 +112,10 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, mainResPath, jarPath, managedJavaPath, extractApkLibDependencies, streams) map {
-    (mPackage, aPath, mPath, resPath, jPath, javaPath, apklibs, s) =>
+    (manifestPackage, aaptPath, manifestPath, resPath, jarPath, managedJavaPath, generatedProguardConfigPath, extractApkLibDependencies, streams, buildConfigDebug) map {
+    (mPackage, aPath, mPath, rPath, jPath, javaPath, proGen, apklibs, s, isDebug) =>
 
-    val libraryResPathArgs = for (
-      lib <- apklibs;
-      d <- lib.resDir.toSeq;
-      arg <- Seq("-S", d.absolutePath)
-    ) yield arg
+    val libraryResPathArgs = rPath.flatMap(p => Seq("-S", p.absolutePath))
 
     val libraryAssetPathArgs = for (
       lib <- apklibs;
@@ -127,9 +127,9 @@ object AndroidBase {
       val aapt = Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
         "--custom-package", `package`,
         "-M", mPath.head.absolutePath,
-        "-S", resPath.absolutePath,
         "-I", jPath.absolutePath,
-        "-J", javaPath.absolutePath) ++
+        "-J", javaPath.absolutePath,
+        "-G", proGen.absolutePath) ++
         args ++
         libraryResPathArgs ++
         libraryAssetPathArgs
@@ -137,7 +137,23 @@ object AndroidBase {
     }
     runAapt(mPackage)
     apklibs.foreach(lib => runAapt(lib.pkgName, "--non-constant-id"))
-    javaPath ** "R.java" get
+
+    def createBuildConfig(`package`: String) = {
+      var path = javaPath
+      `package`.split('.').foreach { path /= _ }
+      path.mkdirs
+      val buildConfig = path / "BuildConfig.java"
+      IO.write(buildConfig, """
+        package %s;
+        public final class BuildConfig {
+          public static final boolean DEBUG = %s;
+        }""".format(`package`, isDebug))
+      buildConfig
+    }
+
+    (javaPath ** "R.java" get) ++
+      Seq(createBuildConfig(mPackage)) ++
+      apklibs.map(lib => createBuildConfig(lib.pkgName))
   }
 
   private def aidlGenerateTask =
@@ -196,18 +212,24 @@ object AndroidBase {
     managedScalaPath <<= (sourceManaged in Compile) ( _ / "scala"),
     managedNativePath <<= (sourceManaged in Compile) (_ / "native_libs"),
 
+    resPath := Seq(),
+    resPath <+= mainResPath,
+    resPath <++= extractApkLibDependencies map (apklibs => apklibs.flatMap(_.resDir)),
+
     extractApkLibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
-
-    managedSourceDirectories in Compile <<= (managedJavaPath, managedScalaPath) (Seq(_, _)),
 
     classesMinJarPath <<= (target, classesMinJarName) (_ / _),
     classesDexPath <<= (target, classesDexName) (_ / _),
     resourcesApkPath <<= (target, resourcesApkName) (_ / _),
+    generatedProguardConfigPath <<= (target, generatedProguardConfigName) (_ / _),
     useProguard := true,
+    skipScalaLibrary := false,
     proguardOptimizations := Seq.empty,
     proguardInJarsOption := Seq.empty,
     proguardInJarsFilter := { case _ => Seq.empty},
+
+    buildConfigDebug := false,
 
     jarPath <<= (platformPath, jarName) (_ / _),
     libraryJarPath <<= (jarPath (_ get)),

@@ -1,3 +1,5 @@
+package sbtandroid
+
 import sbt._
 
 import Keys._
@@ -34,7 +36,8 @@ object AndroidKeys {
   val classesMinJarName = SettingKey[String]("classes-min-jar-name")
   val classesDexName = SettingKey[String]("classes-dex-name")
   val resourcesApkName = SettingKey[String]("resources-apk-name")
-  val dxOpts = SettingKey[Tuple2[String, Option[Seq[String]]]]("dx-opts")
+  val generatedProguardConfigName = SettingKey[String]("generated-proguard-config-name")
+  val dxMemory = SettingKey[String]("dx-memory")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
   val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
@@ -46,15 +49,17 @@ object AndroidKeys {
 
   /** Path Settings */
   val sdkPath = SettingKey[File]("sdk-path")
+  val platformToolsPath = SettingKey[File]("platform-tools-path")
+  val buildToolsPath = SettingKey[File]("build-tools-path")
   val toolsPath = SettingKey[File]("tools-path")
   val dbPath = SettingKey[File]("db-path")
-  val platformPath = SettingKey[File]("platform-path")
   val aaptPath = SettingKey[File]("apt-path")
   val idlPath = SettingKey[File]("idl-path")
   val dxPath = SettingKey[File]("dx-path")
 
   /** Base Settings */
-  val platformToolsPath = SettingKey[File]("platform-tools-path")
+  val platformPath = SettingKey[File]("platform-path")
+  val buildToolsVersion = SettingKey[Option[String]]("build-tools-version")
   val manifestPackage = TaskKey[String]("manifest-package")
   val manifestPackageName = TaskKey[String]("manifest-package-name")
   val minSdkVersion = TaskKey[Option[Int]]("min-sdk-version")
@@ -65,14 +70,19 @@ object AndroidKeys {
   val jarPath = SettingKey[File]("jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = TaskKey[File]("main-res-path")
+  val resPath = TaskKey[Seq[File]]("res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
   val managedNativePath = SettingKey[File]("managed-native-path")
   val classesMinJarPath = SettingKey[File]("classes-min-jar-path")
   val classesDexPath = SettingKey[File]("classes-dex-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
+  val generatedProguardConfigPath = SettingKey[File]("generated-proguard-config-path")
   val packageApkPath = TaskKey[File]("package-apk-path")
   val packageApkLibPath = TaskKey[File]("package-apklib-path")
   val useProguard = SettingKey[Boolean]("use-proguard")
+  val buildConfigDebug = SettingKey[Boolean]("build-config-debug")
+  val skipScalaLibrary = SettingKey[Boolean]("skip-scala-library")
+  val predexLibraries = SettingKey[Boolean]("predex-libraries")
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
@@ -192,4 +202,22 @@ object AndroidKeys {
 
   val cachePasswords = SettingKey[Boolean]("cache-passwords", "Cache passwords")
   val clearPasswords = TaskKey[Unit]("clear-passwords", "Clear cached passwords")
+
+  /** Advanced device manipulations **/
+  val rootDevice = TaskKey[Unit]("root-device")
+  val remountDevice = TaskKey[Unit]("remount-device")
+  val rootEmulator = TaskKey[Unit]("root-emulator")
+  val remountEmulator = TaskKey[Unit]("remount-emulator")
+
+  /** Install Scala on device/emulator **/
+  val preloadDevice     = TaskKey[Unit]("preload-device", "Setup device for development by uploading the predexed Scala library")
+  val preloadEmulator   = InputKey[Unit]("preload-emulator", "Setup emulator for development by uploading the predexed Scala library")
+
+  /** Unload Scala from device/emulator **/
+  val unloadDevice   = TaskKey[Unit]("unload-device", "Unloads the Scala library from the device")
+  val unloadEmulator = InputKey[Unit]("unload-emulator", "Unloads the Scala library from the emulator")
+
+  /** Use preloaded Scala for development **/
+  val usePreloadedScala = SettingKey[Boolean]("use-preloaded-scala",
+    "If true, will preload the current Scala version on the device or emulator and use it for development")
 }
