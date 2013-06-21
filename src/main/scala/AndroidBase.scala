@@ -348,7 +348,10 @@ object AndroidBase {
     apk <<= apk in Compile,
 
     // Use typed resources by default
-    useTypedResources := true
+    useTypedResources := true,
+
+    // Path to the native libraries (.so) base directory
+    nativeLibrariesPath <<= unmanagedBase
   )
 
   lazy val settings: Seq[Setting[_]] = (Seq (
@@ -387,9 +390,6 @@ object AndroidBase {
     versionName <<= (manifestPath, manifestSchema, version) map ((p, schema, version) =>
         manifest(p.head).attribute(schema, "versionName").map(_.text).getOrElse(version)
     ),
-
-    // Path to the native libraries (.so) base directory 
-    nativeLibrariesPath <<= (sourceDirectory) (_ / "libs"),
 
     // Main asset and resource paths
     mainAssetsPath <<= (sourceDirectory, assetsDirectoryName) (_ / _),
