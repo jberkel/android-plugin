@@ -91,9 +91,11 @@ object AndroidInstall {
 
   private def proguardTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, generatedProguardConfigPath) map {
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, generatedProguardConfigPath,
+     proguardInJarsOption, proguardInJarsFilter) map {
     (useProguard, skipScalaLibrary, proguardOptimizations, scalaInstance, classDirectory, proguardInJars, streams,
-     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, genConfig) =>
+     classesMinJarPath, libraryJarPath, manifestPackage, proguardOption, genConfig, 
+     proguardInJarsOption, proguardInJarsFilter) =>
       if (useProguard) {
           val generatedOptions = 
             if(genConfig.exists()) 
@@ -103,14 +105,20 @@ object AndroidInstall {
           val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
                                "TR.class", "TR$.class", "library.properties")
           val sep = JFile.pathSeparator
-
-          val inJars = ("\"" + classDirectory.absolutePath + "\"") +:
+          val inJars = ("\"" + classDirectory.absolutePath + "\"") +: 
                        proguardInJars
                        .filter(!skipScalaLibrary || _ != scalaInstance.libraryJar)
-                       .map("\""+_+"\""+manifestr.mkString("(", ",!**/", ")"))
+                       .map { jar =>
+                         val default: PartialFunction[String, Seq[String]] = { case _ => Seq.empty }
+                         val filter = (proguardInJarsFilter orElse default)(jar.getName()) 
+                         
+                         "\""+jar+"\""+manifestr.mkString("(", ",!**/", "") +
+                           (if(!filter.isEmpty) filter.mkString(",", ",", ")") else ")")
+                       }
+          
 
           val args = (
-                 "-injars" :: inJars.mkString(sep) ::
+                 "-injars" :: (proguardInJarsOption ++ inJars).mkString(sep) ::
                  "-outjars" :: "\""+classesMinJarPath.absolutePath+"\"" ::
                  "-libraryjars" :: libraryJarPath.map("\""+_+"\"").mkString(sep) ::
                  Nil) ++ 

@@ -226,6 +226,8 @@ object AndroidBase {
     useProguard := true,
     skipScalaLibrary := false,
     proguardOptimizations := Seq.empty,
+    proguardInJarsOption := Seq.empty,
+    proguardInJarsFilter := { case _ => Seq.empty},
 
     buildConfigDebug := false,
 
