@@ -26,7 +26,7 @@ object AndroidDefaults {
     aidlName := DefaultAaidlName,
     dxName := DefaultDxName,
     manifestName := DefaultAndroidManifestName,
-    jarName := DefaultAndroidJarName,
+    libraryJarName := DefaultAndroidJarName,
     assetsDirectoryName := DefaultAssetsDirectoryName,
     generatedProguardConfigName := DefaultGeneratedProguardConfigName,
     resDirectoryName := DefaultResDirectoryName,

@@ -33,20 +33,31 @@ object AndroidInstall {
   }
 
   private def aaptPackageTask: Project.Initialize[Task[File]] =
-  (aaptPath, manifestPath, resPath, mainAssetsPath, jarPath, resourcesApkPath, apklibDependencies, streams) map {
-    (apPath, manPath, rPath, assetPath, jPath, resApkPath, apklibs, s) =>
+  (aaptPath, manifestPath, resPath, mainAssetsPath, libraryJarPath, resourcesApkPath, streams) map {
+  (aaptPath, manifestPath, resPath, mainAssetsPath, libraryJarPath, resourcesApkPath, streams) =>
 
-    val libraryResPathArgs = rPath.flatMap(p => Seq("-S", p.absolutePath))
+    // Make assets directory
+    mainAssetsPath.mkdirs
 
-    val aapt = Seq(apPath.absolutePath, "package", "--auto-add-overlay", "-f",
-        "-M", manPath.head.absolutePath,
-        "-A", assetPath.absolutePath,
-        "-I", jPath.absolutePath,
-        "-F", resApkPath.absolutePath) ++
+    // Resource arguments
+    val libraryResPathArgs = resPath.flatMap(p => Seq("-S", p.absolutePath))
+
+    // AAPT command line
+    val aapt = Seq(aaptPath.absolutePath, "package",
+        "--auto-add-overlay", "-f",
+        "-M", manifestPath.head.absolutePath,
+        "-A", mainAssetsPath.absolutePath,
+        "-I", libraryJarPath.absolutePath,
+        "-F", resourcesApkPath.absolutePath) ++
         libraryResPathArgs
-    s.log.debug("packaging: " + aapt.mkString(" "))
-    if (aapt.run(false).exitValue != 0) sys.error("error packaging resources")
-    resApkPath
+
+    // Package resources
+    streams.log.info("Packaging resources in " + resourcesApkPath.absolutePath)
+    streams.log.debug("Running: " + aapt.mkString(" "))
+    if (aapt.run(false).exitValue != 0) sys.error("Error packaging resources")
+
+    // Return the path to the resources APK
+    resourcesApkPath
   }
 
   private def dxTask: Project.Initialize[Task[File]] =
@@ -216,14 +227,11 @@ object AndroidInstall {
 
   lazy val settings: Seq[Setting[_]] = Seq(
 
-    // Resource generation (AAPT)
-    makeAssetPath <<= directory(mainAssetsPath),
+    // Resource package generation
     aaptPackage <<= aaptPackageTask,
-    aaptPackage <<= aaptPackage dependsOn (makeAssetPath, dx),
 
     // Dexing (DX)
     dx <<= dxTask,
-    dxMemory := "-JXmx512m",
 
     // Clean generated APK
     cleanApk <<= (packageApkPath) map (IO.delete(_)),
@@ -241,7 +249,7 @@ object AndroidInstall {
        nativeDirectories, dxInputs, resourceDirectory) map
       (ApkConfig(_, _, _, _, _, _, _)),
 
-    apk <<= apkTask dependsOn (cleanApk, aaptPackage, copyNativeLibraries),
+    apk <<= apkTask dependsOn (cleanApk, aaptPackage, dx, copyNativeLibraries),
 
     // Package installation
     install <<= installTask dependsOn apk,

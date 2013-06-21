@@ -194,7 +194,7 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, resPath, jarPath, managedJavaPath,
+    (manifestPackage, aaptPath, manifestPath, resPath, libraryJarPath, managedJavaPath,
      generatedProguardConfigPath, aarlibDependencies, apklibDependencies, apklibSourceManaged, streams, useDebug) map {
 
     (mPackage, aPath, mPath, rPath, jarPath, javaPath, proGen, aarlibs, apklibs, apklibJavaPath, s, useDebug) =>
@@ -328,12 +328,14 @@ object AndroidBase {
     proguardOptions := Seq.empty,
     proguardOptimizations := Seq.empty,
 
+    // Dex options
+    dxMemory := "-JXmx512m",
+
     // Platform path for the current project
     platformPath <<= (sdkPath, platformName) (_ / "platforms" / _),
 
     // Path to the platform android.jar for the current project
-    jarPath <<= (platformPath, jarName) (_ / _),
-    libraryJarPath <<= (jarPath (_ get)),
+    libraryJarPath <<= (platformPath, libraryJarName) (_ / _),
 
     // By default, if preloading is enabled, preload the Scala library
     preloadFilters := Seq(filterName("scala-library")),
@@ -487,7 +489,7 @@ object AndroidBase {
       val provided = (
         providedInternalDependencies ++
         update.select(Set("provided")) ++
-        libraryJarPath
+        Seq(libraryJarPath)
       )
 
       // Filter the full classpath
@@ -511,6 +513,7 @@ object AndroidBase {
     // Create the managed Java path
     makeManagedJavaPath <<= directory(managedJavaPath),
 
+    // Copy native library dependencies
     copyNativeLibraries <<= copyNativeLibrariesTask,
 
     // AAPT and AIDL source generation
@@ -531,7 +534,7 @@ object AndroidBase {
     managedClasspath <<= managedClasspath in Compile,
 
     // Add the Android libraries to the classpath
-    unmanagedJars <++= (libraryJarPath) map (_.map(Attributed.blank(_))),
+    unmanagedJars <+= (libraryJarPath) map (Attributed.blank(_)),
 
     // Set the default classpath types
     classpathTypes := Set("jar", "bundle", "so"),

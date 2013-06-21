@@ -64,7 +64,6 @@ object AndroidPlugin extends Plugin {
 
   /** Android target **/
   val adbTarget = SettingKey[AndroidTarget]("adb-target", "Current Android target (device or emulator) connected to ADB")
-  val adbName = SettingKey[String]("adb-name", "Name of the ADB command")
 
   /** User Defines */
   val platformName = SettingKey[String]("platform-name", "Targetted android platform")
@@ -116,8 +115,6 @@ object AndroidPlugin extends Plugin {
   val aaptPackage = TaskKey[File]("aapt-package", "Package resources and assets.")
   val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
 
-  val makeAssetPath = TaskKey[Unit]("make-assest-path")
-
   /** Install Scala on device/emulator **/
   val preloadFilters     = SettingKey[Seq[Attributed[File] => Boolean]]("preload-filters", "Filters the libraries that are to be preloaded")
   val preloadDevice      = TaskKey[Unit]("preload-device", "Setup device for development by uploading predexed libraries")
@@ -134,11 +131,12 @@ object AndroidPlugin extends Plugin {
   val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
 
   /** Default Settings */
+  val adbName = SettingKey[String]("adb-name", "Name of the ADB command")
   val aaptName = SettingKey[String]("aapt-name")
   val aidlName = SettingKey[String]("aidl-name")
   val dxName = SettingKey[String]("dx-name")
   val manifestName = SettingKey[String]("manifest-name")
-  val jarName = SettingKey[String]("jar-name")
+  val libraryJarName = SettingKey[String]("library-jar-name")
   val assetsDirectoryName = SettingKey[String]("assets-dir-name")
   val resDirectoryName = SettingKey[String]("res-dir-name")
   val classesMinJarName = SettingKey[String]("classes-min-jar-name")
@@ -148,7 +146,6 @@ object AndroidPlugin extends Plugin {
   val dxMemory = SettingKey[String]("dx-memory")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
-  val libraryJarPath = SettingKey[Seq[File]]("library-path")
 
   /** Determined Settings */
   val packageApkName = TaskKey[String]("package-apk-name")
@@ -164,6 +161,7 @@ object AndroidPlugin extends Plugin {
   val aaptPath = SettingKey[File]("apt-path")
   val idlPath = SettingKey[File]("idl-path")
   val dxPath = SettingKey[File]("dx-path")
+  val libraryJarPath = SettingKey[File]("library-jary-path")
 
   /** Base Settings */
   val platformPath = SettingKey[File]("platform-path")
@@ -174,7 +172,6 @@ object AndroidPlugin extends Plugin {
   val buildToolsVersion = SettingKey[Option[String]]("build-tools-version")
 
   val manifestPath = TaskKey[Seq[File]]("manifest-path")
-  val jarPath = SettingKey[File]("jar-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = TaskKey[File]("main-res-path")
   val resPath = TaskKey[Seq[File]]("res-path")

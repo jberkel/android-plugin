@@ -9,12 +9,12 @@ import AndroidPlugin._
 
 object TypedResources {
   private def generateTypedResourcesTask =
-    (useTypedResources, typedResource, layoutResources, jarPath, manifestPackage, streams) map {
-    (useTypedResources, typedResource, layoutResources, jarPath, manifestPackage, s) =>
+    (useTypedResources, typedResource, layoutResources, libraryJarPath, manifestPackage, streams) map {
+    (useTypedResources, typedResource, layoutResources, libraryJarPath, manifestPackage, s) =>
 
       if (useTypedResources) {
         val Id = """@\+id/(.*)""".r
-        val androidJarLoader = ClasspathUtilities.toLoader(jarPath)
+        val androidJarLoader = ClasspathUtilities.toLoader(libraryJarPath)
 
         def tryLoading(className: String) = {
           try {
