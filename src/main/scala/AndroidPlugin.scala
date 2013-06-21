@@ -33,10 +33,6 @@ object AndroidPlugin extends Plugin {
   lazy val androidJavaLayout: Seq[Setting[_]] =
     AndroidJavaLayout.settings
 
-  // NDK settings
-  lazy val androidNdk: Seq[Setting[_]] =
-    AndroidNdk.settings
-
   // Android SDK and emulator tasks/settings will be automatically loaded
   // for every project.
   override lazy val settings: Seq[Setting[_]] =
