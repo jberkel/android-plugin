@@ -352,8 +352,11 @@ object AndroidBase {
     // Use typed resources by default
     useTypedResources := true,
 
+    // Gradle uses libs/ as the unmanaged JAR directory!
+    unmanagedBase <<= (baseDirectory) (_ / "libs"),
+
     // Path to the unmanaged native libraries
-    unmanagedNativePath <<= unmanagedBase,
+    unmanagedNativePath <<= (baseDirectory) (_ / "lib"),
 
     // Path to the managed native libraries
     managedNativePath <<= (crossTarget) (_ / "native_managed"),
