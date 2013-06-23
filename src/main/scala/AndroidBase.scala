@@ -442,8 +442,6 @@ object AndroidBase {
     aarlibManaged <<= aarlibBaseDirectory (_ / "lib"),
     aarlibResourceManaged <<= aarlibBaseDirectory (_ / "res"),
     aarlibDependencies <<= aarlibDependenciesTask,
-    managedClasspath <++= (aarlibDependencies) map {
-      libs => libs.flatMap(_.sources).map(Attributed.blank(_)) },
 
     // Output path of the DX command
     dxOutputPath <<= (target, classesDexName) (_ / _),
@@ -536,8 +534,10 @@ object AndroidBase {
     dependencyClasspath <<= dependencyClasspath in Compile,
     managedClasspath <<= managedClasspath in Compile,
 
-    // Add the Android libraries to the classpath
-    unmanagedJars <+= (libraryJarPath) map (Attributed.blank(_)),
+    // Add the dependencies to the classpath
+    unmanagedClasspath <+= (libraryJarPath) map (Attributed.blank(_)),
+    unmanagedJars <++= (aarlibDependencies) map {
+      libs => libs.flatMap(_.sources).map(Attributed.blank(_)) },
 
     // Set the default classpath types
     classpathTypes := Set("jar", "bundle", "so"),
