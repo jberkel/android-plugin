@@ -119,8 +119,8 @@ trait AndroidTarget {
    */
    def installPackage(adbPath: File, streams: TaskStreams, apkPath: File) =
      run(adbPath, streams, "install", "-r", apkPath.absolutePath)
-   def uninstallPackage(adbPath: File, streams: TaskStreams, apkPath: File) =
-     run(adbPath, streams, "uninstall", apkPath.absolutePath)
+   def uninstallPackage(adbPath: File, streams: TaskStreams, packageName: String) =
+     run(adbPath, streams, "uninstall", packageName)
 }
 
 /**

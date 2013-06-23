@@ -26,8 +26,8 @@ object AndroidInstall {
    * Task that uninstalls a package from the target
    */
   private val uninstallTask =
-    (adbTarget, dbPath, packageApkPath, streams) map { (t, dp, p, s) =>
-    s.log.info("Uninstalling %s".format(p.name))
+    (adbTarget, dbPath, manifestPackage, streams) map { (t, dp, p, s) =>
+    s.log.info("Uninstalling %s".format(p))
     t.uninstallPackage(dp, s, p)
     ()
   }
