@@ -297,7 +297,7 @@ object AndroidPlugin extends Plugin {
    ********************/
 
   val ndkBuildName = SettingKey[String]("ndk-build-name", "Name for the 'ndk-build' tool")
-  val ndkBuildPath = SettingKey[File]("ndk-build-path", "Path to the 'ndk-build' tool")
+  val ndkBuildPath = SettingKey[Option[File]]("ndk-build-path", "Path to the 'ndk-build' tool")
 
   val ndkLibDirectoryName =  SettingKey[String]("ndk-lib-directory-name", "Directory name for compiled native libraries.")
   val ndkJniDirectoryName = SettingKey[String]("ndk-jni-directory-name", "Directory name for native sources.")

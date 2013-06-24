@@ -59,8 +59,7 @@ object AndroidNdk {
         b = new File(p, ndkBuildName)
         if b.canExecute
       } yield b
-      paths.headOption getOrElse (sys.error("Android NDK not found.  " +
-        "You might need to set " + envs.mkString(" or ")))
+      paths.headOption
     },
 
     // Path to the javah executable
@@ -149,13 +148,14 @@ object AndroidNdk {
   }
 
   private def runNdkBuild(
-    ndkBuildPath: File,
+    ndkBuildPath: Option[File],
     ndkUnmanagedEnv: String,
     javahOutputEnv: String,
     javahOutputDirectory: File,
     ndkNativeObjectPath: File,
     ndkNativeOutputPath: File,
     ndkJniSourcePath: File,
+    envs: Seq[String],
     streams: TaskStreams,
     targets: String*): Seq[File] = {
 
@@ -167,9 +167,13 @@ object AndroidNdk {
       // Source root for ndk-build
       val sourceBase = ndkJniSourcePath.getParentFile
 
+      // NDK-Build path
+      val ndkBuildTool = ndkBuildPath getOrElse (sys.error("Android NDK not found.  " +
+        "You might need to set " + envs.mkString(" or ")))
+
       // Create the ndk-build command
       val ndkBuild = (
-        ndkBuildPath.absolutePath ::
+        ndkBuildTool.absolutePath ::
         "-C" :: sourceBase.absolutePath ::
         (javahOutputEnv + "=" + javahOutputDirectory.absolutePath) ::
         (ndkUnmanagedEnv + "=" + unmanagedArch.absolutePath) ::
@@ -195,16 +199,15 @@ object AndroidNdk {
 
   private val ndkBuildTask =
     (ndkBuildPath, ndkUnmanagedEnv, javahOutputEnv, javahOutputDirectory,
-      ndkNativeObjectPath, ndkNativeOutputPath, ndkJniSourcePath, streams) map (
-
-      runNdkBuild(_, _, _, _, _, _, _, _)
+      ndkNativeObjectPath, ndkNativeOutputPath, ndkJniSourcePath, ndkEnvs, streams) map (
+      runNdkBuild(_, _, _, _, _, _, _, _, _)
     )
 
   private val ndkCleanTask =
     (ndkBuildPath, ndkUnmanagedEnv, javahOutputEnv, javahOutputDirectory,
-      ndkNativeObjectPath, ndkNativeOutputPath, ndkJniSourcePath, streams) map {
-      (bp, ue, joe, jod, nob, nou, nj, s) =>
-      runNdkBuild(bp, ue, joe, jod, nob, nou, nj, s, "clean"); ()
+      ndkNativeObjectPath, ndkNativeOutputPath, ndkJniSourcePath, ndkEnvs, streams) map {
+      (bp, ue, joe, jod, nob, nou, nj, env, s) =>
+      runNdkBuild(bp, ue, joe, jod, nob, nou, nj, env, s, "clean"); ()
     }
 
   lazy val settings: Seq[Setting[_]] = pathSettings ++ Seq (
