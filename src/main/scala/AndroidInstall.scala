@@ -189,7 +189,6 @@ object AndroidInstall {
                  "-keep public class * extends android.appwidget.AppWidgetProvider" ::
                  "-keep class scala.collection.SeqLike { public java.lang.String toString(); }" ::
                  "-keep class scala.reflect.ScalaSignature" ::
-                 "-keep public class " + manifestPackage + ".** { public protected *; }" ::
                  "-keep public class * implements junit.framework.Test { public void test*(); }" ::
                  """
                   -keepclassmembers class * implements java.io.Serializable {
