@@ -146,8 +146,6 @@ object AndroidPlugin extends Plugin {
   val dxMemory = SettingKey[String]("dx-memory")
   val manifestSchema = SettingKey[String]("manifest-schema")
   val envs = SettingKey[Seq[String]]("envs")
-
-  /** Determined Settings */
   val packageApkName = TaskKey[String]("package-apk-name")
   val packageApkLibName = TaskKey[String]("package-apklib-name")
   val osDxName = SettingKey[String]("os-dx-name")
@@ -155,6 +153,7 @@ object AndroidPlugin extends Plugin {
   /** Path Settings */
   val sdkPath = SettingKey[File]("sdk-path")
   val platformToolsPath = SettingKey[File]("platform-tools-path")
+  val buildToolsVersion = SettingKey[Option[String]]("build-tools-version")
   val buildToolsPath = SettingKey[File]("build-tools-path")
   val toolsPath = SettingKey[File]("tools-path")
   val dbPath = SettingKey[File]("db-path")
@@ -163,19 +162,20 @@ object AndroidPlugin extends Plugin {
   val dxPath = SettingKey[File]("dx-path")
   val libraryJarPath = SettingKey[File]("library-jary-path")
 
-  /** Base Settings */
+  /** Base app manifest settings */
   val platformPath = SettingKey[File]("platform-path")
   val manifestPackage = TaskKey[String]("manifest-package")
   val manifestPackageName = TaskKey[String]("manifest-package-name")
   val minSdkVersion = TaskKey[Option[Int]]("min-sdk-version")
   val maxSdkVersion = TaskKey[Option[Int]]("max-sdk-version")
-  val buildToolsVersion = SettingKey[Option[String]]("build-tools-version")
 
+  /** Project paths */
   val manifestPath = TaskKey[Seq[File]]("manifest-path")
   val mainAssetsPath = SettingKey[File]("main-asset-path")
   val mainResPath = TaskKey[File]("main-res-path")
   val resPath = TaskKey[Seq[File]]("res-path")
   val managedJavaPath = SettingKey[File]("managed-java-path")
+  val managedScalaPath = SettingKey[File]("managed-scala-path")
   val resourcesApkPath = SettingKey[File]("resources-apk-path")
   val generatedProguardConfigPath = SettingKey[File]("generated-proguard-config-path")
   val packageApkPath = TaskKey[File]("package-apk-path")
@@ -188,11 +188,9 @@ object AndroidPlugin extends Plugin {
 
   /** Install Settings */
   val packageConfig = TaskKey[ApkConfig]("package-config",
-    "Generates a Apk Config")
+    "Generates the APK configuration")
 
   /** Typed Resource Settings */
-  val makeManagedJavaPath = TaskKey[Unit]("make-managed-java-path")
-  val managedScalaPath = SettingKey[File]("managed-scala-path")
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")

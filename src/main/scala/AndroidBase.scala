@@ -199,10 +199,14 @@ object AndroidBase {
 
     (mPackage, aPath, mPath, rPath, jarPath, javaPath, proGen, aarlibs, apklibs, apklibJavaPath, s, useDebug) =>
 
+    // Create the managed Java path if necessary
+    javaPath.mkdirs
+
+    // Arguments for resource directories
     val libraryResPathArgs = rPath.flatMap(p => Seq("-S", p.absolutePath))
 
+    // Arguments for library assets
     val extlibs = apklibs ++ aarlibs
-
     val libraryAssetPathArgs = for (
       lib <- extlibs;
       d <- lib.assetsDir.toSeq;
@@ -511,15 +515,11 @@ object AndroidBase {
     // Path to the generated (with aapt -G) Proguard configuration
     generatedProguardConfigPath <<= (target, generatedProguardConfigName) (_ / _),
 
-    // Create the managed Java path
-    makeManagedJavaPath <<= directory(managedJavaPath),
-
     // Copy native library dependencies
     copyNativeLibraries <<= copyNativeLibrariesTask,
 
     // AAPT and AIDL source generation
     aaptGenerate <<= aaptGenerateTask,
-    aaptGenerate <<= aaptGenerate dependsOn makeManagedJavaPath,
     aidlGenerate <<= aidlGenerateTask,
 
     // Manifest generator rules
