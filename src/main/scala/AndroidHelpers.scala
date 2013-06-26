@@ -102,4 +102,40 @@ object AndroidHelpers {
    * Loads the AndroidManifest.xml file at path `mpath`
    */
   def manifest(mpath: File) = xml.XML.loadFile(mpath)
+
+  /**
+   * Comparison function for version numbers.
+   * Returns true if `a1 LT a2`
+   */
+  def compareVersions(s1: String, s2: String) = {
+    // Split the strings into version numbers
+    val a1 = s1 split "\\."
+    val a2 = s2 split "\\."
+
+    // Recursive comparison function
+    def compare_rec(i: Int): Boolean = {
+      // Try reading the current index
+      val v1 = try { Some(a1(i)) } catch { case e: ArrayIndexOutOfBoundsException => None }
+      val v2 = try { Some(a2(i)) } catch { case e: ArrayIndexOutOfBoundsException => None }
+
+      // Match them
+      (v1, v2) match {
+        case (Some(s1), Some(s2)) => {
+          val i1 = try { Some(s1.toInt) } catch { case e: NumberFormatException => None }
+          val i2 = try { Some(s2.toInt) } catch { case e: NumberFormatException => None }
+          (i1, i2) match {
+            case (Some(u1), Some(u2)) => u1 > u2 || (u1 == u2 && compare_rec(i+1))
+            case (None, Some(_)) => false
+            case (Some(_), None) => true
+            case (None, None) => s1 > s2 || (s1 == s2 && compare_rec(i+1))
+          }
+        }
+
+        case (None, Some(_)) => false
+        case (Some(_), None) => true
+        case (None, None) => true
+      }
+    }
+    compare_rec(0)
+  }
 }

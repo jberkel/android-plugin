@@ -16,28 +16,17 @@ object AndroidPath {
 
     // Else, sort the installed versions and take the most recent
     else {
-      // List the versions
-      val files = buildToolsPath.listFiles
+      // List the files in the build-tools directory
+      val files = buildToolsPath.listFiles.toList
 
-      // If the directory is empty, return None
-      if (files.isEmpty) None
+      // List the different versions
+      val versions = files map (_.name) filterNot (_.startsWith("."))
 
-      // Else, find the latest version
-      else Some(buildToolsPath.listFiles.map(_.name).reduceLeft((s1, s2) => {
+      // Sort the versions by the most recent
+      val sorted = versions.sortWith(compareVersions(_, _))
 
-        // Convert the version numbers to arrays of integers
-        val v1 = s1 split '.' map (_.toInt)
-        val v2 = s2 split '.' map (_.toInt)
-
-        // TODO: Make that better. Will crash if the version numbers don't
-        //       have 3 digits (like 17.0.0)...
-
-        // Compare them
-        if((v1(0) > v2(0)) ||
-          (v1(0) == v2(0) && v1(1) > v2(1)) ||
-          (v1(0) == v2(0) && v1(1) == v2(1) && v1(2) > v2(1)))
-          s1 else s2
-      }))
+      // Return the most recent
+      sorted.headOption
     }
   }
 
