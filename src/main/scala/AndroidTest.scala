@@ -3,7 +3,7 @@ package sbtandroid
 import sbt._
 import Keys._
 
-import AndroidKeys._
+import AndroidPlugin._
 import AndroidHelpers._
 import complete.DefaultParsers._
 import complete.Parser
@@ -13,34 +13,71 @@ import com.android.ddmlib.testrunner.{InstrumentationResultParser,ITestRunListen
 
 object AndroidTest {
 
-  val defaultTestRunner = "android.test.InstrumentationTestRunner"
+  /**
+   * Test settings
+   */
+  lazy val settings: Seq[Setting[_]] =
+    (Seq (
+      testRunner <<= detectTestRunnerTask,
+      test       <<= instrumentationTestAction dependsOn install,
+      testOnly   <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
+        runSingleTest(test)
+      }
+    ))
 
+  /**
+   * Test runner detection
+   */
+  val defaultTestRunner = "android.test.InstrumentationTestRunner"
   def detectTestRunnerTask = (manifestPath) map { (mp) =>
     val instrumentations = (manifest(mp.head) \ "instrumentation").map(_.attribute(
         "http://schemas.android.com/apk/res/android", "name"))
     instrumentations.headOption.flatMap(_.map(_.toString)).getOrElse(defaultTestRunner)
   }
 
+  /**
+   * Task for starting tests on a target
+   */
+  val instrumentationTestAction =
+    (adbTarget, dbPath, manifestPackage, testRunner, streams) map {
+    (adbTarget, dbPath, manifestPackage, testRunner, s) =>
 
-  def instrumentationTestAction(emulator: Boolean) = (dbPath, manifestPackage, testRunner, streams) map {
-    (dbPath, manifestPackage, testRunner, s) =>
-      val action = Seq("shell", "am", "instrument", "-r", "-w", manifestPackage+"/"+testRunner)
-      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
+      // Run instrumentation tests
+      val (exit, out) = adbTarget.testApp(dbPath, manifestPackage, testRunner)
+
+      // Parse them if they succeeded
       if (exit == 0) parseTests(out, manifestPackage, s.log)
+
+      // Else, display the error
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
+
+      // Return Unit
       ()
     }
 
-  def runSingleTest(emulator: Boolean) = (test: TaskKey[String]) => (test, dbPath, manifestPackage, testRunner, streams) map {
-        (test, dbPath, manifestPackage, testRunner, s) =>
-      val action = Seq("shell", "am", "instrument", "-r", "-w", "-e", "class", test, manifestPackage+"/"+
-                       testRunner)
-      val (exit, out) = adbTaskWithOutput(dbPath.absolutePath, emulator, s, action:_*)
+  /**
+   * Task for starting a single test on a target
+   */
+  val runSingleTest = (test: TaskKey[String]) =>
+      (adbTarget, test, dbPath, manifestPackage, testRunner, streams) map {
+      (adbTarget, test, dbPath, manifestPackage, testRunner, s) =>
+
+      // Run instrumentation tests
+      val (exit, out) = adbTarget.testApp(dbPath, manifestPackage, testRunner, Some(test))
+
+      // Parse them if they succeeded
       if (exit == 0) parseTests(out, manifestPackage, s.log)
+
+      // Else, display the error
       else sys.error("am instrument returned error %d\n\n%s".format(exit, out))
+
+      // Return Unit
       ()
   }
 
+  /**
+   * Parse the test results and display them to the user
+   */
   def parseTests(out: String, name: String, log: Logger) {
     val listener = new TestListener(log)
     val parser = new InstrumentationResultParser(name, listener)
@@ -51,41 +88,10 @@ object AndroidTest {
     }
   }
 
-
   def testParser(s: State, tests:Seq[String]): Parser[String] =
     Space ~> tests.map(t => token(t))
                   .reduceLeftOption(_ | _)
                   .getOrElse(token(NotSpace))
-
-  /** AndroidTestProject */
-  lazy val androidSettings = settings ++
-    inConfig(Android)( Seq(
-      proguardInJars <<= (scalaInstance) map {
-        (scalaInstance) =>
-         Seq(scalaInstance.libraryJar)
-      }
-    )
-  )
-
-  lazy val settings: Seq[Setting[_]] =
-    AndroidBase.settings ++
-    AndroidInstall.settings ++
-    inConfig(Android) (Seq (
-      testRunner   <<= detectTestRunnerTask,
-      testEmulator <<= instrumentationTestAction(true),
-      testDevice   <<= instrumentationTestAction(false),
-      testOnlyEmulator <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
-        runSingleTest(true)(test)
-      },
-      testOnlyDevice   <<= InputTask(loadForParser(definedTestNames in Test)( (s, i) => testParser(s, i getOrElse Nil))) { test =>
-        runSingleTest(false)(test)
-      }
-    )) ++ Seq (
-      testEmulator <<= (testEmulator in Android),
-      testDevice   <<= (testDevice in Android),
-      testOnlyEmulator <<= (testOnlyEmulator in Android),
-      testOnlyDevice   <<= (testOnlyDevice in Android)
-    )
 
   class TestListener(log: Logger) extends ITestRunListener {
     import com.android.ddmlib.testrunner.TestIdentifier

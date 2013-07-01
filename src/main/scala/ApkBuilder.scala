@@ -10,8 +10,7 @@ case class ApkConfig(
   packageApkPath: File,
   resourcesApkPath: File,
   classesDexPath: File,
-  nativeLibrariesPath: File,
-  managedNativePath: File,
+  nativeInputPaths: Seq[File],
   dexInputs: Seq[File],
   resourceDirectory: File
 )
@@ -47,10 +46,13 @@ class ApkBuilder(project: ApkConfig, debug: Boolean) {
     ).asInstanceOf[JApkBuilder]
 
     setDebugMode(builder, debug)
-    addNativeLibraries(builder, project.nativeLibrariesPath, null)
-    addNativeLibraries(builder, project.managedNativePath, null)
+
+    for (path <- project.nativeInputPaths)
+      addNativeLibraries(builder, path, null)
+
     for (file <- project.dexInputs; if file.isFile)
       addResourcesFromJar(builder, file)
+
     addSourceFolder(builder, project.resourceDirectory)
     sealApk(builder)
 
