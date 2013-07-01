@@ -32,7 +32,12 @@ object AndroidProjects {
           useProguard := false,
 
           // The Scala library is already imported by the main project
-          usePreloaded := false
+          usePreloaded := false,
+
+          // It's highly unlikely that you'll need typed resources in test
+          // projects, but you can enable it afterwards anyway, if you really
+          // need it.
+          useTypedResources := false
         )
       )
 
