@@ -29,7 +29,13 @@ object TypedResources {
           case _ => None
         }
       }.toSet
-      val reserved = List("extends", "trait", "type", "val", "var", "with")
+      val reserved =
+        Set("abstract", "case", "do", "else", "finally", "for", "import",
+            "lazy", "object", "override", "return", "sealed", "trait", "try",
+            "var", "while", "catch", "class", "extends", "false", "forSome",
+            "if", "match", "new", "package", "private", "super", "this", "true",
+            "type", "with", "yield", "def", "final", "implicit", "null",
+            "protected", "throw", "val")
 
       val resources = layoutResources.get.flatMap { path =>
         XML.loadFile(path).descendant_or_self flatMap { node =>
@@ -56,8 +62,14 @@ object TypedResources {
             if (v0 != v) s.log.warn("Resource id '%s' mapped to %s and %s" format (k, v0, v))
           }
           m + (k -> v)
-      }.filterNot {
-        case (id, _) => reserved.contains(id)
+      }
+
+      def quoteReserved(id: String) = {
+        if (reserved.contains(id)) {
+          "`" + id + "`"
+        } else {
+          id
+        }
       }
 
       IO.write(typedResource,
@@ -97,10 +109,10 @@ object TypedResources {
             |""".stripMargin.format(
               manifestPackage,
               resources map { case (id, classname) =>
-                "  val %s = TypedResource[%s](R.id.%s)".format(id, classname, id)
+                "  val %s = TypedResource[%s](R.id.%s)".format(quoteReserved(id), classname, quoteReserved(id))
               } mkString "\n",
               layouts map { name =>
-                " val %s = TypedLayout(R.layout.%s)".format(name, name)
+                " val %s = TypedLayout(R.layout.%s)".format(quoteReserved(name), quoteReserved(name))
               } mkString "\n"
             )
         )
