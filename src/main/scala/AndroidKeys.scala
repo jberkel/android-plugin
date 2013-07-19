@@ -94,6 +94,9 @@ object AndroidKeys {
   val layoutResources = TaskKey[Seq[File]]("layout-resources", 
       """All files that are in res/layout. They will
 		 be accessable through TR.layouts._""")
+  val typedResource2 = TaskKey[File]("typed-resource2",
+    """Typed resource file to be generated, also includes
+       interfaces to access these resources.""")
 
   /** Market Publish Settings */
   val keystorePath = SettingKey[File]("key-store-path")
@@ -179,6 +182,9 @@ object AndroidKeys {
   /** TypedResources Task */
   val generateTypedResources = TaskKey[Seq[File]]("generate-typed-resources",
     """Produce a file TR.scala that contains typed
+       references to layout resources.""")
+  val generateTypedResources2 = TaskKey[Seq[File]]("generate-typed-resources2",
+    """Produce a file typed_resource.scala that contains typed
        references to layout resources.""")
 
   /** Manifest Generator tasks*/
