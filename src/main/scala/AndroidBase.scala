@@ -76,9 +76,9 @@ object AndroidBase {
     }
 
   private def aarlibDependenciesTask =
-    (update, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resourceManaged, streams,
+    (update, aarlibBaseDirectory, aarlibLibManaged, aarlibResourceManaged, resourceManaged, streams,
      unmanagedBase) map {
-    (updateReport, aarlibBaseDirectory, aarlibManaged, aarlibResourceManaged, resManaged, s,
+    (updateReport, aarlibBaseDirectory, aarlibLibManaged, aarlibResourceManaged, resManaged, s,
      unmanagedBase) => {
 
       // We want to extract every aarlib in the classpath that is not already
@@ -93,7 +93,7 @@ object AndroidBase {
 
       // Make the destination directories
       aarlibBaseDirectory.mkdirs
-      aarlibManaged.mkdirs
+      aarlibLibManaged.mkdirs
       aarlibResourceManaged.mkdirs
 
       // Extract the aarLibs
@@ -101,7 +101,7 @@ object AndroidBase {
 
         // Check if the AAR lib is up to date
         val dest = aarlibResourceManaged / aarlib.base
-        val destjar = aarlibManaged / (aarlib.base + ".jar")
+        val destjar = aarlibLibManaged / (aarlib.base + ".jar")
         val timestamp = dest / ".timestamp"
 
         // Check if the AAR lib is up to date
@@ -194,10 +194,13 @@ object AndroidBase {
     }
 
   private def aaptGenerateTask =
-    (manifestPackage, aaptPath, manifestPath, resPath, libraryJarPath, managedJavaPath,
-     generatedProguardConfigPath, aarlibDependencies, apklibDependencies, apklibSourceManaged, streams, useDebug) map {
+    (manifestPackage, aaptPath, generatedProguardConfigPath,
+     manifestPath, resPath, libraryJarPath, managedJavaPath,
+     aarlibDependencies, apklibDependencies, apklibSourceManaged,
+     streams, useDebug) map {
 
-    (mPackage, aPath, mPath, rPath, jarPath, javaPath, proGen, aarlibs, apklibs, apklibJavaPath, s, useDebug) =>
+    (mPackage, aPath, proGen, mPath, rPath, jarPath, javaPath,
+     aarlibs, apklibs, apklibJavaPath, s, useDebug) =>
 
     // Create the managed Java path if necessary
     javaPath.mkdirs
@@ -229,29 +232,42 @@ object AndroidBase {
       if (aapt.run(false).exitValue != 0) sys.error("error generating resources")
     }
 
-    // Run aapt to generate resources for the main package
-    runAapt(mPackage, javaPath)
-
-    // Run aapt to generate resources for each apklib dependency
-    apklibs.foreach(lib => runAapt(lib.pkgName, apklibJavaPath, "--non-constant-id"))
-
-    def createBuildConfig(`package`: String) = {
-      var path = javaPath
+    def createBuildConfig(`package`: String, outJavaPath: File) = {
+      // Split the package name in a filesystem path
+      var path = outJavaPath
       `package`.split('.').foreach { path /= _ }
+
+      // Create that path, if needed
       path.mkdirs
+
+      // Write BuildConfig.java
       val buildConfig = path / "BuildConfig.java"
       IO.write(buildConfig, """
         package %s;
         public final class BuildConfig {
           public static final boolean DEBUG = %s;
         }""".format(`package`, useDebug))
+
+      // Return the name of the generated file
       buildConfig
     }
 
-    (javaPath ** "R.java" get) ++
-    (apklibJavaPath ** "R.java" get) ++
-      Seq(createBuildConfig(mPackage)) ++
-      apklibs.map(lib => createBuildConfig(lib.pkgName))
+    // Run aapt to generate resources for the main package, and each apklib and
+    // AAR dependency.
+    runAapt(mPackage, javaPath)
+    apklibs.foreach(lib => runAapt(lib.pkgName, javaPath, "--non-constant-id"))
+    aarlibs.foreach(lib => runAapt(lib.pkgName, javaPath, "--non-constant-id"))
+
+    // Generate BuildConfig.java for the main package, and each apklib and AAR
+    // dependency.
+    val generatedBuildConfig = (
+      Seq(createBuildConfig(mPackage, javaPath)) ++
+      apklibs.map(lib => createBuildConfig(lib.pkgName, javaPath)) ++
+      aarlibs.map(lib => createBuildConfig(lib.pkgName, javaPath))
+    )
+
+    // Return the list of generated files
+    (javaPath ** "R.java" get) ++ generatedBuildConfig
   }
 
   private def aidlGenerateTask =
@@ -443,7 +459,7 @@ object AndroidBase {
 
     // AAR lib paths
     aarlibBaseDirectory <<= crossTarget (_ / "aarlib_managed"),
-    aarlibManaged <<= aarlibBaseDirectory (_ / "lib"),
+    aarlibLibManaged <<= aarlibBaseDirectory (_ / "lib"),
     aarlibResourceManaged <<= aarlibBaseDirectory (_ / "res"),
     aarlibDependencies <<= aarlibDependenciesTask,
 
