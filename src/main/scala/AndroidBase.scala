@@ -322,6 +322,20 @@ object AndroidBase {
   val providedInternalDependencies = TaskKey[Seq[File]]("provided-internal-dependencies")
 
   lazy val globalSettings: Seq[Setting[_]] = Seq(
+
+    // At the moment, we NEED to use Java 6 class files
+    javacOptions ++= Seq(
+      "-encoding", "utf8",
+      "-target", "1.6",
+      "-source", "1.6"
+    ),
+
+    // Same thing for Scalac
+    scalacOptions ++= Seq(
+      "-encoding", "utf8",
+      "-target:jvm-1.6"
+    ),
+
     // By default, use the first device we find as the ADB target
     adbTarget in Global := AndroidDefaultTargets.Auto,
 
