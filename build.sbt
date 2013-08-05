@@ -2,7 +2,7 @@ name := "sbt-android"
 
 organization := "org.scala-sbt"
 
-version := "0.7-SNAPSHOT"
+version := "0.7"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
 
