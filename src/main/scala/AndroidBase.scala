@@ -370,6 +370,10 @@ object AndroidBase {
     // Use typed resources by default
     useTypedResources := true,
 
+    // Add the Android library as a provided dependency
+    unmanagedJars in Compile <+= (libraryJarPath) (p =>
+      Attributed.blank(p)) map (x => x),
+
     // Gradle uses libs/ as the unmanaged JAR directory!
     unmanagedBase <<= (baseDirectory) (_ / "libs"),
 
@@ -484,6 +488,7 @@ object AndroidBase {
     // Provided internal dependencies (usually, class directories from a
     // dependency project set as "provided")
     providedInternalDependencies <<= (thisProjectRef, buildStructure) flatMap providedInternalDependenciesTask,
+    providedInternalDependencies <+= libraryJarPath map (x => x),
 
     // The full input classpath
     inputClasspath <<= (dependencyClasspath) map { dcp =>
@@ -507,8 +512,7 @@ object AndroidBase {
       // Provided dependencies that are not to be included in the APK
       val provided = (
         providedInternalDependencies ++
-        update.select(Set("provided")) ++
-        Seq(libraryJarPath)
+        update.select(Set("provided"))
       )
 
       // Filter the full classpath
@@ -548,8 +552,7 @@ object AndroidBase {
     dependencyClasspath <<= dependencyClasspath in Compile,
     managedClasspath <<= managedClasspath in Compile,
 
-    // Add the dependencies to the classpath
-    unmanagedClasspath <+= (libraryJarPath) map (Attributed.blank(_)),
+    // Add the AAR library dependencies
     unmanagedJars <++= (aarlibDependencies) map {
       libs => libs.flatMap(_.sources).map(Attributed.blank(_)) },
 
