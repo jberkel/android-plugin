@@ -25,6 +25,8 @@ object AndroidRelease {
       val jarsigner = Seq(
         "jarsigner",
         "-verbose",
+        "-sigalg", "SHA1withRSA",
+        "-digestalg", "SHA1",
         "-keystore", ksPath.absolutePath,
         "-storepass", PasswordManager.get(
               "keystore", ka, cache).getOrElse(sys.error("could not get password")),
