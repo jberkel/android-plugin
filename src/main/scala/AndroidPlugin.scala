@@ -89,7 +89,7 @@ object AndroidPlugin extends Plugin {
   /** AAR dependencies */
   val aarlibDependencies = TaskKey[Seq[LibraryProject]]("aarlib-dependencies", "Unpack aarlib dependencies")
   val aarlibBaseDirectory = SettingKey[File]("aarlib-base-directory", "Base directory for the aarLib dependencies")
-  val aarlibManaged = SettingKey[File]("aarlib-source-managed", "Base directory for the aarLib sources")
+  val aarlibLibManaged = SettingKey[File]("aarlib-lib-managed", "Base directoyr for the aarLib JAR libraries")
   val aarlibResourceManaged = SettingKey[File]("aarlib-resource-managed", "Base directory for the resources included in the aarLibs")
 
   /** General inputs for the APK **/
