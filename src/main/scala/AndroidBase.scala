@@ -386,8 +386,8 @@ object AndroidBase {
     // Use typed resources by default
     useTypedResources := true,
 
-    // Use typed resources 2 by default
-    useTypedResources2 := true,
+    // Use typed layouts by default
+    useTypedLayouts := true,
 
     // Gradle uses libs/ as the unmanaged JAR directory!
     unmanagedBase <<= (baseDirectory) (_ / "libs"),

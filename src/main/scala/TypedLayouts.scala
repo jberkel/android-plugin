@@ -8,7 +8,7 @@ import Keys._
 import AndroidPlugin._
 
 // FIXME more appropriate name
-object TypedResources2 {
+object TypedLayouts {
   /** Views with android:id. */
   private case class NamedView(id: String,
                                className: String,
@@ -224,10 +224,10 @@ object TypedResources2 {
     "def %1$s = `this`.views.%1$s".format(quoteReserved(view.id))
   }
 
-  private def generateTypedResources2Task =
-    (useTypedResources2, typedResource2, layoutResources, libraryJarPath, manifestPackage, streams) map {
-    (useTypedResources2, typedResource2, layoutResources, libraryJarPath, manifestPackage, s) =>
-      if (useTypedResources2) {
+  private def generateTypedLayoutsTask =
+    (useTypedLayouts, typedLayouts, layoutResources, libraryJarPath, manifestPackage, streams) map {
+    (useTypedLayouts, typedLayouts, layoutResources, libraryJarPath, manifestPackage, s) =>
+      if (useTypedLayouts) {
         // e.g. main_activity.xml -> main_activity
         def baseName(path: File) = {
           val name = path.getName
@@ -241,7 +241,7 @@ object TypedResources2 {
           )
         )
 
-        IO.write(typedResource2,
+        IO.write(typedLayouts,
                  """|package %s
                     |
                     |package typed_resource {
@@ -263,22 +263,22 @@ object TypedResources2 {
                                          .mkString("\n    ")
                  )
         )
-        s.log.info("Wrote %s".format(typedResource2))
-        Seq(typedResource2)
+        s.log.info("Wrote %s".format(typedLayouts))
+        Seq(typedLayouts)
       } else {
         Seq.empty
       }
     }
 
   lazy val settings: Seq[Setting[_]] = (Seq (
-    typedResource2 <<= (manifestPackage, managedScalaPath) map {
-      _.split('.').foldLeft(_) ((p, s) => p / s) / "typed_resource.scala"
+    typedLayouts <<= (manifestPackage, managedScalaPath) map {
+      _.split('.').foldLeft(_) ((p, s) => p / s) / "typed_layouts.scala"
     },
     layoutResources <<= (mainResPath) map { x => (x * "layout*" * "*.xml" get) },
 
-    generateTypedResources2 <<= generateTypedResources2Task,
+    generateTypedLayouts <<= generateTypedLayoutsTask,
 
-    sourceGenerators <+= generateTypedResources2,
+    sourceGenerators <+= generateTypedLayouts,
 
     watchSources <++= (layoutResources) map (ls => ls)
   ))

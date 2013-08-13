@@ -10,7 +10,7 @@ object AndroidJavaLayout {
     autoScalaLibrary in GlobalScope := false,
     useProguard in Compile := false,
     useTypedResources in Compile := false,
-    useTypedResources2 in Compile := false,
+    useTypedLayouts in Compile := false,
     manifestPath in Compile <<= (baseDirectory, manifestName) map((s,m) => Seq(s / m)) map (x=>x),
     mainResPath in Compile <<= (baseDirectory, resDirectoryName) (_ / _) map (x=>x),
     mainAssetsPath in Compile <<= (baseDirectory, assetsDirectoryName) (_ / _),
