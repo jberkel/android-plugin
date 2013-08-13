@@ -76,6 +76,7 @@ object AndroidPlugin extends Plugin {
   val usePreloaded = SettingKey[Boolean]("use-preloaded", "Use preloaded libraries for development")
   val useDebug = SettingKey[Boolean]("use-debug", "Use debug settings when building an APK")
   val useTypedResources = SettingKey[Boolean]("use-typed-resources", "Use typed resources")
+  val useTypedResources2 = SettingKey[Boolean]("use-typed-resources2", "Use typed resources 2")
 
   /** ApkLib dependencies */
   case class LibraryProject(pkgName: String, manifest: File, sources: Set[File], resDir: Option[File], assetsDir: Option[File])
@@ -194,6 +195,9 @@ object AndroidPlugin extends Plugin {
   val typedResource = TaskKey[File]("typed-resource",
     """Typed resource file to be generated, also includes
        interfaces to access these resources.""")
+  val typedResource2 = TaskKey[File]("typed-resource2",
+    """Typed resource file to be generated, also includes
+       interfaces to access these resources.""")
   val layoutResources = TaskKey[Seq[File]]("layout-resources",
       """All files that are in res/layout. They will
 		 be accessable through TR.layouts._""")
@@ -215,6 +219,9 @@ object AndroidPlugin extends Plugin {
     "Generate Java classes from .aidl files.")
   val generateTypedResources = TaskKey[Seq[File]]("generate-typed-resources",
     """Produce a file TR.scala that contains typed
+       references to layout resources.""")
+  val generateTypedResources2 = TaskKey[Seq[File]]("generate-typed-resources2",
+    """Produce a file typed_resource.scala that contains typed
        references to layout resources.""")
   val generateManifest = TaskKey[Seq[File]]("generate-manifest",
     """Generates a customized AndroidManifest.xml with
