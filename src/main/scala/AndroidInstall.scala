@@ -153,8 +153,7 @@ object AndroidInstall {
             else Seq()
 
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
-          val manifestr = List("!META-INF/MANIFEST.MF", "R.class", "R$*.class",
-                               "TR.class", "TR$.class", "library.properties")
+          val exclusions = List("!META-INF/MANIFEST.MF", "!library.properties").mkString(",")
           val sep = JFile.pathSeparator
 
           // Input class files
@@ -162,7 +161,7 @@ object AndroidInstall {
 
           // Input library JARs to be included in the APK
           val inJars = includedClasspath
-                       .map("\"" +_ + "\"" + manifestr.mkString("(", ",!**/", ")"))
+                       .map("\"" + _ + "\"(" + exclusions + ")")
                        .mkString(sep)
 
           // Input library JARs to be provided at runtime
