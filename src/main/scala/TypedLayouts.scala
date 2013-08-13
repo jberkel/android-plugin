@@ -152,13 +152,13 @@ object TypedLayouts {
        |
        |  def findViewById(id: _root_.scala.Int): _root_.android.view.View
        |
-       |  object views {
-       |    %2$s
-       |  }
+       |
+       |  %2$s
+       |
        |}
        |
        |object %1$s {
-       |  trait Activity extends _root_.android.app.Activity with %4$s.typed_resource.layout.%1$s {
+       |  trait Activity extends _root_.android.app.Activity with %4$s.Layout.%1$s {
        |    protected override def onCreate(savedInstanceState: _root_.android.os.Bundle) {
        |      super.onCreate(savedInstanceState)
        |
@@ -166,7 +166,7 @@ object TypedLayouts {
        |    }
        |  }
        |
-       |  trait Dialog extends _root_.android.app.Dialog with %4$s.typed_resource.layout.%1$s {
+       |  trait Dialog extends _root_.android.app.Dialog with %4$s.Layout.%1$s {
        |    protected override def onCreate(savedInstanceState: _root_.android.os.Bundle) {
        |      super.onCreate(savedInstanceState)
        |
@@ -174,7 +174,7 @@ object TypedLayouts {
        |    }
        |  }
        |
-       |  class ViewWrapper(view: _root_.android.view.View) extends %4$s.typed_resource.ViewWrapper(view) with %4$s.typed_resource.layout.%1$s {
+       |  class ViewWrapper(view: _root_.android.view.View) extends %4$s.Layout.ViewWrapper(view) with %4$s.Layout.%1$s {
        |    override def findViewById(id: _root_.scala.Int) = {
        |      view.findViewById(id)
        |    }
@@ -201,7 +201,7 @@ object TypedLayouts {
                 quoteReserved(view.className),
                 "_root_." + manifestPackage)
     } else {
-      """|object %1$s extends %4$s.typed_resource.ViewWrapper[%2$s](`this`.findViewById(%4$s.R.id.%1$s).asInstanceOf[%2$s]) {
+      """|object %1$s extends %4$s.Layout.ViewWrapper[%2$s](`this`.findViewById(%4$s.R.id.%1$s).asInstanceOf[%2$s]) {
          |  object views {
          |    %3$s
          |  }
@@ -244,15 +244,14 @@ object TypedLayouts {
         IO.write(typedLayouts,
                  """|package %s
                     |
-                    |package typed_resource {
+                    |object Layout {
                     |  case class ViewWrapper[A <: _root_.android.view.View](view: A)
                     |  object ViewWrapper {
                     |    implicit def unwrap[A <: _root_.android.view.View](v: ViewWrapper[A]): A = v.view
                     |  }
                     |
-                    |  package layout {
-                    |    %s
-                    |  }
+                    |  %s
+                    |
                     |}
                     |"""
                    .stripMargin.format(manifestPackage,
