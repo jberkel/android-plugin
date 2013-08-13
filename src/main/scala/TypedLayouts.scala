@@ -130,7 +130,7 @@ object TypedLayouts {
   }
 
   private def toCamelCase(name: String) = {
-    "(.)_".r.replaceAllIn(name, _.group(1).toUpperCase)
+    "_(.)".r.replaceAllIn(name, _.group(1).toUpperCase)
   }
 
   private def toUpperCamelCase(name: String) = {
