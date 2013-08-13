@@ -24,6 +24,7 @@ object AndroidProjects {
         AndroidTest.settings ++
         AndroidNdk.settings ++
         TypedResources.settings ++
+        TypedResources2.settings ++
         Seq(
           // Test projects are Debug projects by default
           useDebug := true,
@@ -37,7 +38,8 @@ object AndroidProjects {
           // It's highly unlikely that you'll need typed resources in test
           // projects, but you can enable it afterwards anyway, if you really
           // need it.
-          useTypedResources := false
+          useTypedResources := false,
+          useTypedResources2 := false
         )
       )
 
@@ -91,7 +93,8 @@ object AndroidProjects {
       AndroidDdm.settings ++
       AndroidLaunch.settings ++
       AndroidNdk.settings ++
-      TypedResources.settings
+      TypedResources.settings ++
+      TypedResources2.settings
     }
 
     // Development settings
