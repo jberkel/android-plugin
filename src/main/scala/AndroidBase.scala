@@ -362,6 +362,11 @@ object AndroidBase {
     proguardOptions := Seq.empty,
     proguardOptimizations := Seq.empty,
 
+    // Default excludes two problematic files, override for custom exclusions
+    proguardInJarsFilter := { jar: File =>
+      Seq("!META-INF/MANIFEST.MF", "!library.properties")
+    },
+
     // Dex options
     dxMemory := "-JXmx512m",
 

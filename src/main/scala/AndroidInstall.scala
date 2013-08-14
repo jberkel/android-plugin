@@ -139,11 +139,13 @@ object AndroidInstall {
   private def proguardConfigurationTask: Project.Initialize[Task[Option[File]]] =
     (useProguard, proguardOptimizations, classDirectory,
     generatedProguardConfigPath, includedClasspath, providedClasspath,
-    proguardOutputPath, manifestPackage, proguardOptions, sourceManaged) map {
+    proguardOutputPath, manifestPackage, proguardOptions, sourceManaged,
+    proguardInJarsFilter) map {
 
     (useProguard, proguardOptimizations, classDirectory,
     genConfig, includedClasspath, providedClasspath,
-    proguardOutputPath, manifestPackage, proguardOptions, sourceManaged) =>
+    proguardOutputPath, manifestPackage, proguardOptions, sourceManaged,
+    proguardInJarsFilter) =>
 
       if (useProguard) {
 
@@ -153,7 +155,6 @@ object AndroidInstall {
             else Seq()
 
           val optimizationOptions = if (proguardOptimizations.isEmpty) Seq("-dontoptimize") else proguardOptimizations
-          val exclusions = List("!META-INF/MANIFEST.MF", "!library.properties").mkString(",")
           val sep = JFile.pathSeparator
 
           // Input class files
@@ -161,7 +162,7 @@ object AndroidInstall {
 
           // Input library JARs to be included in the APK
           val inJars = includedClasspath
-                       .map("\"" + _ + "\"(" + exclusions + ")")
+                       .map{ jar => "\"%s\"(%s)".format(jar, proguardInJarsFilter(jar).mkString(",")) }
                        .mkString(sep)
 
           // Input library JARs to be provided at runtime

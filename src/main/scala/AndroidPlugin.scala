@@ -99,6 +99,7 @@ object AndroidPlugin extends Plugin {
   val providedClasspath = TaskKey[Seq[File]]("provided-classpath", "Classpath entries provided by the running target")
 
   /** Proguard Settings **/
+  val proguardInJarsFilter = SettingKey[File => Traversable[String]]("proguard-in-jars-filter")
   val proguardOptions = SettingKey[Seq[String]]("proguard-options")
   val proguardOptimizations = SettingKey[Seq[String]]("proguard-optimizations")
   val proguardOutputPath = SettingKey[File]("proguard-output-path", "Path to Proguard's output JAR")
