@@ -202,9 +202,9 @@ object TypedLayouts {
                 "_root_." + manifestPackage)
     } else {
       """|object %1$s extends %4$s.Layout.ViewWrapper[%2$s](`this`.findViewById(%4$s.R.id.%1$s).asInstanceOf[%2$s]) {
-         |  object views {
-         |    %3$s
-         |  }
+         |
+         |  %3$s
+         |
          |}
          |""".stripMargin.format(quoteReserved(view.id),
                                  quoteReserved(view.className),
@@ -221,7 +221,7 @@ object TypedLayouts {
   }
 
   private def formatSubView(layoutName: String, view: NamedView) = {
-    "def %1$s = `this`.views.%1$s".format(quoteReserved(view.id))
+    "def %1$s = `this`.%1$s".format(quoteReserved(view.id))
   }
 
   private def generateTypedLayoutsTask =
