@@ -197,10 +197,10 @@ object AndroidBase {
     (manifestPackage, aaptPath, generatedProguardConfigPath,
      manifestPath, resPath, libraryJarPath, managedJavaPath,
      aarlibDependencies, apklibDependencies, apklibSourceManaged,
-     streams, useDebug) map {
+     streams, useDebug, aaptRenameManifestPackage) map {
 
     (mPackage, aPath, proGen, mPath, rPath, jarPath, javaPath,
-     aarlibs, apklibs, apklibJavaPath, s, useDebug) =>
+     aarlibs, apklibs, apklibJavaPath, s, useDebug, renameManifestPackage) =>
 
     // Create the managed Java path if necessary
     javaPath.mkdirs
@@ -215,14 +215,21 @@ object AndroidBase {
       d <- lib.assetsDir.toSeq;
       arg <- Seq("-A", d.absolutePath)
     ) yield arg
+    
+    val renameManifestPackageArgs: Seq[String] = renameManifestPackage match {
+      case Some(pkg) => Seq("--rename-manifest-package", pkg)
+      case None => Nil
+    }
 
     def runAapt(`package`: String, outJavaPath: File, args: String*) {
-      s.log.info("Running AAPT for package " + `package`)
+      s.log.info("Running AAPT for package " + `package` + 
+          renameManifestPackage.map(pkg => " and manifest package " + pkg).getOrElse(""))
 
       val aapt = Seq(aPath.absolutePath, "package", "--auto-add-overlay", "-m",
         "--custom-package", `package`,
-        "-M", mPath.head.absolutePath,
-        "-I", jarPath.absolutePath,
+        "-M", mPath.head.absolutePath) ++
+        renameManifestPackageArgs ++
+        Seq("-I", jarPath.absolutePath,
         "-J", outJavaPath.absolutePath,
         "-G", proGen.absolutePath) ++
         args ++
@@ -393,7 +400,10 @@ object AndroidBase {
 
     // Use typed layouts by default
     useTypedLayouts := true,
-
+    
+    // Don't rename manifest package by default
+    aaptRenameManifestPackage in Global := None,
+    
     // Gradle uses libs/ as the unmanaged JAR directory!
     unmanagedBase <<= (baseDirectory) (_ / "libs"),
 
@@ -478,7 +488,7 @@ object AndroidBase {
     apklibDependencies <<= apklibDependenciesTask,
     apklibPackage <<= apklibPackageTask,
     apklibSources <<= apklibSourcesTask,
-
+    
     // AAR lib paths
     aarlibBaseDirectory <<= crossTarget (_ / "aarlib_managed"),
     aarlibLibManaged <<= aarlibBaseDirectory (_ / "lib"),
