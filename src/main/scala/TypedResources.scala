@@ -66,6 +66,7 @@ object TypedResources {
       """     |package %s
               |import _root_.android.app.{Activity, Dialog}
               |import _root_.android.view.View
+              |import scala.language.implicitConversions
               |
               |case class TypedResource[T](id: Int)
               |case class TypedLayout(id: Int)
