@@ -128,6 +128,7 @@ object AndroidPlugin extends Plugin {
 
   /** Launch Tasks */
   val start = TaskKey[Unit]("start", "Start package on device after installation")
+  val debug = TaskKey[Unit]("debug", "Start package on device after installation, and wait for a debugger to attach")
 
   /** Modules that are preloaded on the device **/
   val preinstalledModules = SettingKey[Seq[ModuleID]]("preinstalled-modules")
