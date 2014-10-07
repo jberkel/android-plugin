@@ -15,11 +15,11 @@ object AndroidEmulator {
       ()
     }
 
-  private def listDevicesTask: Project.Initialize[Task[Unit]] = (dbPath) map {
+  private def listDevicesTask: Def.Initialize[Task[Unit]] = (dbPath) map {
     _ +" devices" !
   }
 
-  private def killAdbTask: Project.Initialize[Task[Unit]] = (dbPath) map {
+  private def killAdbTask: Def.Initialize[Task[Unit]] = (dbPath) map {
     _ +" kill-server" !
   }
 
