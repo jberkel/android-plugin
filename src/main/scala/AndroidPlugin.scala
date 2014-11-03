@@ -115,6 +115,7 @@ object AndroidPlugin extends Plugin {
   /** APK Generation **/
   val apk = TaskKey[File]("apk", "Package and sign with a debug key.")
   val aaptPackage = TaskKey[File]("aapt-package", "Package resources and assets.")
+  val aaptRenameManifestPackage = SettingKey[Option[String]]("appt-rename-manifest-package", "Can be set if the package in generated AndroidManifest should be a different one.")
   val cleanApk = TaskKey[Unit]("clean-apk", "Remove apk package")
 
   /** Install Scala on device/emulator **/
