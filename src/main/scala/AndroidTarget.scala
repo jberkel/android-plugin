@@ -85,6 +85,22 @@ trait AndroidTarget {
     )
   }
 
+  def debugApp(
+    adbPath: File,
+    s: TaskStreams,
+    manifestSchema: String,
+    manifestPackage: String,
+    manifestPath: Seq[java.io.File]) = {
+
+    // Run the command
+    run(adbPath, s,
+      "shell", "am", "set-debug-app",
+      "-w",
+      manifestPackage
+    )
+    startApp(adbPath, s, manifestSchema, manifestPackage, manifestPath)
+  }
+
   /**
    * Runs instrumentation tests on an app
    */

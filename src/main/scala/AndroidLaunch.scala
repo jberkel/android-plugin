@@ -16,10 +16,20 @@ object AndroidLaunch {
     }
   )
 
+  val debugTask = (
+    (adbTarget, dbPath, streams, manifestSchema, manifestPackage, manifestPath) map {
+    (adbTarget, dbPath, streams, manifestSchema, manifestPackage, manifestPath) =>
+      adbTarget.debugApp(dbPath, streams, manifestSchema, manifestPackage, manifestPath)
+      ()
+    }
+  )
+
   lazy val settings: Seq[Setting[_]] =
     AndroidInstall.settings ++
     (Seq (
       start <<= startTask,
-      start <<= start dependsOn install
+      start <<= start dependsOn install,
+      debug <<= debugTask,
+      debug <<= debug dependsOn install
     ))
 }
