@@ -2,9 +2,13 @@ name := "sbt-android"
 
 organization := "org.scala-sbt"
 
+scalaVersion := "2.10.2"
+
 version := "0.7.1-SNAPSHOT"
 
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
+//scalacOptions ++= Seq("-unchecked", "-feature", "-deprecation", "-Xcheckinit", "-Xfatal-warnings")
+
+scalacOptions ++= Seq("-unchecked", "-Xcheckinit")
 
 publishMavenStyle := false
 

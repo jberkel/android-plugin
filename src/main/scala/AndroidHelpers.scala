@@ -87,10 +87,7 @@ object AndroidHelpers {
     val launcher = for (
          activity <- (manifest(amPath) \\ "activity");
          action <- (activity \\ "action");
-         val name = action.attribute(schema, "name").getOrElse(sys.error{
-            "action name not defined"
-          }).text;
-         if name == "android.intent.action.MAIN"
+         if action.attribute(schema, "name").getOrElse(sys.error{ "action name not defined" }).text == "android.intent.action.MAIN"
     ) yield {
       val act = activity.attribute(schema, "name").getOrElse(sys.error("activity name not defined")).text
       if (act.contains(".")) act else mPackage+"."+act

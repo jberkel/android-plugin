@@ -85,7 +85,7 @@ object AndroidPreload {
     // Parse the library file
     val preloadedFile = (
       try { Some(XML.loadString(permissions) \\ "permissions" \\ "library" \\ "@file") }
-      catch { case _ => None }
+      catch { case _: Throwable => None }
 
     // Convert the XML node to a String
     ).map(_.text)

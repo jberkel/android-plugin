@@ -81,7 +81,7 @@ object TypedLayouts {
   }
 
   /** Merges layout definitions having the same name. */
-  private def mergeLayouts(streams: std.TaskStreams[Project.ScopedKey[_]])
+  private def mergeLayouts(streams: std.TaskStreams[_])
                           (layouts: Iterable[(String, Iterable[NamedView])]) = {
     def mergeViews(views: Iterable[NamedView]): Iterable[NamedView] = {
       views.groupBy(_.id).values.map(doMergeViews _)

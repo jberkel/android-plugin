@@ -1,5 +1,6 @@
 package sbtandroid
 
+import sbt.Scoped.{RichTaskables, RichTaskable11}
 import sbt._
 
 import scala.xml._
@@ -66,11 +67,11 @@ object AndroidBase {
       (manPath, rPath, aPath, jPath, sPath, apklib, s) =>
       s.log.info("packaging apklib")
       val mapping =
-        (PathFinder(manPath)            x flat) ++
-        (PathFinder(jPath) ** "*.java"  x rebase(jPath, "src")) ++
-        (PathFinder(sPath) ** "*.scala" x rebase(sPath, "src")) ++
-        ((PathFinder(rPath) ***)        x rebase(rPath, "res")) ++
-        ((PathFinder(aPath) ***)        x rebase(aPath, "assets"))
+        (PathFinder(manPath)            pair flat) ++
+        (PathFinder(jPath) ** "*.java"  pair rebase(jPath, "src")) ++
+        (PathFinder(sPath) ** "*.scala" pair rebase(sPath, "src")) ++
+        ((PathFinder(rPath) ***)        pair rebase(rPath, "res")) ++
+        ((PathFinder(aPath) ***)        pair rebase(aPath, "assets"))
       IO.jar(mapping, apklib, new java.util.jar.Manifest)
       apklib
     }
@@ -197,10 +198,10 @@ object AndroidBase {
     (manifestPackage, aaptPath, generatedProguardConfigPath,
      manifestPath, resPath, libraryJarPath, managedJavaPath,
      aarlibDependencies, apklibDependencies, apklibSourceManaged,
-     streams, useDebug) map {
+     streams) map {
 
     (mPackage, aPath, proGen, mPath, rPath, jarPath, javaPath,
-     aarlibs, apklibs, apklibJavaPath, s, useDebug) =>
+     aarlibs, apklibs, apklibJavaPath, s) =>
 
     // Create the managed Java path if necessary
     javaPath.mkdirs
@@ -246,7 +247,7 @@ object AndroidBase {
         package %s;
         public final class BuildConfig {
           public static final boolean DEBUG = %s;
-        }""".format(`package`, useDebug))
+        }""".format(`package`, false))
 
       // Return the name of the generated file
       buildConfig
@@ -314,7 +315,7 @@ object AndroidBase {
   /**
    * Returns the internal dependencies for the "provided" scope only
    */
-  def providedInternalDependenciesTask(proj: ProjectRef, struct: Load.BuildStructure) = {
+  def providedInternalDependenciesTask(proj: ProjectRef, struct: BuildStructure) = {
     // "Provided" dependencies of a ResolvedProject
     def providedDeps(op: ResolvedProject): Seq[ProjectRef] = {
       op.dependencies
